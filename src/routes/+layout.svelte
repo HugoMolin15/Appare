@@ -5,6 +5,7 @@
 	import { pullFromSupabase } from '$lib/services/sync';
 	import { supabaseReady } from '$lib/supabase';
 	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 
 	let { children } = $props();
 	let path = $derived($page.url.pathname);
@@ -17,6 +18,15 @@
 			syncedUserId = $currentUser.id;
 			pullFromSupabase($currentUser.id).catch(() => {});
 		}
+	});
+
+	// Block iOS left-edge swipe-back gesture globally
+	onMount(() => {
+		function blockEdgeSwipe(e: TouchEvent) {
+			if (e.touches[0].clientX < 30) e.preventDefault();
+		}
+		document.addEventListener('touchstart', blockEdgeSwipe, { passive: false });
+		return () => document.removeEventListener('touchstart', blockEdgeSwipe);
 	});
 
 	let isLoginPage = $derived(path === '/login');

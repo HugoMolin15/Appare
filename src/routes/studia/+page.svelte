@@ -121,20 +121,8 @@
 			}
 		}
 
-		// Block iOS left-edge swipe-back by capturing touches that start near the left edge
-		function blockEdgeSwipe(e: TouchEvent) {
-			if (e.touches[0].clientX < 30) {
-				e.preventDefault();
-			}
-		}
-
 		window.addEventListener('popstate', onPopState);
-		document.addEventListener('touchstart', blockEdgeSwipe, { passive: false });
-
-		return () => {
-			window.removeEventListener('popstate', onPopState);
-			document.removeEventListener('touchstart', blockEdgeSwipe);
-		};
+		return () => window.removeEventListener('popstate', onPopState);
 	});
 </script>
 
