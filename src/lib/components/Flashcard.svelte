@@ -102,6 +102,8 @@
 	.card {
 		width: 100%;
 		flex: 1;
+		min-height: 0;
+		max-height: 520px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;

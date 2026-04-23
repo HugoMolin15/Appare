@@ -106,9 +106,11 @@
 		}
 	}
 
-	// Trap browser swipe-back / hardware back button
+	// Trap browser back button and iOS swipe-back gesture
 	onMount(() => {
 		if (noGuard) return;
+
+		// Push a dummy state so back button/swipe triggers popstate instead of navigating
 		history.pushState(null, '', window.location.href);
 
 		function onPopState() {
@@ -119,8 +121,20 @@
 			}
 		}
 
+		// Block iOS left-edge swipe-back by capturing touches that start near the left edge
+		function blockEdgeSwipe(e: TouchEvent) {
+			if (e.touches[0].clientX < 30) {
+				e.preventDefault();
+			}
+		}
+
 		window.addEventListener('popstate', onPopState);
-		return () => window.removeEventListener('popstate', onPopState);
+		document.addEventListener('touchstart', blockEdgeSwipe, { passive: false });
+
+		return () => {
+			window.removeEventListener('popstate', onPopState);
+			document.removeEventListener('touchstart', blockEdgeSwipe);
+		};
 	});
 </script>
 
@@ -256,8 +270,11 @@
 /* ---- Card area ---- */
 	.card-area {
 		flex: 1;
+		min-height: 0;
 		display: flex;
 		flex-direction: column;
+		align-items: stretch;
+		justify-content: center;
 		padding: 1rem 0;
 	}
 
