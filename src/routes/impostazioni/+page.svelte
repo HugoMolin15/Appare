@@ -536,12 +536,6 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		transition: background 0.15s ease, color 0.15s ease;
-	}
-
-	.arrow-btn:hover:not(:disabled) {
-		background: var(--color-border);
-		color: var(--color-text);
 	}
 
 	.arrow-btn:disabled {
@@ -611,11 +605,6 @@
 		font-family: var(--font-sans);
 		color: #C5221F;
 		cursor: pointer;
-		transition: background-color 0.15s ease;
-	}
-
-	.signout-btn:hover {
-		background-color: #FCE8E6;
 	}
 
 	/* ---- Login CTA ---- */
@@ -656,10 +645,5 @@
 		text-decoration: none;
 		font-size: 0.9rem;
 		font-weight: 700;
-		transition: background-color 0.15s ease;
-	}
-
-	.login-cta-btn:hover {
-		background-color: var(--color-primary-light);
 	}
 </style>

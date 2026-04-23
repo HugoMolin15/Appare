@@ -72,7 +72,7 @@
 	}
 
 	.field-input:focus {
-		background-color: var(--color-surface-warm);
+		background-color: var(--color-surface);
 		box-shadow: inset 0 0 0 1.5px var(--color-primary);
 	}
 
@@ -89,17 +89,7 @@
 		background: var(--color-border);
 		color: var(--color-text-secondary);
 		cursor: pointer;
-		transition: background-color 0.12s ease, color 0.12s ease, transform 0.1s ease;
 		padding: 0;
 		flex-shrink: 0;
-	}
-
-	.clear-btn:hover {
-		background: var(--color-text-tertiary);
-		color: white;
-	}
-
-	.clear-btn:active {
-		transform: scale(0.9);
 	}
 </style>

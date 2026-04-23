@@ -153,16 +153,7 @@
 		height: 40px;
 		border-radius: var(--radius-full);
 		color: var(--color-text);
-		transition: background-color 0.15s ease, color 0.15s ease;
 		text-decoration: none;
-	}
-
-	.settings-btn:hover {
-		background-color: var(--color-surface);
-	}
-
-	.settings-btn:active {
-		background-color: var(--color-surface-warm);
 	}
 
 	/* ---- Daily Words ---- */
@@ -195,19 +186,9 @@
 		font-weight: 600;
 		font-family: var(--font-sans);
 		cursor: pointer;
-		transition: background-color 0.15s ease, transform 0.1s ease;
 		text-decoration: none;
 		text-align: center;
 		box-sizing: border-box;
-	}
-
-	.cta-button:hover {
-		background-color: var(--color-primary-light);
-	}
-
-	.cta-button:active {
-		background-color: var(--color-primary-dark);
-		transform: scale(0.98);
 	}
 
 	/* ---- Divider ---- */
@@ -235,18 +216,9 @@
 		width: 100%;
 		text-align: left;
 		font-family: var(--font-sans);
-		transition: background-color 0.12s ease;
 		border-radius: var(--radius-md);
 		text-decoration: none;
 		color: inherit;
-	}
-
-	.menu-item:hover {
-		background-color: var(--color-surface);
-	}
-
-	.menu-item:active {
-		background-color: var(--color-surface-warm);
 	}
 
 	.menu-icon {

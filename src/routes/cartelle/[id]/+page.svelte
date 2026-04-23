@@ -346,12 +346,6 @@
 		align-items: center;
 		justify-content: center;
 		border-radius: var(--radius-full);
-		transition: all 0.2s ease;
-	}
-
-	.header-action-btn:hover {
-		background-color: var(--color-surface);
-		color: var(--color-text-primary);
 	}
 
 	.word-count-label {
@@ -379,10 +373,8 @@
 
 	.controls-right {
 		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 0.5rem;
-		flex-shrink: 0;
+		align-items: center;
+		gap: 1.25rem;
 	}
 
 	.text-link {
@@ -393,22 +385,13 @@
 		font-weight: 700;
 		color: var(--color-text-secondary);
 		cursor: pointer;
-		transition: color 0.15s ease;
 		text-decoration: underline;
 		text-decoration-thickness: 1px;
 		text-underline-offset: 2px;
 	}
 
-	.text-link:hover {
-		color: var(--color-text-primary);
-	}
-
 	.text-link.delete {
 		color: var(--color-primary);
-	}
-
-	.text-link.delete:hover {
-		color: #C5221F;
 	}
 
 	.word-list {
@@ -610,18 +593,8 @@
 		font-weight: 700;
 		font-family: var(--font-sans);
 		cursor: pointer;
-		transition: background-color 0.15s ease, transform 0.1s ease;
 		white-space: nowrap;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-	}
-
-	.fab:hover {
-		background-color: var(--color-accent-hover);
-		transform: translateY(-2px);
-	}
-
-	.fab:active {
-		transform: translateY(0) scale(0.96);
 	}
 
 	/* ---- Options Sheet ---- */

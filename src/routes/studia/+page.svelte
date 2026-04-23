@@ -300,7 +300,6 @@
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
-		transition: background-color 0.15s ease, transform 0.1s ease;
 	}
 
 	.nav-prev {
@@ -314,28 +313,10 @@
 		cursor: default;
 	}
 
-	.nav-prev:not(:disabled):hover {
-		background-color: var(--color-primary-light);
-	}
-
-	.nav-prev:not(:disabled):active {
-		background-color: var(--color-primary-dark);
-		transform: scale(0.98);
-	}
-
 	.nav-next {
 		flex: 1;
 		background-color: var(--color-primary);
 		color: white;
-	}
-
-	.nav-next:hover {
-		background-color: var(--color-primary-light);
-	}
-
-	.nav-next:active {
-		background-color: var(--color-primary-dark);
-		transform: scale(0.98);
 	}
 
 	/* ---- Empty state ---- */
@@ -421,7 +402,6 @@
 		align-items: center;
 		justify-content: center;
 		gap: 0.4rem;
-		transition: background-color 0.15s ease, transform 0.1s ease;
 		border: none;
 	}
 
@@ -430,17 +410,9 @@
 		color: white;
 	}
 
-	.action-restart:hover {
-		background: var(--color-primary-light);
-	}
-
 	.action-home {
 		background: var(--color-surface);
 		color: var(--color-text);
-	}
-
-	.action-home:hover {
-		background: var(--color-surface-warm);
 	}
 
 	/* ---- Modal ---- */
@@ -499,7 +471,6 @@
 		font-weight: 600;
 		cursor: pointer;
 		border: none;
-		transition: all 0.2s ease;
 	}
 
 	.btn-secondary {
@@ -507,16 +478,8 @@
 		color: var(--color-text-primary);
 	}
 
-	.btn-secondary:hover {
-		background: var(--color-surface-warm);
-	}
-
 	.btn-primary {
 		background: var(--color-primary);
 		color: white;
-	}
-
-	.btn-primary:hover {
-		background: var(--color-primary-light);
 	}
 </style>

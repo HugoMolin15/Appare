@@ -191,25 +191,15 @@
 		font-weight: 700;
 		font-family: var(--font-sans);
 		cursor: pointer;
-		transition: transform 0.2s ease, box-shadow 0.2s ease;
 		display: flex;
 		justify-content: center;
 		align-items: center;
 	}
 
 	.cta-button:disabled {
-		background-color: var(--color-surface-warm);
+		background-color: var(--color-surface);
 		color: var(--color-text-secondary);
 		cursor: not-allowed;
 		opacity: 0.7;
-	}
-
-	.cta-button:not(:disabled):hover {
-		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(139, 26, 26, 0.3);
-	}
-
-	.cta-button:not(:disabled):active {
-		transform: translateY(0);
 	}
 </style>

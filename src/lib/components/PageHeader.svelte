@@ -60,15 +60,6 @@
 		border: none;
 		padding: 0;
 		cursor: pointer;
-		transition: background-color 0.15s ease;
-	}
-
-	.back-btn:hover {
-		background-color: var(--color-surface);
-	}
-
-	.back-btn:active {
-		background-color: var(--color-surface-warm);
 	}
 
 	.page-header-title {

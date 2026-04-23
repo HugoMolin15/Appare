@@ -84,17 +84,7 @@
 		font-weight: 500;
 		font-family: var(--font-sans);
 		cursor: pointer;
-		transition: all 0.15s ease;
 		white-space: nowrap;
-	}
-
-	.chip:hover:not(.active) {
-		border-color: var(--color-text-tertiary);
-		background-color: var(--color-surface);
-	}
-
-	.chip:active:not(.active) {
-		transform: scale(0.96);
 	}
 
 	.chip.active {
