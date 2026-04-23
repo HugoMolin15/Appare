@@ -1,0 +1,91 @@
+<!--
+  PageHeader — Reusable sub-page header with back arrow and centered title.
+  Usage: <PageHeader title="Impostazioni" backHref="/" />
+-->
+<script lang="ts">
+	import type { Snippet } from 'svelte';
+
+	interface Props {
+		title: string;
+		backHref?: string;
+		onback?: () => void;
+		actions?: Snippet;
+	}
+
+	let { title, backHref = '/', onback, actions }: Props = $props();
+</script>
+
+<header class="page-header">
+	{#if onback}
+		<button class="back-btn" onclick={onback} aria-label="Indietro">
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<polyline points="15 18 9 12 15 6" />
+			</svg>
+		</button>
+	{:else}
+		<a href={backHref} class="back-btn" aria-label="Indietro">
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<polyline points="15 18 9 12 15 6" />
+			</svg>
+		</a>
+	{/if}
+	<h1 class="page-header-title">{title}</h1>
+	<div class="header-actions">
+		{#if actions}
+			{@render actions()}
+		{:else}
+			<div class="header-spacer"></div>
+		{/if}
+	</div>
+</header>
+
+<style>
+	.page-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 1.5rem;
+	}
+
+	.back-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		border-radius: var(--radius-full);
+		color: var(--color-text);
+		text-decoration: none;
+		background: transparent;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		transition: background-color 0.15s ease;
+	}
+
+	.back-btn:hover {
+		background-color: var(--color-surface);
+	}
+
+	.back-btn:active {
+		background-color: var(--color-surface-warm);
+	}
+
+	.page-header-title {
+		font-size: 1.125rem;
+		font-weight: 700;
+		margin: 0;
+		letter-spacing: -0.01em;
+	}
+
+	.header-actions {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		width: 40px;
+	}
+
+	.header-spacer {
+		width: 40px;
+	}
+</style>
