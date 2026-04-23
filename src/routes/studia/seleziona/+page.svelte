@@ -180,6 +180,18 @@
 		z-index: 100;
 	}
 
+	@media (min-width: 768px) {
+		.bottom-bar {
+			left: 220px;
+		}
+	}
+
+	@media (min-width: 1280px) {
+		.bottom-bar {
+			left: 260px;
+		}
+	}
+
 	.cta-button {
 		width: 100%;
 		padding: 1.1rem;
