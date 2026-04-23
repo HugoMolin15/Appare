@@ -90,15 +90,6 @@
 		text-decoration: none;
 		color: inherit;
 		border-radius: var(--radius-md);
-		transition: background-color 0.12s ease;
-	}
-
-	.folder-item:hover {
-		background-color: var(--color-surface);
-	}
-
-	.folder-item:active {
-		background-color: var(--color-surface-warm);
 	}
 
 	.folder-icon {
