@@ -345,3 +345,11 @@ export function updateFolder(id: string, name: string, color?: string) {
 		if (updated) pushFolder(updated, uid);
 	});
 }
+/** Clear all folders (used on logout) */
+export function clearFolders() {
+	folders.set([]);
+	if (browser) {
+		localStorage.removeItem(STORAGE_KEY);
+		localStorage.removeItem(SEEDED_KEY);
+	}
+}

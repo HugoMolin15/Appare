@@ -126,3 +126,11 @@ export function removeWordsFromFolder(wordIds: string[]) {
 		});
 	});
 }
+/** Clear all words (used on logout) */
+export function clearWords() {
+	words.set([]);
+	if (browser) {
+		localStorage.removeItem(STORAGE_KEY);
+		localStorage.removeItem(SEEDED_KEY);
+	}
+}

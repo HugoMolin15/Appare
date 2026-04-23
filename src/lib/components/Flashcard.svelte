@@ -78,7 +78,7 @@
 
 			setTimeout(() => {
 				animating = false;
-			}, 200);
+			}, 300);
 		}, 150);
 	}
 
@@ -86,19 +86,29 @@
 	let sideIndicator = $derived(`${currentSide + 1} / ${sides.length}`);
 </script>
 
-<button type="button" class="card" class:flip-out={direction === 'out' && animating} class:flip-in={direction === 'in' && animating} onclick={flip}>
-	<span class="card-indicator">{sideIndicator}</span>
-	<div class="card-top">
-		<span class="card-label">{activeSide.label}</span>
-		<span class="card-category" data-category={word.category}>{word.category}</span>
-	</div>
-	<div class="card-center">
-		<span class="card-text" class:font-jp={activeSide.japanese} style={activeSide.japanese ? `font-size: ${$japaneseFontSize}px` : ''}>{activeSide.text}</span>
-	</div>
-	<span class="card-hint">Tocca per girare</span>
-</button>
+<div class="card-perspective">
+	<button type="button" class="card" class:flipping={animating} onclick={flip}>
+		<span class="card-indicator">{sideIndicator}</span>
+		<div class="card-top">
+			<span class="card-label">{activeSide.label}</span>
+			<span class="card-category" data-category={word.category}>{word.category}</span>
+		</div>
+		<div class="card-center">
+			<span class="card-text" class:font-jp={activeSide.japanese} style={activeSide.japanese ? `font-size: ${$japaneseFontSize}px` : ''}>{activeSide.text}</span>
+		</div>
+		<span class="card-hint">Tocca per continuare</span>
+	</button>
+</div>
 
 <style>
+	.card-perspective {
+		width: 100%;
+		flex: 1;
+		perspective: 1000px;
+		display: flex;
+		flex-direction: column;
+	}
+
 	.card {
 		width: 100%;
 		flex: 1;
@@ -113,31 +123,19 @@
 		border-radius: var(--radius-xl);
 		cursor: pointer;
 		position: relative;
-		transition: transform 0.15s ease, opacity 0.15s ease;
+		transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease;
 		font-family: var(--font-sans);
 		box-sizing: border-box;
+		transform-style: preserve-3d;
 	}
 
 	.card:active {
 		transform: scale(0.98);
 	}
 
-	.card.flip-out {
-		animation: card-flip-out 0.15s ease-in forwards;
-	}
-
-	.card.flip-in {
-		animation: card-flip-in 0.2s ease-out forwards;
-	}
-
-	@keyframes card-flip-out {
-		from { transform: scale(1); opacity: 1; }
-		to { transform: scale(0.95); opacity: 0; }
-	}
-
-	@keyframes card-flip-in {
-		from { transform: scale(0.95); opacity: 0; }
-		to { transform: scale(1); opacity: 1; }
+	.card.flipping {
+		transform: rotateY(90deg);
+		opacity: 0.7;
 	}
 
 	.card-indicator {

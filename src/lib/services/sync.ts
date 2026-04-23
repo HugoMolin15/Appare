@@ -305,3 +305,24 @@ export function pushSettingsUpdate(userId: string) {
 		pushSettings(userId);
 	}, 1000);
 }
+
+import { clearWords } from '$lib/stores/words';
+import { clearFolders } from '$lib/stores/folders';
+import { clearHistory } from '$lib/stores/history';
+import { clearDateColors } from '$lib/stores/dateColors';
+import { clearSettings } from '$lib/stores/settings';
+
+/**
+ * Reset all local stores and clear persistence.
+ * Called during logout to prevent data leaking between accounts.
+ */
+export function clearAllStores() {
+	clearWords();
+	clearFolders();
+	clearHistory();
+	clearDateColors();
+	clearSettings();
+	if (browser) {
+		localStorage.removeItem(LOCAL_SYNCED_KEY);
+	}
+}

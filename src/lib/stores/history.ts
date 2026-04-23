@@ -65,3 +65,10 @@ export const allStudiedWordIds = derived(studyHistory, ($history) => {
 	});
 	return allIds;
 });
+/** Clear history (used on logout) */
+export function clearHistory() {
+	studyHistory.set({});
+	if (browser) {
+		localStorage.removeItem(STORAGE_KEY);
+	}
+}

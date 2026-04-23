@@ -77,28 +77,31 @@
    Base Styles
    ======================================== */
 
-* {
-  -webkit-tap-highlight-color: transparent !important;
-  -webkit-touch-callout: none;
-  outline: none !important;
+html, body {
+  overscroll-behavior-x: none !important;
 }
 
-:focus {
+* {
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+  -webkit-touch-callout: none;
   outline: none !important;
+  box-shadow: none !important;
+}
+
+:focus, :active, :hover {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
 /* Ensure no highlight on any clickable element */
-a, button, input, textarea, select, [role="button"] {
+a, button, input, textarea, select, [role="button"], label {
   -webkit-tap-highlight-color: transparent !important;
   -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
-}
-
-a, button, label, nav, [role="button"] {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
-
 
 html {
   overflow-x: hidden;

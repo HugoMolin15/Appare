@@ -50,6 +50,9 @@ export async function signInWithApple() {
 	return error;
 }
 
+import { clearAllStores } from '$lib/services/sync';
+
 export async function signOut() {
 	await supabase.auth.signOut();
+	clearAllStores();
 }

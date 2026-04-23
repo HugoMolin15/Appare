@@ -35,3 +35,10 @@ export function setDateColor(key: string, color: string | undefined) {
 		if (uid) pushDateColor(uid, key, color);
 	});
 }
+/** Clear date colors (used on logout) */
+export function clearDateColors() {
+	dateColors.set({});
+	if (browser) {
+		localStorage.removeItem(STORAGE_KEY);
+	}
+}
