@@ -1,9 +1,10 @@
 -- =============================================
 -- Appare — Supabase Schema
 -- Run this in: Supabase Dashboard > SQL Editor
+-- Safe to run multiple times (idempotent)
 -- =============================================
 
--- Words (only user-created, not seed words)
+-- Words
 CREATE TABLE IF NOT EXISTS words (
   id TEXT PRIMARY KEY,
   user_id UUID REFERENCES auth.users NOT NULL,
@@ -19,11 +20,12 @@ CREATE TABLE IF NOT EXISTS words (
 );
 
 ALTER TABLE words ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own words" ON words;
 CREATE POLICY "own words" ON words FOR ALL
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
--- Folders (only user-created, not seed folders)
+-- Folders
 CREATE TABLE IF NOT EXISTS folders (
   id TEXT PRIMARY KEY,
   user_id UUID REFERENCES auth.users NOT NULL,
@@ -34,6 +36,7 @@ CREATE TABLE IF NOT EXISTS folders (
 );
 
 ALTER TABLE folders ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own folders" ON folders;
 CREATE POLICY "own folders" ON folders FOR ALL
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
@@ -47,6 +50,7 @@ CREATE TABLE IF NOT EXISTS study_history (
 );
 
 ALTER TABLE study_history ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own history" ON study_history;
 CREATE POLICY "own history" ON study_history FOR ALL
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
@@ -60,6 +64,7 @@ CREATE TABLE IF NOT EXISTS date_colors (
 );
 
 ALTER TABLE date_colors ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own date colors" ON date_colors;
 CREATE POLICY "own date colors" ON date_colors FOR ALL
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
@@ -75,6 +80,7 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own settings" ON settings;
 CREATE POLICY "own settings" ON settings FOR ALL
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
