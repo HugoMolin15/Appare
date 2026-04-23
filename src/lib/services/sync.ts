@@ -34,14 +34,25 @@ export async function pullFromSupabase(userId: string): Promise<void> {
 	const isNewDevice = previousUserId !== userId;
 
 	if (isNewDevice) {
-		// New device or first login: pull server data and overwrite local
-		await Promise.all([
-			pullWords(userId),
-			pullFolders(userId),
-			pullHistory(userId),
-			pullDateColors(userId),
-			pullSettings(userId)
-		]);
+		// Check if this is a brand-new account (no data in Supabase yet)
+		const { count } = await supabase
+			.from('words')
+			.select('*', { count: 'exact', head: true })
+			.eq('user_id', userId);
+
+		if ((count ?? 0) === 0) {
+			// New account: push local data up so it isn't lost
+			await pushAll(userId);
+		} else {
+			// Existing account on new device: pull server data
+			await Promise.all([
+				pullWords(userId),
+				pullFolders(userId),
+				pullHistory(userId),
+				pullDateColors(userId),
+				pullSettings(userId)
+			]);
+		}
 		localStorage.setItem(LOCAL_SYNCED_KEY, userId);
 	} else {
 		// Same device: push any local changes that may have happened offline
@@ -286,6 +297,11 @@ export async function pushDateColor(userId: string, key: string, color: string |
 	}
 }
 
-export async function pushSettingsUpdate(userId: string) {
-	await pushSettings(userId);
+let settingsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function pushSettingsUpdate(userId: string) {
+	if (settingsDebounceTimer) clearTimeout(settingsDebounceTimer);
+	settingsDebounceTimer = setTimeout(() => {
+		pushSettings(userId);
+	}, 1000);
 }

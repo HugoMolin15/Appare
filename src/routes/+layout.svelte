@@ -1,8 +1,6 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
 	import { currentUser, authLoading } from '$lib/stores/auth';
 	import { pullFromSupabase } from '$lib/services/sync';
 	import { supabaseReady } from '$lib/supabase';
@@ -14,22 +12,18 @@
 
 	$effect(() => {
 		if (!browser || !supabaseReady) return;
-		const isLoginPage = path === '/login';
-
-		if (!$authLoading && !$currentUser && !isLoginPage) {
-			goto('/login');
-			return;
-		}
 
 		if ($currentUser && $currentUser.id !== syncedUserId) {
 			syncedUserId = $currentUser.id;
 			pullFromSupabase($currentUser.id).catch(() => {});
 		}
 	});
+
+	let isLoginPage = $derived(path === '/login');
 </script>
 
 <div class="app-shell safe-top safe-bottom">
-	<aside class="sidebar">
+	<aside class="sidebar" class:hidden={isLoginPage}>
 		<div class="sidebar-logo">
 			<span class="sidebar-jp">日本語</span>
 			<span class="sidebar-title">Appare</span>
@@ -76,6 +70,8 @@
 	.sidebar { display: none; }
 	.main-content { flex: 1; min-width: 0; }
 
+	.hidden { display: none !important; }
+
 	@media (min-width: 768px) {
 		.sidebar {
 			display: flex;
@@ -107,7 +103,6 @@
 		}
 	}
 
-	/* Sidebar internals */
 	.sidebar-logo {
 		display: flex;
 		flex-direction: column;

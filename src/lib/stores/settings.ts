@@ -1,9 +1,16 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
+import { supabase } from '$lib/supabase';
+import { pushSettingsUpdate } from '$lib/services/sync';
+
+async function getUserId(): Promise<string | null> {
+	const { data } = await supabase.auth.getSession();
+	return data.session?.user.id ?? null;
+}
 
 /**
- * Creates a writable store that persists to localStorage.
- * Falls back to the default value on the server or if localStorage is unavailable.
+ * Creates a writable store that persists to localStorage and syncs to Supabase
+ * on change (debounced via pushSettingsUpdate).
  */
 function persisted<T>(key: string, defaultValue: T) {
 	const initial = browser
@@ -20,12 +27,15 @@ function persisted<T>(key: string, defaultValue: T) {
 	const store = writable<T>(initial);
 
 	if (browser) {
+		let first = true;
 		store.subscribe((value) => {
 			try {
 				localStorage.setItem(key, JSON.stringify(value));
-			} catch {
-				// localStorage full or unavailable — silently fail
-			}
+			} catch {}
+
+			// Skip the initial subscription fire — no need to sync on load
+			if (first) { first = false; return; }
+			getUserId().then((uid) => { if (uid) pushSettingsUpdate(uid); });
 		});
 	}
 

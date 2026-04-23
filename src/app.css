@@ -72,12 +72,6 @@ a, button, label, nav, [role="button"] {
   -webkit-touch-callout: none;
 }
 
-/* On touch devices, :hover gets stuck after a tap — disable it */
-@media (hover: none) {
-  *:hover {
-    background-color: transparent !important;
-  }
-}
 
 html {
   overflow-x: hidden;
@@ -150,7 +144,25 @@ body {
 
 /* Smooth page transitions */
 .page-enter {
-  animation: var(--animate-fade-in);
+  animation: fade-in 0.15s ease-out both;
+}
+
+/* Disable landscape on small devices */
+@media (orientation: landscape) and (max-height: 500px) {
+  body::before {
+    content: 'Ruota il dispositivo';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 1.2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 /* Custom scrollbar (thin, subtle) */

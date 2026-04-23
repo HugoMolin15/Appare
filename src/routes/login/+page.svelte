@@ -6,6 +6,7 @@
 	let mode = $state<'login' | 'signup'>('login');
 	let email = $state('');
 	let password = $state('');
+	let showPassword = $state(false);
 	let errorMsg = $state('');
 	let loading = $state(false);
 
@@ -113,15 +114,24 @@
 			</div>
 			<div class="field">
 				<label class="label" for="password">Password</label>
-				<input
-					id="password"
-					class="input"
-					type="password"
-					bind:value={password}
-					placeholder="••••••••"
-					autocomplete={mode === 'login' ? 'current-password' : 'new-password'}
-					disabled={loading}
-				/>
+				<div class="password-wrapper">
+					<input
+						id="password"
+						class="input password-input"
+						type={showPassword ? 'text' : 'password'}
+						bind:value={password}
+						placeholder="••••••••"
+						autocomplete={mode === 'login' ? 'current-password' : 'new-password'}
+						disabled={loading}
+					/>
+					<button type="button" class="eye-btn" onclick={() => showPassword = !showPassword} tabindex="-1" aria-label="Mostra password">
+						{#if showPassword}
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+						{:else}
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+						{/if}
+					</button>
+				</div>
 			</div>
 
 			{#if errorMsg}
@@ -276,6 +286,29 @@
 
 	.input:disabled {
 		opacity: 0.5;
+	}
+
+	.password-wrapper {
+		position: relative;
+		display: flex;
+		align-items: center;
+	}
+
+	.password-input {
+		padding-right: 3rem;
+	}
+
+	.eye-btn {
+		position: absolute;
+		right: 0.75rem;
+		background: none;
+		border: none;
+		padding: 0.25rem;
+		cursor: pointer;
+		color: var(--color-text-secondary);
+		display: flex;
+		align-items: center;
+		border-radius: var(--radius-sm);
 	}
 
 	.error-msg {

@@ -7,7 +7,6 @@
 
 	async function handleSignOut() {
 		await signOut();
-		goto('/login');
 	}
 
 	// Slider progress percentage (24–72 range)
@@ -204,13 +203,23 @@
 	<div class="divider" style="margin-top: 1.5rem;"></div>
 
 	<!-- Account -->
-	<div class="account-row">
-		<div class="account-info">
-			<span class="account-label">Account</span>
-			<span class="account-email">{$currentUser?.email ?? ''}</span>
+	{#if $currentUser}
+		<div class="account-row">
+			<div class="account-info">
+				<span class="account-label">Account</span>
+				<span class="account-email">{$currentUser.email ?? ''}</span>
+			</div>
+			<button class="signout-btn" onclick={handleSignOut}>Esci</button>
 		</div>
-		<button class="signout-btn" onclick={handleSignOut}>Esci</button>
-	</div>
+	{:else}
+		<div class="login-cta">
+			<div class="login-cta-text">
+				<span class="login-cta-title">Salva i tuoi progressi</span>
+				<span class="login-cta-sub">Crea un account per sincronizzare i dati su tutti i tuoi dispositivi.</span>
+			</div>
+			<a href="/login" class="login-cta-btn">Accedi / Registrati</a>
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -607,5 +616,50 @@
 
 	.signout-btn:hover {
 		background-color: #FCE8E6;
+	}
+
+	/* ---- Login CTA ---- */
+	.login-cta {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		padding: 1rem;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+	}
+
+	.login-cta-text {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+	}
+
+	.login-cta-title {
+		font-size: 0.95rem;
+		font-weight: 700;
+	}
+
+	.login-cta-sub {
+		font-size: 0.82rem;
+		color: var(--color-text-secondary);
+		line-height: 1.4;
+	}
+
+	.login-cta-btn {
+		display: block;
+		text-align: center;
+		padding: 0.75rem;
+		background-color: var(--color-primary);
+		color: white;
+		border-radius: var(--radius-md);
+		text-decoration: none;
+		font-size: 0.9rem;
+		font-weight: 700;
+		transition: background-color 0.15s ease;
+	}
+
+	.login-cta-btn:hover {
+		background-color: var(--color-primary-light);
 	}
 </style>
