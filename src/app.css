@@ -39,7 +39,7 @@
   --color-info-border: #E8E2DA;
 
   /* Typography */
-  --font-sans: 'Inter', 'Klee One', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-jp: 'Klee One', sans-serif;
 
   /* Spacing */
