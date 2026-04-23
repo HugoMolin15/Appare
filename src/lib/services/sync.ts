@@ -30,34 +30,35 @@ const LOCAL_SYNCED_KEY = 'appare_synced_user_id';
 // ---------------------------------------------------------------------------
 
 export async function pullFromSupabase(userId: string): Promise<void> {
-	const previousUserId = localStorage.getItem(LOCAL_SYNCED_KEY);
-	const isNewDevice = previousUserId !== userId;
+	// 1. Check server state
+	const { count, error: countError } = await supabase
+		.from('words')
+		.select('*', { count: 'exact', head: true })
+		.eq('user_id', userId);
 
-	if (isNewDevice) {
-		// Check if this is a brand-new account (no data in Supabase yet)
-		const { count } = await supabase
-			.from('words')
-			.select('*', { count: 'exact', head: true })
-			.eq('user_id', userId);
+	if (countError) {
+		console.error('Sync: Error checking server data', countError);
+		return;
+	}
 
-		if ((count ?? 0) === 0) {
-			// New account: push local data up so it isn't lost
-			await pushAll(userId);
-		} else {
-			// Existing account on new device: pull server data
-			await Promise.all([
-				pullWords(userId),
-				pullFolders(userId),
-				pullHistory(userId),
-				pullDateColors(userId),
-				pullSettings(userId)
-			]);
-		}
-		localStorage.setItem(LOCAL_SYNCED_KEY, userId);
-	} else {
-		// Same device: push any local changes that may have happened offline
+	const serverHasData = (count ?? 0) > 0;
+	const localUserWords = get(words).filter((w) => !w.id.startsWith('seed-')).length;
+
+	if (serverHasData) {
+		// Server has data: pull everything to sync local state
+		await Promise.all([
+			pullWords(userId),
+			pullFolders(userId),
+			pullHistory(userId),
+			pullDateColors(userId),
+			pullSettings(userId)
+		]);
+	} else if (localUserWords > 0) {
+		// Server is empty but we have local data: push it up
 		await pushAll(userId);
 	}
+
+	localStorage.setItem(LOCAL_SYNCED_KEY, userId);
 }
 
 async function pullWords(userId: string) {
@@ -82,7 +83,14 @@ async function pullWords(userId: string) {
 
 	words.update((local) => {
 		const seedWords = local.filter((w) => w.id.startsWith('seed-'));
-		return [...seedWords, ...remoteWords];
+		const localUserWords = local.filter((w) => !w.id.startsWith('seed-'));
+		
+		// Merge local and remote: remote wins for the same ID
+		const merged = new Map();
+		localUserWords.forEach(w => merged.set(w.id, w));
+		remoteWords.forEach(w => merged.set(w.id, w));
+		
+		return [...seedWords, ...Array.from(merged.values())];
 	});
 }
 
@@ -103,7 +111,14 @@ async function pullFolders(userId: string) {
 
 	folders.update((local) => {
 		const seedFolders = local.filter((f) => f.id.startsWith('seed-'));
-		return [...seedFolders, ...remoteFolders];
+		const localUserFolders = local.filter((f) => !f.id.startsWith('seed-'));
+		
+		// Merge: remote folders win for the same ID
+		const merged = new Map();
+		localUserFolders.forEach(f => merged.set(f.id, f));
+		remoteFolders.forEach(f => merged.set(f.id, f));
+		
+		return [...seedFolders, ...Array.from(merged.values())];
 	});
 }
 
