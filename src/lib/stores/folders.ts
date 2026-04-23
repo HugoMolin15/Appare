@@ -307,24 +307,35 @@ function saveFolders(folders: Folder[]) {
 /** Reactive store for folders */
 export const folders = writable<Folder[]>(loadFolders());
 
+// Cache the current user ID to avoid a session round-trip on every write
+let cachedUserId: string | null = null;
 if (browser) {
-	folders.subscribe(saveFolders);
+	supabase.auth.getSession().then(({ data }) => {
+		cachedUserId = data.session?.user.id ?? null;
+	});
+	supabase.auth.onAuthStateChange((_e, session) => {
+		cachedUserId = session?.user.id ?? null;
+	});
+}
+
+// Debounce localStorage writes — store updates are still instant
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+if (browser) {
+	folders.subscribe((value) => {
+		if (saveTimer) clearTimeout(saveTimer);
+		saveTimer = setTimeout(() => saveFolders(value), 400);
+	});
 }
 
 /** Total folder count */
 export const folderCount = derived(folders, ($f) => $f.length);
-
-async function getUserId(): Promise<string | null> {
-	const { data } = await supabase.auth.getSession();
-	return data.session?.user.id ?? null;
-}
 
 /** Add a new folder */
 export function addFolder(name: string, color?: string, parentId?: string): string {
 	const id = crypto.randomUUID();
 	const folder: Folder = { id, name, color, parentId, createdAt: Date.now() };
 	folders.update((current) => [...current, folder]);
-	getUserId().then((uid) => { if (uid) pushFolder(folder, uid); });
+	if (cachedUserId) pushFolder(folder, cachedUserId);
 	return id;
 }
 
@@ -339,11 +350,10 @@ export function updateFolder(id: string, name: string, color?: string) {
 	folders.update((current) =>
 		current.map((f) => (f.id === id ? { ...f, name, color } : f))
 	);
-	getUserId().then((uid) => {
-		if (!uid) return;
+	if (cachedUserId) {
 		const updated = get(folders).find((f) => f.id === id);
-		if (updated) pushFolder(updated, uid);
-	});
+		if (updated) pushFolder(updated, cachedUserId);
+	}
 }
 /** Clear all folders (used on logout) */
 export function clearFolders() {

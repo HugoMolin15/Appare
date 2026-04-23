@@ -16,8 +16,7 @@ import {
 	studyGoal,
 	japaneseFontSize,
 	cardOrder,
-	randomCardOrder,
-	dailyWordsCount
+	randomCardOrder
 } from '$lib/stores/settings';
 import { get } from 'svelte/store';
 import type { Word, Folder } from '$lib/types/word';
@@ -170,7 +169,6 @@ async function pullSettings(userId: string) {
 	japaneseFontSize.set(data.japanese_font_size);
 	cardOrder.set(data.card_order);
 	randomCardOrder.set(data.random_card_order);
-	dailyWordsCount.set(data.daily_words_count);
 }
 
 // ---------------------------------------------------------------------------
@@ -252,8 +250,7 @@ async function pushSettings(userId: string) {
 		study_goal: get(studyGoal),
 		japanese_font_size: get(japaneseFontSize),
 		card_order: get(cardOrder),
-		random_card_order: get(randomCardOrder),
-		daily_words_count: get(dailyWordsCount)
+		random_card_order: get(randomCardOrder)
 	});
 }
 
@@ -276,6 +273,26 @@ export async function pushWord(word: Word, userId: string) {
 		folder_id: word.folderId ?? null,
 		created_at: word.createdAt
 	});
+}
+
+export async function pushWords(wordList: Word[], userId: string) {
+	const filtered = wordList.filter((w) => !w.id.startsWith('seed-'));
+	if (!filtered.length) return;
+	await supabase.from('words').upsert(
+		filtered.map((w) => ({
+			id: w.id,
+			user_id: userId,
+			italiano: w.italiano,
+			hiragana: w.hiragana,
+			katakana: w.katakana,
+			romaji: w.romaji,
+			kanji: w.kanji,
+			category: w.category ?? null,
+			word_type: w.wordType ?? null,
+			folder_id: w.folderId ?? null,
+			created_at: w.createdAt
+		}))
+	);
 }
 
 export async function deleteWord(wordId: string) {

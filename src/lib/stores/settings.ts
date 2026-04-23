@@ -42,9 +42,6 @@ function persisted<T>(key: string, defaultValue: T) {
 	return store;
 }
 
-/** Number of daily words to study (1–5) */
-export const dailyWordsCount = persisted<number>('appare_daily_words', 5);
-
 /** Japanese font size in px for flashcard display */
 export const japaneseFontSize = persisted<number>('appare_jp_font_size', 48);
 
@@ -58,17 +55,16 @@ export const cardOrder = persisted<string[]>('appare_card_order', ['italiano', '
 export const randomCardOrder = persisted<boolean>('appare_random_card_order', false);
 /** Clear settings (used on logout) */
 export function clearSettings() {
-	dailyWordsCount.set(5);
 	japaneseFontSize.set(48);
 	studyGoal.set(10);
 	cardOrder.set(['italiano', 'hiragana', 'katakana', 'romaji', 'kanji']);
 	randomCardOrder.set(false);
 
 	if (browser) {
-		localStorage.removeItem('appare_daily_words');
 		localStorage.removeItem('appare_jp_font_size');
 		localStorage.removeItem('appare_study_goal');
 		localStorage.removeItem('appare_card_order');
 		localStorage.removeItem('appare_random_card_order');
+		localStorage.removeItem('appare_daily_words');
 	}
 }
