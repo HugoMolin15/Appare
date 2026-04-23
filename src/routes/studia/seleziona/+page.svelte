@@ -175,8 +175,7 @@
 		left: 0;
 		right: 0;
 		padding: 1rem var(--spacing-page);
-		background: var(--color-background);
-		border-top: 1px solid var(--color-border);
+		background: var(--color-bg);
 		padding-bottom: calc(1rem + env(safe-area-inset-bottom, 20px));
 		z-index: 100;
 	}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { get } from 'svelte/store';
 	import { goto, onNavigate } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import { words } from '$lib/stores/words';
 	import { selectedWordIds, clearSelection, skipExitGuard } from '$lib/stores/studySession';
 	import { allStudiedWordIds, recordStudy } from '$lib/stores/history';
@@ -104,6 +105,23 @@
 			e.returnValue = '';
 		}
 	}
+
+	// Trap browser swipe-back / hardware back button
+	onMount(() => {
+		if (noGuard) return;
+		history.pushState(null, '', window.location.href);
+
+		function onPopState() {
+			if (!finished && studySet.length > 0 && studiedCount < studySet.length) {
+				history.pushState(null, '', window.location.href);
+				showExitModal = true;
+				pendingUrl = '/';
+			}
+		}
+
+		window.addEventListener('popstate', onPopState);
+		return () => window.removeEventListener('popstate', onPopState);
+	});
 </script>
 
 <svelte:window onbeforeunload={handleBeforeUnload} />
@@ -195,10 +213,13 @@
 <style>
 	.page {
 		padding: var(--spacing-page);
-		min-height: 100dvh;
+		height: 100dvh;
+		max-height: 100dvh;
+		overflow: hidden;
 		display: flex;
 		flex-direction: column;
 		padding-bottom: 2rem;
+		box-sizing: border-box;
 	}
 
 	/* ---- Progress ---- */
