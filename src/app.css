@@ -124,22 +124,22 @@ button:not(:disabled):active,
 a:active,
 [role="button"]:not([aria-disabled="true"]):active,
 .tap-feedback:active {
-  transform: scale(0.96);
-  opacity: 0.85;
+  transform: scale(0.98);
+  opacity: 0.92;
 }
 
-/* Smaller icon buttons — a more pronounced squish */
+/* Icon buttons — slightly more pronounced since they're smaller */
 .eye-btn:active,
 [data-icon-btn]:active {
-  transform: scale(0.88) !important;
-  opacity: 0.7;
+  transform: scale(0.94) !important;
+  opacity: 0.85;
 }
 
 /* Checkboxes and radio-like tappable rows */
 input[type="checkbox"]:active,
 input[type="radio"]:active,
 .checkbox:active {
-  transform: scale(0.88);
+  transform: scale(0.94);
 }
 
 html {
