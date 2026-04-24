@@ -44,8 +44,13 @@ export function setDateColor(key: string, color: string | undefined) {
 	if (existing) clearTimeout(existing);
 	pendingPushes.set(key, setTimeout(() => {
 		pendingPushes.delete(key);
-		pushDateColor(uid, key, color);
+		if (get(currentUserId) === uid) pushDateColor(uid, key, color);
 	}, 500));
+}
+
+export function cancelPendingPushes() {
+	for (const t of pendingPushes.values()) clearTimeout(t);
+	pendingPushes.clear();
 }
 /** Clear date colors (used on logout) */
 export function clearDateColors() {

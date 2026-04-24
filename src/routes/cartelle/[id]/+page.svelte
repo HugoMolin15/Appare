@@ -10,6 +10,7 @@
 	import ConfirmationModal from '$lib/components/ConfirmationModal.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { FOLDER_COLORS } from '$lib/constants';
 	import { fade, fly } from 'svelte/transition';
 
@@ -142,9 +143,7 @@
 							<span class="folder-name">{subfolder.name}</span>
 							<span class="folder-count">{subfolder.wordCount} parole</span>
 						</div>
-						<svg class="folder-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<polyline points="9 18 15 12 9 6" />
-						</svg>
+						<Icon name="chevron-right" class="folder-chevron" />
 					</a>
 				{/each}
 			</div>
@@ -189,9 +188,7 @@
 						<!-- svelte-ignore a11y_no_static_element_interactions -->
 						<div class="word-checkbox-area" onclick={() => toggleWordSelection(word.id)}>
 							<div class="word-checkbox" class:checked={$selectedWordIds.has(word.id)}>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-									<polyline points="20 6 9 17 4 12" />
-								</svg>
+								<Icon name="check" strokeWidth={3} />
 							</div>
 						</div>
 						<div class="word-main">
@@ -250,9 +247,7 @@
 								aria-label="Colore {color}"
 							>
 								{#if editColor === color}
-									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-										<polyline points="20 6 9 17 4 12" />
-									</svg>
+									<Icon name="check" size={14} strokeWidth={4} stroke="white" />
 								{/if}
 							</button>
 						{/each}
@@ -263,9 +258,7 @@
 							onclick={() => editColor = ''}
 							aria-label="Nessun colore"
 						>
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-								<line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-							</svg>
+							<Icon name="close" size={14} strokeWidth={2.5} />
 						</button>
 					</div>
 				</div>
@@ -280,9 +273,7 @@
 
 				{#if folderWords.length > 0}
 					<button class="sheet-action" onclick={() => { showOptionsSheet = false; showAddWordsModal = true; }}>
-						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-						</svg>
+						<Icon name="plus" size={18} />
 						Aggiungi parole
 					</button>
 				{/if}
@@ -301,10 +292,7 @@
 	{#if folderWords.length === 0 && folder}
 		<div class="fab-container">
 			<button class="fab" onclick={() => showFolderModal = true}>
-				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-					<line x1="12" y1="5" x2="12" y2="19" />
-					<line x1="5" y1="12" x2="19" y2="12" />
-				</svg>
+				<Icon name="plus" size={18} strokeWidth={2.5} />
 				Nuova cartella
 			</button>
 		</div>

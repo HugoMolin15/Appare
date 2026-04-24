@@ -3,6 +3,7 @@
 	import { addFolder } from '$lib/stores/folders';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import ClearableInput from '$lib/components/ClearableInput.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { FOLDER_COLORS } from '$lib/constants';
 
 	let name = $state('');
@@ -45,9 +46,7 @@
 						aria-label="Seleziona colore {color}"
 					>
 						{#if selectedColor === color}
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-								<polyline points="20 6 9 17 4 12" />
-							</svg>
+							<Icon name="check" size={16} strokeWidth={3} stroke="white" />
 						{/if}
 					</button>
 				{/each}
@@ -64,9 +63,7 @@
 			onclick={handleSave}
 		>
 			{#if isValid}
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-					<polyline points="20 6 9 17 4 12" />
-				</svg>
+				<Icon name="check" strokeWidth={2.5} />
 			{/if}
 			Salva cartella
 		</button>

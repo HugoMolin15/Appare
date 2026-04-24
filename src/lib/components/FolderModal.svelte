@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { addFolder } from '$lib/stores/folders';
 	import ClearableInput from '$lib/components/ClearableInput.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { FOLDER_COLORS } from '$lib/constants';
 
@@ -55,9 +56,7 @@
 						onclick={() => selectedColor = color}
 					>
 						{#if selectedColor === color}
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-								<polyline points="20 6 9 17 4 12" />
-							</svg>
+							<Icon name="check" size={14} strokeWidth={4} stroke="white" />
 						{/if}
 					</button>
 				{/each}

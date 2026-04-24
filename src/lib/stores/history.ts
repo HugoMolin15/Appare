@@ -46,8 +46,13 @@ function schedulePush(uid: string, date: string, ids: string[]) {
 	if (existing) clearTimeout(existing);
 	pendingPushes.set(date, setTimeout(() => {
 		pendingPushes.delete(date);
-		pushHistoryDate(uid, date, ids);
+		if (get(currentUserId) === uid) pushHistoryDate(uid, date, ids);
 	}, 500));
+}
+
+export function cancelPendingPushes() {
+	for (const t of pendingPushes.values()) clearTimeout(t);
+	pendingPushes.clear();
 }
 
 /**
@@ -72,12 +77,18 @@ export function recordStudy(wordIds: string[]) {
  * Helper to get all word IDs that have EVER been studied.
  * Useful for filtering the global "Inizia a studiare" pool.
  */
+let cachedIds: Set<string> | null = null;
+let cachedSig: string | null = null;
 export const allStudiedWordIds = derived(studyHistory, ($history) => {
-	const allIds = new Set<string>();
-	Object.values($history).forEach(ids => {
-		ids.forEach(id => allIds.add(id));
-	});
-	return allIds;
+	const keys = Object.keys($history);
+	let sig = '';
+	for (const k of keys) sig += `${k}:${$history[k].length}|`;
+	if (sig === cachedSig && cachedIds) return cachedIds;
+	const next = new Set<string>();
+	for (const ids of Object.values($history)) for (const id of ids) next.add(id);
+	cachedIds = next;
+	cachedSig = sig;
+	return next;
 });
 /** Clear history (used on logout) */
 export function clearHistory() {

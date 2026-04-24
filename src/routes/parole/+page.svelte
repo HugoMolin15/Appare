@@ -4,6 +4,7 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { fade, fly } from 'svelte/transition';
 
 	let searchQuery = $state('');
@@ -97,9 +98,7 @@
 				<span class="pill">
 					{pill.label}
 					<button class="pill-remove" onclick={pill.remove} aria-label="Rimuovi filtro {pill.label}">
-						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-							<line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-						</svg>
+						<Icon name="close" size={12} strokeWidth={3} />
 					</button>
 				</span>
 			{/each}
@@ -145,9 +144,7 @@
 						>
 							<span>{label}</span>
 							{#if sourceFilter === val}
-								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-									<polyline points="20 6 9 17 4 12" />
-								</svg>
+								<Icon name="check" size={18} strokeWidth={3} />
 							{/if}
 						</button>
 					{/each}
@@ -165,9 +162,7 @@
 						>
 							<span>{label}</span>
 							{#if typeFilter === val}
-								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-									<polyline points="20 6 9 17 4 12" />
-								</svg>
+								<Icon name="check" size={18} strokeWidth={3} />
 							{/if}
 						</button>
 					{/each}
@@ -185,9 +180,7 @@
 						>
 							<span>{group}</span>
 							{#if selectedGroups.has(group)}
-								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-									<polyline points="20 6 9 17 4 12" />
-								</svg>
+								<Icon name="check" size={18} strokeWidth={3} />
 							{/if}
 						</button>
 					{/each}

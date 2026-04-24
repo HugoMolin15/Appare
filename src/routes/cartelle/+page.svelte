@@ -3,6 +3,8 @@
 	import { words } from '$lib/stores/words';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import FolderModal from '$lib/components/FolderModal.svelte';
+	import Icon from '$lib/components/Icon.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 
 	let showModal = $state(false);
 
@@ -26,11 +28,11 @@
 	<PageHeader title="Cartelle" />
 
 	{#if folderList.length === 0}
-		<div class="empty-state">
-			<span class="empty-icon">📁</span>
-			<p class="empty-text">Nessuna cartella</p>
-			<p class="empty-sub">Le cartelle raggruppano le parole per argomento.</p>
-		</div>
+		<EmptyState
+			icon="📁"
+			title="Nessuna cartella"
+			subtitle="Le cartelle raggruppano le parole per argomento."
+		/>
 	{:else}
 		<div class="folder-list">
 			{#each folderList as folder}
@@ -44,9 +46,7 @@
 						<span class="folder-name">{folder.name}</span>
 						<span class="folder-count">{folder.wordCount} parole</span>
 					</div>
-					<svg class="folder-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<polyline points="9 18 15 12 9 6" />
-					</svg>
+					<Icon name="chevron-right" class="folder-chevron" />
 				</a>
 			{/each}
 		</div>
@@ -55,10 +55,7 @@
 	<!-- FAB for New Folder -->
 	<div class="fab-container">
 		<button class="fab" onclick={() => showModal = true}>
-			<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-				<line x1="12" y1="5" x2="12" y2="19" />
-				<line x1="5" y1="12" x2="19" y2="12" />
-			</svg>
+			<Icon name="plus" size={18} strokeWidth={2.5} />
 			Nuova cartella
 		</button>
 	</div>
@@ -121,33 +118,6 @@
 	.folder-chevron {
 		color: var(--color-text-tertiary);
 		flex-shrink: 0;
-	}
-
-	.empty-state {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		text-align: center;
-		gap: 0.5rem;
-	}
-
-	.empty-icon {
-		font-size: 3rem;
-		margin-bottom: 0.5rem;
-	}
-
-	.empty-text {
-		font-size: 1.1rem;
-		font-weight: 600;
-		margin: 0;
-	}
-
-	.empty-sub {
-		font-size: 0.85rem;
-		color: var(--color-text-secondary);
-		margin: 0;
 	}
 
 	/* ---- FAB ---- */

@@ -6,6 +6,7 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	let searchQuery = $state('');
 
@@ -45,9 +46,7 @@
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div class="word-row" onclick={() => toggleWordSelection(word.id)}>
 					<div class="word-checkbox" class:checked={$selectedWordIds.has(word.id)}>
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-							<polyline points="20 6 9 17 4 12" />
-						</svg>
+						<Icon name="check" strokeWidth={3} />
 					</div>
 					<div class="word-main">
 						<span class="word-it">{word.italiano}</span>

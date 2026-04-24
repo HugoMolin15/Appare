@@ -2,6 +2,7 @@
 	import { words } from '$lib/stores/words';
 	import { fade, fly } from 'svelte/transition';
 	import ClearableInput from '$lib/components/ClearableInput.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 
 	interface Props {
@@ -64,9 +65,7 @@
 					<div class="word-option" class:selected={selectedIds.has(word.id)} onclick={() => toggleSelection(word.id)}>
 						<div class="checkbox" class:checked={selectedIds.has(word.id)}>
 							{#if selectedIds.has(word.id)}
-								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-									<polyline points="20 6 9 17 4 12" />
-								</svg>
+								<Icon name="check" size={12} strokeWidth={4} stroke="white" />
 							{/if}
 						</div>
 						<div class="word-info">

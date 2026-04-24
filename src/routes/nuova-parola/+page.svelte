@@ -6,6 +6,7 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import ClearableInput from '$lib/components/ClearableInput.svelte';
 	import CategoryPicker from '$lib/components/CategoryPicker.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	const folderId = $page.url.searchParams.get('folderId');
 
@@ -106,9 +107,7 @@
 			onclick={handleSave}
 		>
 			{#if isValid}
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-					<polyline points="20 6 9 17 4 12" />
-				</svg>
+				<Icon name="check" strokeWidth={2.5} />
 			{/if}
 			Salva
 		</button>

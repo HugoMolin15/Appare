@@ -7,6 +7,8 @@
 	import { allStudiedWordIds, recordStudy } from '$lib/stores/history';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Flashcard from '$lib/components/Flashcard.svelte';
+	import Icon from '$lib/components/Icon.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { shuffle } from '$lib/utils/shuffle';
 
 	const allWordsData = get(words);
@@ -144,13 +146,13 @@
 	<PageHeader title="Studia" />
 
 	{#if studySet.length === 0}
-		<!-- No words available -->
-		<div class="empty-state">
-			<span class="empty-icon font-jp">📚</span>
-			<p class="empty-text">Nessuna parola disponibile.</p>
-			<p class="empty-sub">Aggiungi delle parole per iniziare a studiare.</p>
-			<a href="/nuova-parola" class="empty-btn">Aggiungi parola</a>
-		</div>
+		<EmptyState
+			icon="📚"
+			title="Nessuna parola disponibile."
+			subtitle="Aggiungi delle parole per iniziare a studiare."
+			ctaHref="/nuova-parola"
+			ctaLabel="Aggiungi parola"
+		/>
 
 	{:else if finished}
 		<!-- Completed -->
@@ -194,9 +196,7 @@
 				</button>
 				<button type="button" class="nav-btn nav-next" onclick={next}>
 					{currentIndex < studySet.length - 1 ? 'Prossima' : 'Finisci'}
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-						<polyline points="9 18 15 12 9 6" />
-					</svg>
+					<Icon name="chevron-right" size={18} strokeWidth={2.5} />
 				</button>
 			</div>
 		</div>
@@ -296,45 +296,6 @@
 		flex: 1;
 		background-color: var(--color-primary);
 		color: white;
-	}
-
-	/* ---- Empty state ---- */
-	.empty-state {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		text-align: center;
-		gap: 0.5rem;
-	}
-
-	.empty-icon {
-		font-size: 3rem;
-		margin-bottom: 0.5rem;
-	}
-
-	.empty-text {
-		font-size: 1.1rem;
-		font-weight: 600;
-		margin: 0;
-	}
-
-	.empty-sub {
-		font-size: 0.85rem;
-		color: var(--color-text-secondary);
-		margin: 0 0 1rem 0;
-	}
-
-	.empty-btn {
-		padding: 0.7rem 1.5rem;
-		background: var(--color-primary);
-		color: white;
-		border-radius: var(--radius-lg);
-		font-size: 0.9rem;
-		font-weight: 600;
-		text-decoration: none;
-		font-family: var(--font-sans);
 	}
 
 	/* ---- Finished state ---- */

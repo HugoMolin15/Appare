@@ -5,6 +5,25 @@
 	}
 
 	let { value = $bindable(), placeholder = 'Cerca...' }: Props = $props();
+
+	let inputValue = $state(value);
+	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+	// Keep inputValue in sync when the outer value is reset externally
+	$effect(() => {
+		if (value !== inputValue && debounceTimer === null) {
+			inputValue = value;
+		}
+	});
+
+	function handleInput(e: Event) {
+		inputValue = (e.target as HTMLInputElement).value;
+		if (debounceTimer) clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(() => {
+			debounceTimer = null;
+			value = inputValue;
+		}, 150);
+	}
 </script>
 
 <div class="search-container">
@@ -16,7 +35,8 @@
 		type="text"
 		class="search-input"
 		{placeholder}
-		bind:value
+		value={inputValue}
+		oninput={handleInput}
 	/>
 </div>
 

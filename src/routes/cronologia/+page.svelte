@@ -8,6 +8,7 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import type { Word } from '$lib/types/word';
 	import { fade, fly } from 'svelte/transition';
 
@@ -181,9 +182,7 @@
 						<button class="color-dot-btn" onclick={(e) => openColorEdit(key, e)} aria-label="Colora">
 							<div class="color-dot" style={$dateColors[colorKey(key)] ? `background: ${$dateColors[colorKey(key)]}` : ''}></div>
 						</button>
-						<svg class="folder-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<polyline points="9 18 15 12 9 6" />
-						</svg>
+						<Icon name="chevron-right" class="folder-chevron" />
 					</div>
 				{/each}
 			</div>
@@ -226,9 +225,7 @@
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div class="word-row" onclick={() => toggleWordSelection(word.id)}>
 						<div class="word-checkbox" class:checked={$selectedWordIds.has(word.id)}>
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-								<polyline points="20 6 9 17 4 12" />
-							</svg>
+							<Icon name="check" strokeWidth={3} />
 						</div>
 						<div class="word-main">
 							<span class="word-it">{word.italiano}</span>
@@ -264,9 +261,7 @@
 					aria-label="Colore {color}"
 				>
 					{#if editColor === color}
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-							<polyline points="20 6 9 17 4 12" />
-						</svg>
+						<Icon name="check" size={14} strokeWidth={4} stroke="white" />
 					{/if}
 				</button>
 			{/each}
@@ -277,9 +272,7 @@
 				onclick={() => editColor = ''}
 				aria-label="Nessun colore"
 			>
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-					<line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-				</svg>
+				<Icon name="close" size={14} strokeWidth={2.5} />
 			</button>
 		</div>
 		<button class="save-color-btn" onclick={saveColor}>Salva</button>

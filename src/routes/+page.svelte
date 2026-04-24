@@ -2,6 +2,7 @@
 	import { wordCount } from '$lib/stores/words';
 	import { folderCount } from '$lib/stores/folders';
 	import Heatmap from '$lib/components/Heatmap.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 </script>
 
 <svelte:head>
@@ -50,9 +51,7 @@
 				<span class="menu-label">Tutte le parole</span>
 				<span class="menu-count">{$wordCount} parole</span>
 			</div>
-			<svg class="menu-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				<polyline points="9 18 15 12 9 6" />
-			</svg>
+			<Icon name="chevron-right" class="menu-chevron" />
 		</a>
 
 		<a href="/cartelle" class="menu-item">
@@ -65,9 +64,7 @@
 				<span class="menu-label">Cartelle</span>
 				<span class="menu-count">{$folderCount} {$folderCount === 1 ? 'cartella' : 'cartelle'}</span>
 			</div>
-			<svg class="menu-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				<polyline points="9 18 15 12 9 6" />
-			</svg>
+			<Icon name="chevron-right" class="menu-chevron" />
 		</a>
 
 		<a href="/cronologia" class="menu-item">
@@ -80,19 +77,14 @@
 				<span class="menu-label">Cronologia</span>
 				<span class="menu-count">Vedi sessioni passate</span>
 			</div>
-			<svg class="menu-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				<polyline points="9 18 15 12 9 6" />
-			</svg>
+			<Icon name="chevron-right" class="menu-chevron" />
 		</a>
 	</nav>
 
 	<!-- FAB -->
 	<div class="fab-container hide-desktop">
 		<a href="/nuova-parola" class="fab">
-			<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-				<line x1="12" y1="5" x2="12" y2="19" />
-				<line x1="5" y1="12" x2="19" y2="12" />
-			</svg>
+			<Icon name="plus" size={18} strokeWidth={2.5} />
 			Nuova parola
 		</a>
 	</div>

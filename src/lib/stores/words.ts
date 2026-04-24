@@ -24,7 +24,14 @@ function loadStoredWords(): Word[] {
  * this is a no-op and the dynamic chunk is never fetched.
  * Call once from the root layout after mount.
  */
-export async function ensureSeeded(): Promise<void> {
+let seedingPromise: Promise<void> | null = null;
+export function ensureSeeded(): Promise<void> {
+	if (seedingPromise) return seedingPromise;
+	seedingPromise = doSeed();
+	return seedingPromise;
+}
+
+async function doSeed(): Promise<void> {
 	if (!browser) return;
 	if (localStorage.getItem(SEEDED_KEY) === SEED_VERSION) return;
 

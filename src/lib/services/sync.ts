@@ -19,6 +19,7 @@ import {
 	randomCardOrder
 } from '$lib/stores/settings';
 import { get } from 'svelte/store';
+import { currentUserId } from '$lib/stores/auth';
 import type { Word, Folder } from '$lib/types/word';
 import type { StudyHistory } from '$lib/stores/history';
 
@@ -34,6 +35,8 @@ export async function pullFromSupabase(userId: string): Promise<void> {
 		.from('words')
 		.select('*', { count: 'exact', head: true })
 		.eq('user_id', userId);
+
+	if (get(currentUserId) !== userId) return;
 
 	if (countError) {
 		console.error('Sync: Error checking server data', countError);
@@ -57,6 +60,7 @@ export async function pullFromSupabase(userId: string): Promise<void> {
 		await pushAll(userId);
 	}
 
+	if (get(currentUserId) !== userId) return;
 	localStorage.setItem(LOCAL_SYNCED_KEY, userId);
 }
 
@@ -66,6 +70,7 @@ async function pullWords(userId: string) {
 		.select('*')
 		.eq('user_id', userId);
 	if (error || !data) return;
+	if (get(currentUserId) !== userId) return;
 
 	const remoteWords: Word[] = data.map((r) => ({
 		id: r.id,
@@ -99,6 +104,7 @@ async function pullFolders(userId: string) {
 		.select('*')
 		.eq('user_id', userId);
 	if (error || !data) return;
+	if (get(currentUserId) !== userId) return;
 
 	const remoteFolders: Folder[] = data.map((r) => ({
 		id: r.id,
@@ -127,6 +133,7 @@ async function pullHistory(userId: string) {
 		.select('date, word_ids')
 		.eq('user_id', userId);
 	if (error || !data) return;
+	if (get(currentUserId) !== userId) return;
 
 	const remote: StudyHistory = {};
 	for (const row of data) {
@@ -149,6 +156,7 @@ async function pullDateColors(userId: string) {
 		.select('key, color')
 		.eq('user_id', userId);
 	if (error || !data) return;
+	if (get(currentUserId) !== userId) return;
 
 	const remote: Record<string, string> = {};
 	for (const row of data) {
@@ -164,6 +172,7 @@ async function pullSettings(userId: string) {
 		.eq('user_id', userId)
 		.single();
 	if (error || !data) return;
+	if (get(currentUserId) !== userId) return;
 
 	studyGoal.set(data.study_goal);
 	japaneseFontSize.set(data.japanese_font_size);
@@ -297,7 +306,8 @@ export async function pushWords(wordList: Word[], userId: string) {
 
 export async function deleteWord(wordId: string) {
 	if (wordId.startsWith('seed-')) return;
-	await supabase.from('words').delete().eq('id', wordId);
+	const { error } = await supabase.from('words').delete().eq('id', wordId);
+	if (error) console.error('Sync: word delete failed', wordId, error);
 }
 
 export async function pushFolder(folder: Folder, userId: string) {
@@ -314,7 +324,8 @@ export async function pushFolder(folder: Folder, userId: string) {
 
 export async function deleteFolder(folderId: string) {
 	if (folderId.startsWith('seed-')) return;
-	await supabase.from('folders').delete().eq('id', folderId);
+	const { error } = await supabase.from('folders').delete().eq('id', folderId);
+	if (error) console.error('Sync: folder delete failed', folderId, error);
 }
 
 export async function pushHistoryDate(userId: string, date: string, wordIds: string[]) {
@@ -334,21 +345,28 @@ let settingsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 export function pushSettingsUpdate(userId: string) {
 	if (settingsDebounceTimer) clearTimeout(settingsDebounceTimer);
 	settingsDebounceTimer = setTimeout(() => {
-		pushSettings(userId);
+		if (get(currentUserId) === userId) pushSettings(userId);
 	}, 1000);
 }
 
 import { clearWords } from '$lib/stores/words';
 import { clearFolders } from '$lib/stores/folders';
-import { clearHistory } from '$lib/stores/history';
-import { clearDateColors } from '$lib/stores/dateColors';
+import { clearHistory, cancelPendingPushes as cancelHistoryPushes } from '$lib/stores/history';
+import { clearDateColors, cancelPendingPushes as cancelDateColorPushes } from '$lib/stores/dateColors';
 import { clearSettings } from '$lib/stores/settings';
+import { browser } from '$app/environment';
 
 /**
  * Reset all local stores and clear persistence.
  * Called during logout to prevent data leaking between accounts.
  */
 export function clearAllStores() {
+	cancelHistoryPushes();
+	cancelDateColorPushes();
+	if (settingsDebounceTimer) {
+		clearTimeout(settingsDebounceTimer);
+		settingsDebounceTimer = null;
+	}
 	clearWords();
 	clearFolders();
 	clearHistory();

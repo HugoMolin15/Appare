@@ -3,6 +3,8 @@
   Usage: <ClearableInput bind:value={myVal} placeholder="es. grande" />
 -->
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
+
 	interface Props {
 		value: string;
 		placeholder?: string;
@@ -32,10 +34,7 @@
 	/>
 	{#if value.length > 0}
 		<button type="button" class="clear-btn" onclick={clear} aria-label="Cancella">
-			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-				<line x1="18" y1="6" x2="6" y2="18" />
-				<line x1="6" y1="6" x2="18" y2="18" />
-			</svg>
+			<Icon name="close" size={14} strokeWidth={2.5} />
 		</button>
 	{/if}
 </div>
