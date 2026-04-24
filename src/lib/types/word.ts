@@ -1,6 +1,6 @@
 /** All possible word categories */
 export const CATEGORIES = {
-	VERBI: ['Verbo U', 'Verbo Ru', 'Verbo Irregolare'],
+	VERBI: ['Verbo Godan', 'Verbo Ichidan', 'Verbo Irregolare'],
 	AGGETTIVI: ['Aggettivo I', 'Aggettivo Na'],
 	'SOSTANTIVI E PRONOMI': ['Sostantivo', 'Pronome', 'Dimostrativo'],
 	ALTRO: ['Avverbio', 'Particella', 'Espressione']

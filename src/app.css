@@ -268,13 +268,13 @@ body {
   border-color: #B06000 !important;
 }
 
-[data-category="Verbo U"] {
+[data-category="Verbo Godan"] {
   background-color: #E6F4EA !important;
   color: #137333 !important;
   border-color: #137333 !important;
 }
 
-[data-category="Verbo Ru"] {
+[data-category="Verbo Ichidan"] {
   background-color: #E0F2F1 !important;
   color: #00796B !important;
   border-color: #00796B !important;

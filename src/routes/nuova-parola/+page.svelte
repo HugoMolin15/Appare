@@ -15,7 +15,7 @@
 	let katakana = $state('');
 	let romaji = $state('');
 	let kanji = $state('');
-	let selectedCategory = $state<CategoryValue | null>('Verbo U');
+	let selectedCategory = $state<CategoryValue | null>('Verbo Godan');
 	let wordType = $state<'word' | 'phrase'>('word');
 
 	let hasReading = $derived(

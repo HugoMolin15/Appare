@@ -6,7 +6,7 @@ import { pushWord, pushWords, deleteWord as dbDeleteWord } from '$lib/services/s
 
 const STORAGE_KEY = 'appare_words';
 const SEEDED_KEY = 'appare_seeded';
-const SEED_VERSION = '16';
+const SEED_VERSION = '17';
 
 function loadStoredWords(): Word[] {
 	if (!browser) return [];
