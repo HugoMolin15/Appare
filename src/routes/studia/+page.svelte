@@ -7,16 +7,7 @@
 	import { allStudiedWordIds, recordStudy } from '$lib/stores/history';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Flashcard from '$lib/components/Flashcard.svelte';
-
-	// Get the daily study set — shuffle and pick N words
-	function shuffle<T>(arr: T[]): T[] {
-		const a = [...arr];
-		for (let i = a.length - 1; i > 0; i--) {
-			const j = Math.floor(Math.random() * (i + 1));
-			[a[i], a[j]] = [a[j], a[i]];
-		}
-		return a;
-	}
+	import { shuffle } from '$lib/utils/shuffle';
 
 	const allWordsData = get(words);
 	const selectedIds = get(selectedWordIds);

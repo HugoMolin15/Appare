@@ -168,12 +168,6 @@
 		margin: 0 0 0.25rem 0;
 	}
 
-	.daily-subtitle {
-		font-size: 0.9rem;
-		color: var(--color-text-secondary);
-		margin: 0 0 1.25rem 0;
-	}
-
 	.cta-button {
 		display: block;
 		width: 100%;

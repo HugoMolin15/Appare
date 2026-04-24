@@ -6,6 +6,7 @@
 	import { supabaseReady } from '$lib/supabase';
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
+	import { ensureSeeded } from '$lib/stores/words';
 
 	let { children } = $props();
 	let path = $derived($page.url.pathname);
@@ -22,6 +23,9 @@
 
 	// Block iOS left-edge swipe-back gesture globally
 	onMount(() => {
+		// Lazy-load and merge the seed word bundle (no-op after first launch at the current SEED_VERSION)
+		ensureSeeded();
+
 		function blockEdgeSwipe(e: TouchEvent) {
 			if (e.touches[0].clientX < 30) e.preventDefault();
 		}

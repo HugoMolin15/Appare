@@ -1,6 +1,6 @@
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 import { browser } from '$app/environment';
-import { supabase } from '$lib/supabase';
+import { currentUserId } from '$lib/stores/auth';
 import { pushDateColor } from '$lib/services/sync';
 
 const STORAGE_KEY = 'appare_date_colors';
@@ -17,11 +17,19 @@ function load(): Record<string, string> {
 
 export const dateColors = writable<Record<string, string>>(load());
 
+// Debounce localStorage writes
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
 if (browser) {
 	dateColors.subscribe((v) => {
-		try { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); } catch {}
+		if (saveTimer) clearTimeout(saveTimer);
+		saveTimer = setTimeout(() => {
+			try { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); } catch {}
+		}, 400);
 	});
 }
+
+// Debounce remote pushes per key so rapid color picks coalesce
+const pendingPushes = new Map<string, ReturnType<typeof setTimeout>>();
 
 export function setDateColor(key: string, color: string | undefined) {
 	dateColors.update((current) => {
@@ -30,10 +38,14 @@ export function setDateColor(key: string, color: string | undefined) {
 		else delete next[key];
 		return next;
 	});
-	supabase.auth.getSession().then(({ data }) => {
-		const uid = data.session?.user.id;
-		if (uid) pushDateColor(uid, key, color);
-	});
+	const uid = get(currentUserId);
+	if (!uid) return;
+	const existing = pendingPushes.get(key);
+	if (existing) clearTimeout(existing);
+	pendingPushes.set(key, setTimeout(() => {
+		pendingPushes.delete(key);
+		pushDateColor(uid, key, color);
+	}, 500));
 }
 /** Clear date colors (used on logout) */
 export function clearDateColors() {

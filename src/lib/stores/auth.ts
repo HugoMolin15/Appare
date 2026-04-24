@@ -24,6 +24,9 @@ if (browser) {
 
 export const isLoggedIn = derived(currentUser, ($u) => $u !== null);
 
+/** Single source of truth for the current user's ID — derived from the one auth listener above. */
+export const currentUserId = derived(currentUser, ($u) => $u?.id ?? null);
+
 export async function signInWithEmail(email: string, password: string) {
 	const { error } = await supabase.auth.signInWithPassword({ email, password });
 	return error;
@@ -31,22 +34,6 @@ export async function signInWithEmail(email: string, password: string) {
 
 export async function signUpWithEmail(email: string, password: string) {
 	const { error } = await supabase.auth.signUp({ email, password });
-	return error;
-}
-
-export async function signInWithGoogle() {
-	const { error } = await supabase.auth.signInWithOAuth({
-		provider: 'google',
-		options: { redirectTo: `${window.location.origin}/` }
-	});
-	return error;
-}
-
-export async function signInWithApple() {
-	const { error } = await supabase.auth.signInWithOAuth({
-		provider: 'apple',
-		options: { redirectTo: `${window.location.origin}/` }
-	});
 	return error;
 }
 

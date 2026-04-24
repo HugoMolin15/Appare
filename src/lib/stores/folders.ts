@@ -1,7 +1,7 @@
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
 import type { Folder } from '$lib/types/word';
-import { supabase } from '$lib/supabase';
+import { currentUserId } from '$lib/stores/auth';
 import { pushFolder, deleteFolder as dbDeleteFolder } from '$lib/services/sync';
 
 const STORAGE_KEY = 'appare_folders';
@@ -307,17 +307,6 @@ function saveFolders(folders: Folder[]) {
 /** Reactive store for folders */
 export const folders = writable<Folder[]>(loadFolders());
 
-// Cache the current user ID to avoid a session round-trip on every write
-let cachedUserId: string | null = null;
-if (browser) {
-	supabase.auth.getSession().then(({ data }) => {
-		cachedUserId = data.session?.user.id ?? null;
-	});
-	supabase.auth.onAuthStateChange((_e, session) => {
-		cachedUserId = session?.user.id ?? null;
-	});
-}
-
 // Debounce localStorage writes — store updates are still instant
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 if (browser) {
@@ -335,7 +324,8 @@ export function addFolder(name: string, color?: string, parentId?: string): stri
 	const id = crypto.randomUUID();
 	const folder: Folder = { id, name, color, parentId, createdAt: Date.now() };
 	folders.update((current) => [...current, folder]);
-	if (cachedUserId) pushFolder(folder, cachedUserId);
+	const uid = get(currentUserId);
+	if (uid) pushFolder(folder, uid);
 	return id;
 }
 
@@ -350,9 +340,10 @@ export function updateFolder(id: string, name: string, color?: string) {
 	folders.update((current) =>
 		current.map((f) => (f.id === id ? { ...f, name, color } : f))
 	);
-	if (cachedUserId) {
+	const uid = get(currentUserId);
+	if (uid) {
 		const updated = get(folders).find((f) => f.id === id);
-		if (updated) pushFolder(updated, cachedUserId);
+		if (updated) pushFolder(updated, uid);
 	}
 }
 /** Clear all folders (used on logout) */

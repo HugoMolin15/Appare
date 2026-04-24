@@ -1,43 +1,48 @@
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
 import type { Word } from '$lib/types/word';
-import { SEED_WORDS } from '$lib/data/seed-words';
-import { supabase } from '$lib/supabase';
+import { currentUserId } from '$lib/stores/auth';
 import { pushWord, pushWords, deleteWord as dbDeleteWord } from '$lib/services/sync';
 
 const STORAGE_KEY = 'appare_words';
 const SEEDED_KEY = 'appare_seeded';
 const SEED_VERSION = '16';
 
-function loadWords(): Word[] {
+function loadStoredWords(): Word[] {
 	if (!browser) return [];
 	try {
 		const raw = localStorage.getItem(STORAGE_KEY);
-		let words: Word[] = raw ? (JSON.parse(raw) as Word[]) : [];
-
-		// Seed pre-loaded words (versioned — bumps when new data is added)
-		if (localStorage.getItem(SEEDED_KEY) !== SEED_VERSION) {
-			const seedMap = new Map(SEED_WORDS.map(w => [w.id, w]));
-
-			// Update categories of existing seed words
-			words = words.map(w => {
-				if (seedMap.has(w.id)) {
-					return { ...w, category: seedMap.get(w.id)!.category };
-				}
-				return w;
-			});
-
-			const existingIds = new Set(words.map((w) => w.id));
-			const newSeeds = SEED_WORDS.filter((w) => !existingIds.has(w.id));
-			words = [...words, ...newSeeds];
-			localStorage.setItem(SEEDED_KEY, SEED_VERSION);
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(words));
-		}
-
-		return words;
+		return raw ? (JSON.parse(raw) as Word[]) : [];
 	} catch {
 		return [];
 	}
+}
+
+/**
+ * Lazy-load the 328KB seed word bundle and merge it into the store.
+ * Only runs when the stored SEED_VERSION is out of date — on subsequent launches
+ * this is a no-op and the dynamic chunk is never fetched.
+ * Call once from the root layout after mount.
+ */
+export async function ensureSeeded(): Promise<void> {
+	if (!browser) return;
+	if (localStorage.getItem(SEEDED_KEY) === SEED_VERSION) return;
+
+	const { SEED_WORDS } = await import('$lib/data/seed-words');
+	const seedMap = new Map(SEED_WORDS.map((w) => [w.id, w]));
+
+	words.update((current) => {
+		// Update categories of existing seed words
+		const updated = current.map((w) => {
+			const seed = seedMap.get(w.id);
+			return seed ? { ...w, category: seed.category } : w;
+		});
+		const existingIds = new Set(updated.map((w) => w.id));
+		const newSeeds = SEED_WORDS.filter((w) => !existingIds.has(w.id));
+		return [...updated, ...newSeeds];
+	});
+
+	localStorage.setItem(SEEDED_KEY, SEED_VERSION);
 }
 
 function saveWords(words: Word[]) {
@@ -50,18 +55,7 @@ function saveWords(words: Word[]) {
 }
 
 /** Reactive store holding all vocabulary words */
-export const words = writable<Word[]>(loadWords());
-
-// Cache the current user ID to avoid a session round-trip on every write
-let cachedUserId: string | null = null;
-if (browser) {
-	supabase.auth.getSession().then(({ data }) => {
-		cachedUserId = data.session?.user.id ?? null;
-	});
-	supabase.auth.onAuthStateChange((_e, session) => {
-		cachedUserId = session?.user.id ?? null;
-	});
-}
+export const words = writable<Word[]>(loadStoredWords());
 
 // Debounce localStorage writes — store updates are still instant
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -86,7 +80,8 @@ export function addWord(word: Omit<Word, 'id' | 'createdAt'>) {
 		createdAt: Date.now()
 	};
 	words.update((current) => [...current, newWord]);
-	if (cachedUserId) pushWord(newWord, cachedUserId);
+	const uid = get(currentUserId);
+	if (uid) pushWord(newWord, uid);
 }
 
 /** Update an existing word's fields */
@@ -94,9 +89,10 @@ export function updateWord(id: string, updates: Omit<Word, 'id' | 'createdAt'>) 
 	words.update((current) =>
 		current.map((w) => (w.id === id ? { ...w, ...updates } : w))
 	);
-	if (cachedUserId) {
+	const uid = get(currentUserId);
+	if (uid) {
 		const updated = get(words).find((w) => w.id === id);
-		if (updated) pushWord(updated, cachedUserId);
+		if (updated) pushWord(updated, uid);
 	}
 }
 
@@ -111,9 +107,10 @@ export function moveWordsToFolder(wordIds: string[], folderId: string) {
 	words.update((current) =>
 		current.map((w) => (wordIds.includes(w.id) ? { ...w, folderId } : w))
 	);
-	if (cachedUserId) {
+	const uid = get(currentUserId);
+	if (uid) {
 		const toSync = get(words).filter((w) => wordIds.includes(w.id));
-		pushWords(toSync, cachedUserId);
+		pushWords(toSync, uid);
 	}
 }
 
@@ -122,9 +119,10 @@ export function removeWordsFromFolder(wordIds: string[]) {
 	words.update((current) =>
 		current.map((w) => (wordIds.includes(w.id) ? { ...w, folderId: undefined } : w))
 	);
-	if (cachedUserId) {
+	const uid = get(currentUserId);
+	if (uid) {
 		const toSync = get(words).filter((w) => wordIds.includes(w.id));
-		pushWords(toSync, cachedUserId);
+		pushWords(toSync, uid);
 	}
 }
 /** Clear all words (used on logout) */

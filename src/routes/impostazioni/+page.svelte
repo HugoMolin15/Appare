@@ -316,29 +316,6 @@
 		color: var(--color-text-secondary);
 	}
 
-	/* ---- Info Box ---- */
-	.info-box {
-		display: flex;
-		gap: 0.75rem;
-		padding: 0.875rem 1rem;
-		background-color: var(--color-info-bg);
-		border-radius: var(--radius-lg);
-		align-items: flex-start;
-	}
-
-	.info-icon {
-		flex-shrink: 0;
-		color: var(--color-text-secondary);
-		margin-top: 1px;
-	}
-
-	.info-text {
-		font-size: 0.82rem;
-		color: var(--color-text-secondary);
-		line-height: 1.5;
-		margin: 0;
-	}
-
 	/* ---- Divider ---- */
 	.divider {
 		height: 1px;

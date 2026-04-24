@@ -5,6 +5,7 @@
 <script lang="ts">
 	import type { Word } from '$lib/types/word';
 	import { japaneseFontSize, cardOrder, randomCardOrder } from '$lib/stores/settings';
+	import { shuffle } from '$lib/utils/shuffle';
 
 	interface CardSide {
 		label: string;
@@ -25,15 +26,6 @@
 		romaji:   { label: 'Romaji',   japanese: false },
 		kanji:    { label: 'Kanji',    japanese: true },
 	};
-
-	function shuffle<T>(arr: T[]): T[] {
-		const a = [...arr];
-		for (let i = a.length - 1; i > 0; i--) {
-			const j = Math.floor(Math.random() * (i + 1));
-			[a[i], a[j]] = [a[j], a[i]];
-		}
-		return a;
-	}
 
 	// Build sides based on stored order (or shuffle), filtering out empty fields
 	let sides = $derived.by(() => {

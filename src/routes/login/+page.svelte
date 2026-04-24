@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithApple, currentUser } from '$lib/stores/auth';
+	import { signInWithEmail, signUpWithEmail, currentUser } from '$lib/stores/auth';
 	import { onMount } from 'svelte';
 
 	let mode = $state<'login' | 'signup'>('login');
@@ -165,57 +165,6 @@
 		font-size: 0.9rem;
 		color: var(--color-text-secondary);
 		margin: 0 0 1.75rem 0;
-	}
-
-	.oauth-group {
-		display: flex;
-		flex-direction: column;
-		gap: 0.65rem;
-		margin-bottom: 1.25rem;
-	}
-
-	.oauth-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.75rem;
-		width: 100%;
-		padding: 0.8rem 1rem;
-		background: var(--color-surface);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		font-size: 0.95rem;
-		font-weight: 600;
-		font-family: var(--font-sans);
-		color: var(--color-text);
-		cursor: pointer;
-		transition: background-color 0.15s ease;
-	}
-
-	.oauth-btn:hover:not(:disabled) {
-		background: var(--color-surface-warm);
-	}
-
-	.oauth-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.divider {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		margin-bottom: 1.25rem;
-		color: var(--color-text-tertiary);
-		font-size: 0.8rem;
-	}
-
-	.divider::before,
-	.divider::after {
-		content: '';
-		flex: 1;
-		height: 1px;
-		background: var(--color-border);
 	}
 
 	.field {

@@ -144,16 +144,6 @@
 		color: var(--color-text);
 	}
 
-	.fields-hint {
-		display: flex;
-		align-items: center;
-		gap: 0.35rem;
-		font-size: 0.75rem;
-		color: var(--color-text-tertiary);
-		margin: 0;
-		line-height: 1.4;
-	}
-
 	.type-picker {
 		display: flex;
 		background: var(--color-surface);

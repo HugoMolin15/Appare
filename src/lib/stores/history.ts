@@ -1,7 +1,7 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
 import { getLocalValue } from '$lib/utils/date';
-import { supabase } from '$lib/supabase';
+import { currentUserId } from '$lib/stores/auth';
 import { pushHistoryDate } from '$lib/services/sync';
 
 const STORAGE_KEY = 'appare_study_history';
@@ -30,8 +30,24 @@ function saveHistory(history: StudyHistory) {
 
 export const studyHistory = writable<StudyHistory>(loadHistory());
 
+// Debounce localStorage writes
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
 if (browser) {
-	studyHistory.subscribe(saveHistory);
+	studyHistory.subscribe((value) => {
+		if (saveTimer) clearTimeout(saveTimer);
+		saveTimer = setTimeout(() => saveHistory(value), 400);
+	});
+}
+
+// Debounce remote pushes per date — coalesces rapid recordStudy() calls
+const pendingPushes = new Map<string, ReturnType<typeof setTimeout>>();
+function schedulePush(uid: string, date: string, ids: string[]) {
+	const existing = pendingPushes.get(date);
+	if (existing) clearTimeout(existing);
+	pendingPushes.set(date, setTimeout(() => {
+		pendingPushes.delete(date);
+		pushHistoryDate(uid, date, ids);
+	}, 500));
 }
 
 /**
@@ -48,10 +64,8 @@ export function recordStudy(wordIds: string[]) {
 		return { ...history, [today]: updatedIds };
 	});
 
-	supabase.auth.getSession().then(({ data }) => {
-		const uid = data.session?.user.id;
-		if (uid && updatedIds.length) pushHistoryDate(uid, today, updatedIds);
-	});
+	const uid = get(currentUserId);
+	if (uid && updatedIds.length) schedulePush(uid, today, updatedIds);
 }
 
 /**
