@@ -113,6 +113,35 @@ a, button, input, textarea, select, [role="button"], label {
   -webkit-touch-callout: none;
 }
 
+/* ========================================
+   Tactile Press Feedback
+   Snappy scale + dim on press — no transition so it feels instant.
+   Scoped Svelte styles often override `transition`, so we rely on
+   instant transform to avoid conflicts.
+   ======================================== */
+
+button:not(:disabled):active,
+a:active,
+[role="button"]:not([aria-disabled="true"]):active,
+.tap-feedback:active {
+  transform: scale(0.96);
+  opacity: 0.85;
+}
+
+/* Smaller icon buttons — a more pronounced squish */
+.eye-btn:active,
+[data-icon-btn]:active {
+  transform: scale(0.88) !important;
+  opacity: 0.7;
+}
+
+/* Checkboxes and radio-like tappable rows */
+input[type="checkbox"]:active,
+input[type="radio"]:active,
+.checkbox:active {
+  transform: scale(0.88);
+}
+
 html {
   overflow-x: hidden;
 }
