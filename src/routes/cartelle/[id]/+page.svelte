@@ -19,6 +19,7 @@
 	let showFolderModal = $state(false);
 	let showAddWordsModal = $state(false);
 	let showOptionsSheet = $state(false);
+	let showMoveSheet = $state(false);
 	let editName = $state('');
 	let editColor = $state('');
 	let itemToDelete = $state<{ type: 'word' | 'folder' | 'selection', id?: string, name?: string, ids?: string[] } | null>(null);
@@ -91,6 +92,18 @@
 	let selectedInFolder = $derived(
 		folderWords.filter(w => $selectedWordIds.has(w.id)).length
 	);
+
+	// All folders except the current one, for the move sheet
+	let movableFolders = $derived(
+		$folders.filter(f => !f.parentId && f.id !== folderId)
+	);
+
+	function moveSelected(targetFolderId: string) {
+		const ids = folderWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id);
+		moveWordsToFolder(ids, targetFolderId);
+		clearSelection();
+		showMoveSheet = false;
+	}
 
 	$effect(() => {
 		if (showOptionsSheet) {
@@ -183,6 +196,7 @@
 				</div>
 				{#if selectedInFolder > 0}
 					<div class="controls-right">
+						<button class="text-link move" onclick={() => showMoveSheet = true}>Sposta</button>
 						<button class="text-link" onclick={clearSelection}>Deseleziona</button>
 					</div>
 				{/if}
@@ -313,6 +327,31 @@
 		<FolderModal parentId={folderId} onClose={() => showFolderModal = false} />
 	{/if}
 
+	{#if showMoveSheet}
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div class="sheet-backdrop" transition:fade={{ duration: 200 }} onclick={() => showMoveSheet = false}></div>
+		<div class="options-sheet" transition:fly={{ y: 300, duration: 300 }}>
+			<div class="sheet-header">
+				<h2 class="sheet-title">Sposta in cartella</h2>
+				<button class="sheet-close" onclick={() => showMoveSheet = false}>Annulla</button>
+			</div>
+			<div class="move-folder-list">
+				{#each movableFolders as f}
+					<button class="move-folder-row" onclick={() => moveSelected(f.id)}>
+						<div class="move-folder-icon" style={f.color ? `color: ${f.color}` : ''}>
+							<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+							</svg>
+						</div>
+						<span class="move-folder-name">{f.name}</span>
+						<Icon name="chevron-right" size={18} />
+					</button>
+				{/each}
+			</div>
+		</div>
+	{/if}
+
 	{#if itemToDelete}
 		<ConfirmationModal 
 			title={itemToDelete.type === 'folder' ? 'Elimina cartella' : 'Elimina parole'}
@@ -391,6 +430,10 @@
 
 	.text-link.delete {
 		color: var(--color-primary);
+	}
+
+	.text-link.move {
+		color: var(--color-text);
 	}
 
 	.word-list {
@@ -791,5 +834,45 @@
 
 	.sheet-action.danger {
 		color: #C5221F;
+	}
+
+	.move-folder-list {
+		display: flex;
+		flex-direction: column;
+		overflow-y: auto;
+		flex: 1;
+		padding: 0.5rem 0;
+	}
+
+	.move-folder-row {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem 0;
+		background: none;
+		border: none;
+		border-bottom: 1px solid var(--color-border-light);
+		font-family: inherit;
+		cursor: pointer;
+		width: 100%;
+		text-align: left;
+		color: var(--color-text);
+	}
+
+	.move-folder-row:last-child {
+		border-bottom: none;
+	}
+
+	.move-folder-icon {
+		display: flex;
+		align-items: center;
+		color: var(--color-text-secondary);
+		flex-shrink: 0;
+	}
+
+	.move-folder-name {
+		flex: 1;
+		font-size: 1rem;
+		font-weight: 600;
 	}
 </style>
