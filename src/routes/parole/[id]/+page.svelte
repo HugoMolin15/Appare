@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { CATEGORIES, type CategoryValue } from '$lib/types/word';
 	import { words, updateWord, removeWord } from '$lib/stores/words';
+	import { UNCATEGORIZED_TAG } from '$lib/constants';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import ClearableInput from '$lib/components/ClearableInput.svelte';
 	import CategoryPicker from '$lib/components/CategoryPicker.svelte';
@@ -59,14 +60,17 @@
 
 	function handleSave() {
 		if (!isValid || !wordId) return;
+		// Drop the fallback tag if the user has assigned real tags
+		const realTags = selectedTags.filter(t => t !== UNCATEGORIZED_TAG);
+		const finalTags = realTags.length > 0 ? realTags : selectedTags;
 		updateWord(wordId, {
 			italiano: italiano.trim(),
 			hiragana: hiragana.trim(),
 			katakana: '',
 			romaji: romaji.trim(),
 			kanji: kanji.trim(),
-			category: (selectedTags.find(t => allPresetValues.has(t)) as CategoryValue | undefined),
-			tags: selectedTags.length > 0 ? selectedTags : undefined,
+			category: (finalTags.find(t => allPresetValues.has(t)) as CategoryValue | undefined),
+			tags: finalTags.length > 0 ? finalTags : undefined,
 			wordType,
 			folderId: word?.folderId
 		});

@@ -3,12 +3,12 @@
 	import { goto } from '$app/navigation';
 	import { CATEGORIES, type CategoryValue } from '$lib/types/word';
 	import { addWord, words } from '$lib/stores/words';
+	import { MY_WORDS_FOLDER_ID, UNCATEGORIZED_TAG } from '$lib/constants';
 	import { folders } from '$lib/stores/folders';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import ClearableInput from '$lib/components/ClearableInput.svelte';
 	import CategoryPicker from '$lib/components/CategoryPicker.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
 	const urlFolderId = $page.url.searchParams.get('folderId');
 
@@ -46,6 +46,8 @@
 
 	function handleSave() {
 		if (!isValid) return;
+		const realTags = selectedTags.filter(t => t !== UNCATEGORIZED_TAG);
+		const finalTags = realTags.length > 0 ? realTags : selectedTags;
 
 		addWord({
 			italiano: italiano.trim(),
@@ -53,8 +55,8 @@
 			katakana: '',
 			romaji: romaji.trim(),
 			kanji: kanji.trim(),
-			category: (selectedTags.find(t => allPresetValues.has(t)) as CategoryValue | undefined),
-			tags: selectedTags.length > 0 ? selectedTags : undefined,
+			category: (finalTags.find(t => allPresetValues.has(t)) as CategoryValue | undefined),
+			tags: finalTags.length > 0 ? finalTags : undefined,
 			wordType,
 			folderId: destFolderId || undefined
 		});
