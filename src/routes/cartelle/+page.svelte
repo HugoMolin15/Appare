@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { folders } from '$lib/stores/folders';
 	import { words } from '$lib/stores/words';
+	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import FolderModal from '$lib/components/FolderModal.svelte';
 	import Icon from '$lib/components/Icon.svelte';
@@ -8,6 +9,7 @@
 	import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
 	let showModal = $state(false);
+	let reorderMode = $state(false);
 	type FolderSort = 'newest' | 'oldest' | 'name-az';
 	let folderSortMode = $state<FolderSort>('newest');
 	const folderSortLabels: Record<FolderSort, string> = { newest: 'Più recenti', oldest: 'Meno recenti', 'name-az': 'A-Z' };
@@ -28,16 +30,29 @@
 			: null
 	);
 
-	let folderList = $derived(
-		$folders
+	let folderList = $derived.by(() => {
+		const base = $folders
 			.filter((f) => !f.parentId && f.id !== MY_WORDS_FOLDER_ID)
-			.map(folderWithCount)
-			.sort((a, b) => {
-				if (folderSortMode === 'oldest') return a.createdAt - b.createdAt;
-				if (folderSortMode === 'name-az') return a.name.localeCompare(b.name, 'it');
-				return b.createdAt - a.createdAt;
-			})
-	);
+			.map(folderWithCount);
+		if ($folderOrder['root']) return applyFolderOrder(base, $folderOrder, 'root');
+		if (folderSortMode === 'oldest') return [...base].sort((a, b) => a.createdAt - b.createdAt);
+		if (folderSortMode === 'name-az') return [...base].sort((a, b) => a.name.localeCompare(b.name, 'it'));
+		return [...base].sort((a, b) => b.createdAt - a.createdAt);
+	});
+
+	function enterReorderMode() {
+		snapshotFolderOrder('root', folderList.map(f => f.id));
+		reorderMode = true;
+	}
+
+	function exitReorderMode() {
+		reorderMode = false;
+	}
+
+	function resetFolderOrder() {
+		clearFolderOrder('root');
+		reorderMode = false;
+	}
 </script>
 
 <svelte:head>
@@ -48,7 +63,19 @@
 	<PageHeader title="Cartelle" />
 
 	<div class="sort-row">
-		<button class="sort-btn" onclick={cycleFolderSort}>↕ {folderSortLabels[folderSortMode]}</button>
+		{#if !reorderMode}
+			<button class="sort-btn" onclick={cycleFolderSort}>↕ {folderSortLabels[folderSortMode]}</button>
+		{/if}
+		{#if folderList.length > 1}
+			{#if reorderMode}
+				<button class="sort-btn reorder-active" onclick={exitReorderMode}>Fine</button>
+				{#if $folderOrder['root']}
+					<button class="sort-btn" onclick={resetFolderOrder}>Reimposta</button>
+				{/if}
+			{:else}
+				<button class="sort-btn" onclick={enterReorderMode}>Riordina</button>
+			{/if}
+		{/if}
 	</div>
 
 	<div class="folder-list">
@@ -74,19 +101,47 @@
 				subtitle="Le cartelle raggruppano le parole per argomento."
 			/>
 		{:else}
-			{#each folderList as folder}
-				<a href="/cartelle/{folder.id}" class="folder-item">
-					<div class="folder-icon" style={folder.color ? `color: ${folder.color}` : ''}>
-						<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-							<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
-						</svg>
+			{#each folderList as folder, i}
+				{#if reorderMode}
+					<div class="folder-item">
+						<div class="folder-icon" style={folder.color ? `color: ${folder.color}` : ''}>
+							<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+							</svg>
+						</div>
+						<div class="folder-text">
+							<span class="folder-name">{folder.name}</span>
+							<span class="folder-count">{folder.wordCount} parole</span>
+						</div>
+						<div class="reorder-btns">
+							<button
+								class="reorder-btn"
+								disabled={i === 0}
+								onclick={() => moveFolderInOrder('root', folder.id, 'up', folderList.map(f => f.id))}
+								aria-label="Sposta su"
+							>↑</button>
+							<button
+								class="reorder-btn"
+								disabled={i === folderList.length - 1}
+								onclick={() => moveFolderInOrder('root', folder.id, 'down', folderList.map(f => f.id))}
+								aria-label="Sposta giù"
+							>↓</button>
+						</div>
 					</div>
-					<div class="folder-text">
-						<span class="folder-name">{folder.name}</span>
-						<span class="folder-count">{folder.wordCount} parole</span>
-					</div>
-					<Icon name="chevron-right" class="folder-chevron" />
-				</a>
+				{:else}
+					<a href="/cartelle/{folder.id}" class="folder-item">
+						<div class="folder-icon" style={folder.color ? `color: ${folder.color}` : ''}>
+							<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+							</svg>
+						</div>
+						<div class="folder-text">
+							<span class="folder-name">{folder.name}</span>
+							<span class="folder-count">{folder.wordCount} parole</span>
+						</div>
+						<Icon name="chevron-right" class="folder-chevron" />
+					</a>
+				{/if}
 			{/each}
 		{/if}
 	</div>
@@ -115,6 +170,9 @@
 
 	.sort-row {
 		margin-bottom: 0.5rem;
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
 	}
 
 	.sort-btn {
@@ -127,6 +185,41 @@
 		font-family: var(--font-sans);
 		color: var(--color-text-secondary);
 		cursor: pointer;
+	}
+
+	.sort-btn.reorder-active {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+	}
+
+	.reorder-btns {
+		display: flex;
+		gap: 0.25rem;
+		flex-shrink: 0;
+	}
+
+	.reorder-btn {
+		width: 32px;
+		height: 32px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		font-size: 1rem;
+		cursor: pointer;
+		color: var(--color-text);
+		transition: background-color 0.1s ease;
+	}
+
+	.reorder-btn:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+
+	.reorder-btn:not(:disabled):active {
+		background: var(--color-border);
 	}
 
 	.folder-list {

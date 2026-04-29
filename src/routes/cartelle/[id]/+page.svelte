@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { folders, removeFolder, updateFolder } from '$lib/stores/folders';
+	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
 	import { words, removeWord, moveWordsToFolder, removeWordsFromFolder } from '$lib/stores/words';
 	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection } from '$lib/stores/studySession';
 	import PageHeader from '$lib/components/PageHeader.svelte';
@@ -76,12 +77,29 @@
 	function handleAddExistingWords(wordIds: string[]) {
 		if (folderId) moveWordsToFolder(wordIds, folderId);
 	}
-	let subfolders = $derived(
-		$folders.filter((f) => f.parentId === folderId).map((f) => ({
-			...f,
-			wordCount: $words.filter((w) => w.folderId === f.id).length
-		})).sort((a, b) => b.createdAt - a.createdAt)
-	);
+	let reorderSubfoldersMode = $state(false);
+
+	let subfolders = $derived.by(() => {
+		const base = $folders
+			.filter((f) => f.parentId === folderId)
+			.map((f) => ({ ...f, wordCount: $words.filter((w) => w.folderId === f.id).length }));
+		if ($folderOrder[folderId]) return applyFolderOrder(base, $folderOrder, folderId);
+		return [...base].sort((a, b) => b.createdAt - a.createdAt);
+	});
+
+	function enterSubfolderReorder() {
+		snapshotFolderOrder(folderId, subfolders.map(f => f.id));
+		reorderSubfoldersMode = true;
+	}
+
+	function exitSubfolderReorder() {
+		reorderSubfoldersMode = false;
+	}
+
+	function resetSubfolderOrder() {
+		clearFolderOrder(folderId);
+		reorderSubfoldersMode = false;
+	}
 
 	type WordSort = 'newest' | 'oldest' | 'it-az' | 'jp-az';
 	let wordSortMode = $state<WordSort>('newest');
@@ -190,20 +208,60 @@
 		</div>
 	{:else}
 		{#if subfolders.length > 0}
+			{#if subfolders.length > 1}
+				<div class="sort-row">
+					{#if reorderSubfoldersMode}
+						<button class="sort-btn reorder-active" onclick={exitSubfolderReorder}>Fine</button>
+						{#if $folderOrder[folderId]}
+							<button class="sort-btn" onclick={resetSubfolderOrder}>Reimposta</button>
+						{/if}
+					{:else}
+						<button class="sort-btn" onclick={enterSubfolderReorder}>Riordina</button>
+					{/if}
+				</div>
+			{/if}
 			<div class="folder-list">
-				{#each subfolders as subfolder}
-					<a href="/cartelle/{subfolder.id}" class="folder-item">
-						<div class="folder-icon" style={subfolder.color ? `color: ${subfolder.color}` : ''}>
-							<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-								<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
-							</svg>
+				{#each subfolders as subfolder, i}
+					{#if reorderSubfoldersMode}
+						<div class="folder-item">
+							<div class="folder-icon" style={subfolder.color ? `color: ${subfolder.color}` : ''}>
+								<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+									<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+								</svg>
+							</div>
+							<div class="folder-text">
+								<span class="folder-name">{subfolder.name}</span>
+								<span class="folder-count">{subfolder.wordCount} parole</span>
+							</div>
+							<div class="reorder-btns">
+								<button
+									class="reorder-btn"
+									disabled={i === 0}
+									onclick={() => moveFolderInOrder(folderId, subfolder.id, 'up', subfolders.map(f => f.id))}
+									aria-label="Sposta su"
+								>↑</button>
+								<button
+									class="reorder-btn"
+									disabled={i === subfolders.length - 1}
+									onclick={() => moveFolderInOrder(folderId, subfolder.id, 'down', subfolders.map(f => f.id))}
+									aria-label="Sposta giù"
+								>↓</button>
+							</div>
 						</div>
-						<div class="folder-text">
-							<span class="folder-name">{subfolder.name}</span>
-							<span class="folder-count">{subfolder.wordCount} parole</span>
-						</div>
-						<Icon name="chevron-right" class="folder-chevron" />
-					</a>
+					{:else}
+						<a href="/cartelle/{subfolder.id}" class="folder-item">
+							<div class="folder-icon" style={subfolder.color ? `color: ${subfolder.color}` : ''}>
+								<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+									<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+								</svg>
+							</div>
+							<div class="folder-text">
+								<span class="folder-name">{subfolder.name}</span>
+								<span class="folder-count">{subfolder.wordCount} parole</span>
+							</div>
+							<Icon name="chevron-right" class="folder-chevron" />
+						</a>
+					{/if}
 				{/each}
 			</div>
 		{/if}
@@ -938,6 +996,9 @@
 
 	.sort-row {
 		margin-bottom: 0.5rem;
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
 	}
 
 	.sort-btn {
@@ -950,6 +1011,41 @@
 		font-family: var(--font-sans);
 		color: var(--color-text-secondary);
 		cursor: pointer;
+	}
+
+	.sort-btn.reorder-active {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+	}
+
+	.reorder-btns {
+		display: flex;
+		gap: 0.25rem;
+		flex-shrink: 0;
+	}
+
+	.reorder-btn {
+		width: 32px;
+		height: 32px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		font-size: 1rem;
+		cursor: pointer;
+		color: var(--color-text);
+		transition: background-color 0.1s ease;
+	}
+
+	.reorder-btn:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+
+	.reorder-btn:not(:disabled):active {
+		background: var(--color-border);
 	}
 
 	.move-folder-name {
