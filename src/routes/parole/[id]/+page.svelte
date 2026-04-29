@@ -3,11 +3,13 @@
 	import { goto } from '$app/navigation';
 	import { CATEGORIES, type CategoryValue } from '$lib/types/word';
 	import { words, updateWord, removeWord } from '$lib/stores/words';
+	import { folders } from '$lib/stores/folders';
 	import { UNCATEGORIZED_TAG } from '$lib/constants';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import ClearableInput from '$lib/components/ClearableInput.svelte';
 	import CategoryPicker from '$lib/components/CategoryPicker.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import { fade, fly } from 'svelte/transition';
 
 	let wordId = $derived($page.params.id);
 	let word = $derived($words.find((w) => w.id === wordId));
@@ -21,6 +23,7 @@
 	let kanji = $state('');
 	let selectedTags = $state<string[]>([]);
 	let wordType = $state<'word' | 'phrase'>('word');
+	let destFolderId = $state<string | undefined>(undefined);
 	let initialized = $state(false);
 
 	$effect(() => {
@@ -29,11 +32,51 @@
 			hiragana = word.hiragana || word.katakana;
 			romaji = word.romaji;
 			kanji = word.kanji;
-			// Migrate: if no tags yet, fall back to single category
 			selectedTags = word.tags ?? (word.category ? [word.category] : []);
 			wordType = word.wordType ?? 'word';
+			destFolderId = word.folderId;
 			initialized = true;
 		}
+	});
+
+	// Build breadcrumb path for the current folder
+	let folderPath = $derived.by(() => {
+		if (!destFolderId) return null;
+		const fs = $folders;
+		const path: string[] = [];
+		let current = fs.find(f => f.id === destFolderId);
+		while (current) {
+			path.unshift(current.name);
+			current = current.parentId ? fs.find(f => f.id === current!.parentId) : undefined;
+		}
+		return path.length > 0 ? path : null;
+	});
+
+	// Move-to-folder sheet
+	let showMoveSheet = $state(false);
+	let moveBreadcrumb = $state<string[]>([]);
+	let moveCurrentParent = $derived(moveBreadcrumb.length > 0 ? moveBreadcrumb[moveBreadcrumb.length - 1] : null);
+	let moveFoldersAtLevel = $derived(
+		$folders.filter(f => moveCurrentParent === null ? !f.parentId : f.parentId === moveCurrentParent)
+	);
+
+	function folderHasChildren(id: string) {
+		return $folders.some(f => f.parentId === id);
+	}
+	function moveSheetDrillInto(id: string) { moveBreadcrumb = [...moveBreadcrumb, id]; }
+	function moveSheetBack() { moveBreadcrumb = moveBreadcrumb.slice(0, -1); }
+	function openMoveSheet() { moveBreadcrumb = []; showMoveSheet = true; }
+
+	function selectDestFolder(id: string) {
+		destFolderId = id;
+		showMoveSheet = false;
+		moveBreadcrumb = [];
+	}
+
+	$effect(() => {
+		if (showMoveSheet) document.body.style.overflow = 'hidden';
+		else document.body.style.overflow = '';
+		return () => { document.body.style.overflow = ''; };
 	});
 
 	const allPresetValues = new Set(Object.values(CATEGORIES).flat() as string[]);
@@ -72,7 +115,7 @@
 			category: (finalTags.find(t => allPresetValues.has(t)) as CategoryValue | undefined),
 			tags: finalTags.length > 0 ? finalTags : undefined,
 			wordType,
-			folderId: word?.folderId
+			folderId: destFolderId
 		});
 		goto('/parole');
 	}
@@ -168,6 +211,18 @@
 				<span class="field-label">Data creazione</span>
 				<div class="date-field">{createdAtFormatted}</div>
 			</div>
+
+			<div class="field">
+				<span class="field-label">Cartella</span>
+				<div class="folder-path-field">
+					{#if folderPath}
+						<span class="folder-path">{folderPath.join(' / ')}</span>
+					{:else}
+						<span class="folder-path-none">Nessuna cartella</span>
+					{/if}
+					<button type="button" class="move-folder-btn" onclick={openMoveSheet}>Sposta</button>
+				</div>
+			</div>
 		</div>
 
 		<div class="type-picker">
@@ -197,6 +252,50 @@
 		</div>
 	{/if}
 </div>
+
+{#if showMoveSheet}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="sheet-backdrop" transition:fade={{ duration: 200 }} onclick={() => showMoveSheet = false}></div>
+	<div class="move-sheet" transition:fly={{ y: 300, duration: 300 }}>
+		<div class="sheet-header">
+			{#if moveBreadcrumb.length > 0}
+				<button class="sheet-back" onclick={moveSheetBack}>
+					<Icon name="chevron-left" size={20} strokeWidth={2.5} />
+				</button>
+			{/if}
+			<h2 class="sheet-title">
+				{moveBreadcrumb.length > 0
+					? ($folders.find(f => f.id === moveCurrentParent)?.name ?? 'Cartella')
+					: 'Sposta in cartella'}
+			</h2>
+			<button class="sheet-close" onclick={() => showMoveSheet = false}>Annulla</button>
+		</div>
+
+		<div class="move-folder-list">
+			{#if moveBreadcrumb.length > 0}
+				<button class="move-folder-row move-folder-leaf" onclick={() => selectDestFolder(moveCurrentParent!)}>
+					<span class="move-folder-name">Metti qui</span>
+				</button>
+			{/if}
+			{#each moveFoldersAtLevel as f}
+				{#if folderHasChildren(f.id)}
+					<button class="move-folder-row" onclick={() => moveSheetDrillInto(f.id)}>
+						<span class="move-folder-name">{f.name}</span>
+						<Icon name="chevron-right" size={18} />
+					</button>
+				{:else}
+					<button class="move-folder-row move-folder-leaf" onclick={() => selectDestFolder(f.id)}>
+						<span class="move-folder-name">{f.name}</span>
+					</button>
+				{/if}
+			{/each}
+			{#if moveFoldersAtLevel.length === 0 && moveBreadcrumb.length === 0}
+				<p class="move-empty">Nessuna cartella disponibile.</p>
+			{/if}
+		</div>
+	</div>
+{/if}
 
 <style>
 	.page {
@@ -406,5 +505,148 @@
 	.btn-danger {
 		background: #C5221F;
 		color: white;
+	}
+
+	/* ---- Folder path field ---- */
+	.folder-path-field {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		padding: 0.75rem 1rem;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+	}
+
+	.folder-path {
+		font-size: 0.9rem;
+		color: var(--color-text);
+		font-weight: 500;
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.folder-path-none {
+		font-size: 0.9rem;
+		color: var(--color-text-tertiary);
+		flex: 1;
+	}
+
+	.move-folder-btn {
+		background: none;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-full);
+		padding: 0.3rem 0.75rem;
+		font-size: 0.78rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		color: var(--color-text-secondary);
+		cursor: pointer;
+		white-space: nowrap;
+		flex-shrink: 0;
+	}
+
+	/* ---- Move sheet ---- */
+	.sheet-backdrop {
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.4);
+		backdrop-filter: blur(2px);
+		z-index: 100;
+	}
+
+	.move-sheet {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		max-height: 75dvh;
+		background: var(--color-bg);
+		border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+		padding: 1.75rem;
+		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+		z-index: 101;
+		box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
+		display: flex;
+		flex-direction: column;
+	}
+
+	.sheet-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 1rem;
+		flex-shrink: 0;
+	}
+
+	.sheet-title {
+		font-size: 1.1rem;
+		font-weight: 700;
+		margin: 0;
+		flex: 1;
+	}
+
+	.sheet-close {
+		background: none;
+		border: none;
+		color: var(--color-text-secondary);
+		font-size: 0.9rem;
+		font-weight: 600;
+		font-family: inherit;
+		cursor: pointer;
+	}
+
+	.sheet-back {
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		color: var(--color-text-secondary);
+		display: flex;
+		align-items: center;
+		margin-right: 0.5rem;
+	}
+
+	.move-folder-list {
+		display: flex;
+		flex-direction: column;
+		overflow-y: auto;
+		flex: 1;
+	}
+
+	.move-folder-row {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem 0;
+		background: none;
+		border: none;
+		border-bottom: 1px solid var(--color-border);
+		font-family: inherit;
+		cursor: pointer;
+		width: 100%;
+		text-align: left;
+		color: var(--color-text);
+	}
+
+	.move-folder-row:last-child { border-bottom: none; }
+
+	.move-folder-leaf { color: var(--color-primary); }
+
+	.move-folder-name {
+		flex: 1;
+		font-size: 0.95rem;
+		font-weight: 600;
+	}
+
+	.move-empty {
+		font-size: 0.9rem;
+		color: var(--color-text-secondary);
+		padding: 1.5rem 0;
+		text-align: center;
 	}
 </style>
