@@ -1,7 +1,11 @@
 <script lang="ts">
+	import { get } from 'svelte/store';
+	import { goto } from '$app/navigation';
 	import { folders } from '$lib/stores/folders';
 	import { words } from '$lib/stores/words';
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
+	import { setSelectedWords, skipExitGuard } from '$lib/stores/studySession';
+	import { shuffle } from '$lib/utils/shuffle';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import FolderModal from '$lib/components/FolderModal.svelte';
 	import Icon from '$lib/components/Icon.svelte';
@@ -10,6 +14,9 @@
 
 	let showModal = $state(false);
 	let reorderMode = $state(false);
+	let selectMode = $state(false);
+	let selectedFolderIds = $state(new Set<string>());
+
 	type FolderSort = 'newest' | 'oldest' | 'name-az';
 	let folderSortMode = $state<FolderSort>('newest');
 	const folderSortLabels: Record<FolderSort, string> = { newest: 'Più recenti', oldest: 'Meno recenti', 'name-az': 'A-Z' };
@@ -44,14 +51,49 @@
 		snapshotFolderOrder('root', folderList.map(f => f.id));
 		reorderMode = true;
 	}
+	function exitReorderMode() { reorderMode = false; }
+	function resetFolderOrder() { clearFolderOrder('root'); reorderMode = false; }
 
-	function exitReorderMode() {
-		reorderMode = false;
+	// ---- Select mode ----
+	function toggleFolderSelect(id: string) {
+		const next = new Set(selectedFolderIds);
+		if (next.has(id)) next.delete(id); else next.add(id);
+		selectedFolderIds = next;
 	}
 
-	function resetFolderOrder() {
-		clearFolderOrder('root');
-		reorderMode = false;
+	function exitSelectMode() {
+		selectMode = false;
+		selectedFolderIds = new Set();
+	}
+
+	function collectWordsFromFolder(folderId: string, ws = get(words), fs = get(folders)): string[] {
+		const direct = ws.filter(w => w.folderId === folderId).map(w => w.id);
+		const subs = fs.filter(f => f.parentId === folderId).map(f => f.id);
+		return [...direct, ...subs.flatMap(id => collectWordsFromFolder(id, ws, fs))];
+	}
+
+	let selectedWordCount = $derived.by(() => {
+		const ws = $words; const fs = $folders;
+		function collect(folderId: string): string[] {
+			const direct = ws.filter(w => w.folderId === folderId).map(w => w.id);
+			const subs = fs.filter(f => f.parentId === folderId).map(f => f.id);
+			return [...direct, ...subs.flatMap(collect)];
+		}
+		return new Set(Array.from(selectedFolderIds).flatMap(collect)).size;
+	});
+
+	function studySelected() {
+		const ws = get(words); const fs = get(folders);
+		function collect(folderId: string): string[] {
+			const direct = ws.filter(w => w.folderId === folderId).map(w => w.id);
+			const subs = fs.filter(f => f.parentId === folderId).map(f => f.id);
+			return [...direct, ...subs.flatMap(collect)];
+		}
+		const ids = shuffle([...new Set(Array.from(selectedFolderIds).flatMap(collect))]);
+		if (ids.length === 0) return;
+		setSelectedWords(ids);
+		skipExitGuard.set(true);
+		goto('/studia');
 	}
 </script>
 
@@ -63,35 +105,59 @@
 	<PageHeader title="Cartelle" />
 
 	<div class="sort-row">
-		{#if !reorderMode}
-			<button class="sort-btn" onclick={cycleFolderSort}>↕ {folderSortLabels[folderSortMode]}</button>
-		{/if}
-		{#if folderList.length > 1}
-			{#if reorderMode}
-				<button class="sort-btn reorder-active" onclick={exitReorderMode}>Fine</button>
-				{#if $folderOrder['root']}
-					<button class="sort-btn" onclick={resetFolderOrder}>Reimposta</button>
-				{/if}
-			{:else}
-				<button class="sort-btn" onclick={enterReorderMode}>Riordina</button>
+		{#if selectMode}
+			<button class="sort-btn select-active" onclick={exitSelectMode}>Fine</button>
+		{:else}
+			{#if !reorderMode}
+				<button class="sort-btn" onclick={cycleFolderSort}>↕ {folderSortLabels[folderSortMode]}</button>
 			{/if}
+			{#if folderList.length > 1}
+				{#if reorderMode}
+					<button class="sort-btn reorder-active" onclick={exitReorderMode}>Fine</button>
+					{#if $folderOrder['root']}
+						<button class="sort-btn" onclick={resetFolderOrder}>Reimposta</button>
+					{/if}
+				{:else}
+					<button class="sort-btn" onclick={enterReorderMode}>Riordina</button>
+				{/if}
+			{/if}
+			<button class="sort-btn" onclick={() => { selectMode = true; reorderMode = false; }}>Seleziona</button>
 		{/if}
 	</div>
 
 	<div class="folder-list">
 		{#if myWordsFolder}
-			<a href="/cartelle/{myWordsFolder.id}" class="folder-item">
-				<div class="folder-icon" style={myWordsFolder.color ? `color: ${myWordsFolder.color}` : ''}>
-					<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-						<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
-					</svg>
+			{#if selectMode}
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div class="folder-item" onclick={() => toggleFolderSelect(myWordsFolder!.id)}>
+					<div class="folder-checkbox" class:checked={selectedFolderIds.has(myWordsFolder.id)}>
+						<Icon name="check" strokeWidth={3} />
+					</div>
+					<div class="folder-icon" style={myWordsFolder.color ? `color: ${myWordsFolder.color}` : ''}>
+						<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+						</svg>
+					</div>
+					<div class="folder-text">
+						<span class="folder-name">{myWordsFolder.name}</span>
+						<span class="folder-count">{myWordsFolder.wordCount} parole</span>
+					</div>
 				</div>
-				<div class="folder-text">
-					<span class="folder-name">{myWordsFolder.name}</span>
-					<span class="folder-count">{myWordsFolder.wordCount} parole</span>
-				</div>
-				<Icon name="chevron-right" class="folder-chevron" />
-			</a>
+			{:else}
+				<a href="/cartelle/{myWordsFolder.id}" class="folder-item">
+					<div class="folder-icon" style={myWordsFolder.color ? `color: ${myWordsFolder.color}` : ''}>
+						<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+						</svg>
+					</div>
+					<div class="folder-text">
+						<span class="folder-name">{myWordsFolder.name}</span>
+						<span class="folder-count">{myWordsFolder.wordCount} parole</span>
+					</div>
+					<Icon name="chevron-right" class="folder-chevron" />
+				</a>
+			{/if}
 		{/if}
 
 		{#if folderList.length === 0 && !myWordsFolder}
@@ -102,7 +168,24 @@
 			/>
 		{:else}
 			{#each folderList as folder, i}
-				{#if reorderMode}
+				{#if selectMode}
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<div class="folder-item" onclick={() => toggleFolderSelect(folder.id)}>
+						<div class="folder-checkbox" class:checked={selectedFolderIds.has(folder.id)}>
+							<Icon name="check" strokeWidth={3} />
+						</div>
+						<div class="folder-icon" style={folder.color ? `color: ${folder.color}` : ''}>
+							<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+							</svg>
+						</div>
+						<div class="folder-text">
+							<span class="folder-name">{folder.name}</span>
+							<span class="folder-count">{folder.wordCount} parole</span>
+						</div>
+					</div>
+				{:else if reorderMode}
 					<div class="folder-item">
 						<div class="folder-icon" style={folder.color ? `color: ${folder.color}` : ''}>
 							<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
@@ -146,13 +229,29 @@
 		{/if}
 	</div>
 
+	{#if selectMode && selectedFolderIds.size > 0}
+		<div class="study-bar">
+			<span class="study-bar-info">
+				{selectedFolderIds.size} {selectedFolderIds.size === 1 ? 'cartella' : 'cartelle'} · {selectedWordCount} parole
+			</span>
+			<button class="study-bar-btn" onclick={studySelected} disabled={selectedWordCount === 0}>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+					<polygon points="5 3 19 12 5 21 5 3" />
+				</svg>
+				Studia
+			</button>
+		</div>
+	{/if}
+
 	<!-- FAB for New Folder -->
-	<div class="fab-container">
-		<button class="fab" onclick={() => showModal = true}>
-			<Icon name="plus" size={18} strokeWidth={2.5} />
-			Nuova cartella
-		</button>
-	</div>
+	{#if !selectMode}
+		<div class="fab-container">
+			<button class="fab" onclick={() => showModal = true}>
+				<Icon name="plus" size={18} strokeWidth={2.5} />
+				Nuova cartella
+			</button>
+		</div>
+	{/if}
 
 	{#if showModal}
 		<FolderModal onClose={() => showModal = false} />
@@ -266,6 +365,75 @@
 	.folder-chevron {
 		color: var(--color-text-tertiary);
 		flex-shrink: 0;
+	}
+
+	.sort-btn.select-active {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+	}
+
+	.folder-checkbox {
+		width: 24px;
+		height: 24px;
+		border-radius: 6px;
+		border: 2px solid var(--color-border);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: transparent;
+		flex-shrink: 0;
+		transition: all 0.15s ease;
+	}
+
+	.folder-checkbox svg { width: 14px; height: 14px; }
+
+	.folder-checkbox.checked {
+		background-color: var(--color-primary);
+		border-color: var(--color-primary);
+		color: white;
+	}
+
+	.study-bar {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		background: var(--color-bg);
+		border-top: 1px solid var(--color-border);
+		padding: 0.85rem var(--spacing-page);
+		padding-bottom: calc(0.85rem + env(safe-area-inset-bottom));
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		z-index: 50;
+	}
+
+	.study-bar-info {
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--color-text-secondary);
+	}
+
+	.study-bar-btn {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.65rem 1.25rem;
+		background: var(--color-primary);
+		color: white;
+		border: none;
+		border-radius: var(--radius-full);
+		font-size: 0.9rem;
+		font-weight: 700;
+		font-family: var(--font-sans);
+		cursor: pointer;
+		white-space: nowrap;
+	}
+
+	.study-bar-btn:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
 	}
 
 	/* ---- FAB ---- */

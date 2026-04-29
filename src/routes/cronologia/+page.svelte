@@ -11,6 +11,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import type { Word } from '$lib/types/word';
 	import { fade, fly } from 'svelte/transition';
+	import { shuffle } from '$lib/utils/shuffle';
 
 	// Path state: [Year, Month, Week, Date]
 	let path = $state<string[]>([]);
@@ -110,6 +111,50 @@
 		dayWords.filter(w => $selectedWordIds.has(w.id)).length
 	);
 
+	// Folder select mode (at non-day levels)
+	let selectMode = $state(false);
+	let selectedKeys = $state(new Set<string>());
+
+	function toggleKeySelect(key: string) {
+		const next = new Set(selectedKeys);
+		if (next.has(key)) next.delete(key); else next.add(key);
+		selectedKeys = next;
+	}
+
+	function exitSelectMode() { selectMode = false; selectedKeys = new Set(); }
+
+	function collectWordIdsFromNode(node: unknown): string[] {
+		if (Array.isArray(node)) return node as string[];
+		if (node && typeof node === 'object') {
+			return Object.values(node).flatMap(collectWordIdsFromNode);
+		}
+		return [];
+	}
+
+	let selectedNodeWordCount = $derived.by(() => {
+		const items = currentItems();
+		return new Set(
+			Array.from(selectedKeys).flatMap(k => collectWordIdsFromNode(items[k]))
+		).size;
+	});
+
+	function studySelectedPeriods() {
+		const items = currentItems();
+		const allIds = Array.from(selectedKeys).flatMap(k => collectWordIdsFromNode(items[k]));
+		const unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
+		if (unique.length === 0) return;
+		setSelectedWords(shuffle(unique));
+		skipExitGuard.set(true);
+		goto('/studia');
+	}
+
+	// Reset select mode when navigating
+	$effect(() => {
+		path; // track path changes
+		selectMode = false;
+		selectedKeys = new Set();
+	});
+
 	// Color editing for folder nodes
 	let editingColorKey = $state<string | null>(null);
 	let editColor = $state('');
@@ -158,11 +203,23 @@
 			</div>
 		{:else if path.length < 4}
 			<!-- Show Folders -->
+			<div class="crono-sort-row">
+				{#if selectMode}
+					<button class="sort-btn select-active" onclick={exitSelectMode}>Fine</button>
+				{:else}
+					<button class="sort-btn" onclick={() => selectMode = true}>Seleziona</button>
+				{/if}
+			</div>
 			<div class="folder-list">
 				{#each Object.keys(currentItems()).sort().reverse() as key}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
-					<div class="folder-item" onclick={() => navigateTo(key)}>
+					<div class="folder-item" onclick={() => selectMode ? toggleKeySelect(key) : navigateTo(key)}>
+						{#if selectMode}
+							<div class="folder-checkbox" class:checked={selectedKeys.has(key)}>
+								<Icon name="check" strokeWidth={3} />
+							</div>
+						{/if}
 						<div class="folder-icon" style={$dateColors[colorKey(key)] ? `color: ${$dateColors[colorKey(key)]}` : ''}>
 							<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
 								<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
@@ -179,13 +236,29 @@
 								{/if}
 							</span>
 						</div>
-						<button class="color-dot-btn" onclick={(e) => openColorEdit(key, e)} aria-label="Colora">
-							<div class="color-dot" style={$dateColors[colorKey(key)] ? `background: ${$dateColors[colorKey(key)]}` : ''}></div>
-						</button>
-						<Icon name="chevron-right" class="folder-chevron" />
+						{#if !selectMode}
+							<button class="color-dot-btn" onclick={(e) => openColorEdit(key, e)} aria-label="Colora">
+								<div class="color-dot" style={$dateColors[colorKey(key)] ? `background: ${$dateColors[colorKey(key)]}` : ''}></div>
+							</button>
+							<Icon name="chevron-right" class="folder-chevron" />
+						{/if}
 					</div>
 				{/each}
 			</div>
+
+			{#if selectMode && selectedKeys.size > 0}
+				<div class="study-bar">
+					<span class="study-bar-info">
+						{selectedKeys.size} {selectedKeys.size === 1 ? 'periodo' : 'periodi'} · {selectedNodeWordCount} parole
+					</span>
+					<button class="study-bar-btn" onclick={studySelectedPeriods} disabled={selectedNodeWordCount === 0}>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<polygon points="5 3 19 12 5 21 5 3" />
+						</svg>
+						Studia
+					</button>
+				</div>
+			{/if}
 		{:else}
 			<!-- Show Words for the selected day -->
 			<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
@@ -296,6 +369,93 @@
 		padding: 4rem 1rem;
 		color: var(--color-text-secondary);
 		text-align: center;
+	}
+
+	.crono-sort-row {
+		margin-bottom: 0.5rem;
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.sort-btn {
+		background: none;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-full);
+		padding: 0.3rem 0.85rem;
+		font-size: 0.78rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		color: var(--color-text-secondary);
+		cursor: pointer;
+	}
+
+	.sort-btn.select-active {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+	}
+
+	.folder-checkbox {
+		width: 24px;
+		height: 24px;
+		border-radius: 6px;
+		border: 2px solid var(--color-border);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: transparent;
+		flex-shrink: 0;
+		transition: all 0.15s ease;
+	}
+
+	.folder-checkbox svg { width: 14px; height: 14px; }
+
+	.folder-checkbox.checked {
+		background-color: var(--color-primary);
+		border-color: var(--color-primary);
+		color: white;
+	}
+
+	.study-bar {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		background: var(--color-bg);
+		border-top: 1px solid var(--color-border);
+		padding: 0.85rem var(--spacing-page);
+		padding-bottom: calc(0.85rem + env(safe-area-inset-bottom));
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		z-index: 50;
+	}
+
+	.study-bar-info {
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--color-text-secondary);
+	}
+
+	.study-bar-btn {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.65rem 1.25rem;
+		background: var(--color-primary);
+		color: white;
+		border: none;
+		border-radius: var(--radius-full);
+		font-size: 0.9rem;
+		font-weight: 700;
+		font-family: var(--font-sans);
+		cursor: pointer;
+		white-space: nowrap;
+	}
+
+	.study-bar-btn:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
 	}
 
 	.folder-list {
