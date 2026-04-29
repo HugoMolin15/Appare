@@ -16,7 +16,7 @@
 			<img src="/secondary_icon.png" alt="Appare logo" class="header-icon" />
 			<div class="header-text">
 				<span class="header-title">Appare</span>
-				<span class="header-subtitle">Scuola di lingua Giapponese di Tomoko Yamane</span>
+				<span class="header-subtitle">Scuola di lingua <span class="subtitle-highlight">Giapponese</span><br>di Tomoko Yamane</span>
 			</div>
 		</div>
 		<a href="/impostazioni" class="settings-btn" aria-label="Impostazioni">
@@ -143,6 +143,11 @@
 		line-height: 1.3;
 		letter-spacing: 0.01em;
 		margin-top: 0.1rem;
+	}
+
+	.subtitle-highlight {
+		color: #E8192C;
+		font-weight: 700;
 	}
 
 	.settings-btn {
