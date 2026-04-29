@@ -132,6 +132,22 @@ export function removeWordsFromFolder(wordIds: string[]) {
 		pushWords(toSync, uid);
 	}
 }
+/** Strip a custom tag from every word that has it */
+export function removeTagFromAllWords(tag: string) {
+	words.update((current) =>
+		current.map((w) => {
+			if (!w.tags?.includes(tag)) return w;
+			const tags = w.tags.filter((t) => t !== tag);
+			return { ...w, tags: tags.length > 0 ? tags : undefined };
+		})
+	);
+	const uid = get(currentUserId);
+	if (uid) {
+		const affected = get(words).filter((w) => !w.tags?.includes(tag));
+		if (affected.length > 0) pushWords(affected, uid);
+	}
+}
+
 /** Clear all words (used on logout) */
 export function clearWords() {
 	words.set([]);

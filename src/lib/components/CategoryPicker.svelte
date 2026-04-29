@@ -5,6 +5,7 @@
 <script lang="ts">
 	import { CATEGORIES } from '$lib/types/word';
 	import { userTags, addUserTag, removeUserTag } from '$lib/stores/userTags';
+	import { words, removeTagFromAllWords } from '$lib/stores/words';
 	import Icon from '$lib/components/Icon.svelte';
 
 	interface Props {
@@ -38,9 +39,30 @@
 		inputEl?.focus();
 	}
 
-	function handleRemoveUserTag(tag: string) {
+	// Pending delete confirmation state
+	let pendingDeleteTag = $state<string | null>(null);
+
+	let pendingDeleteCount = $derived(
+		pendingDeleteTag
+			? $words.filter(w => w.tags?.includes(pendingDeleteTag!)).length
+			: 0
+	);
+
+	function requestDeleteTag(tag: string) {
+		pendingDeleteTag = tag;
+	}
+
+	function cancelDelete() {
+		pendingDeleteTag = null;
+	}
+
+	function confirmDeleteTag() {
+		if (!pendingDeleteTag) return;
+		const tag = pendingDeleteTag;
+		removeTagFromAllWords(tag);
 		removeUserTag(tag);
 		selectedTags = selectedTags.filter(t => t !== tag);
+		pendingDeleteTag = null;
 	}
 </script>
 
@@ -83,13 +105,30 @@
 						<button
 							type="button"
 							class="chip-delete"
-							onclick={() => handleRemoveUserTag(tag)}
+							onclick={() => requestDeleteTag(tag)}
 							aria-label="Rimuovi etichetta {tag}"
 						>
 							<Icon name="close" size={10} strokeWidth={3} />
 						</button>
 					</div>
 				{/each}
+			</div>
+		</div>
+	{/if}
+
+	{#if pendingDeleteTag}
+		<div class="delete-confirm">
+			<p class="delete-confirm-msg">
+				Eliminare l'etichetta <strong>{pendingDeleteTag}</strong>?
+				{#if pendingDeleteCount > 0}
+					Verrà rimossa anche da <strong>{pendingDeleteCount} {pendingDeleteCount === 1 ? 'parola' : 'parole'}</strong>.
+				{:else}
+					Non è usata da nessuna parola.
+				{/if}
+			</p>
+			<div class="delete-confirm-actions">
+				<button type="button" class="confirm-btn cancel" onclick={cancelDelete}>Annulla</button>
+				<button type="button" class="confirm-btn danger" onclick={confirmDeleteTag}>Elimina</button>
 			</div>
 		</div>
 	{/if}
@@ -237,5 +276,49 @@
 	.add-tag-btn:disabled {
 		opacity: 0.35;
 		cursor: not-allowed;
+	}
+
+	.delete-confirm {
+		background: var(--color-surface);
+		border: 1.5px solid var(--color-border);
+		border-radius: var(--radius-lg);
+		padding: 0.85rem 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.delete-confirm-msg {
+		font-size: 0.85rem;
+		color: var(--color-text);
+		margin: 0;
+		line-height: 1.4;
+	}
+
+	.delete-confirm-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.confirm-btn {
+		flex: 1;
+		padding: 0.55rem;
+		border-radius: var(--radius-md);
+		border: none;
+		font-size: 0.85rem;
+		font-weight: 700;
+		font-family: var(--font-sans);
+		cursor: pointer;
+	}
+
+	.confirm-btn.cancel {
+		background: var(--color-bg);
+		color: var(--color-text-secondary);
+		border: 1.5px solid var(--color-border);
+	}
+
+	.confirm-btn.danger {
+		background: #C5221F;
+		color: white;
 	}
 </style>
