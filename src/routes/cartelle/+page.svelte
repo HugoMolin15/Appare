@@ -16,7 +16,7 @@
 				...f,
 				wordCount: $words.filter((w) => w.folderId === f.id || (w.folderId && childIds.has(w.folderId))).length
 			};
-		})
+		}).sort((a, b) => b.createdAt - a.createdAt)
 	);
 </script>
 

@@ -55,7 +55,7 @@
 			);
 			result = result.filter(w => w.category !== undefined && allowed.has(w.category));
 		}
-		return result;
+		return result.sort((a, b) => b.createdAt - a.createdAt);
 	});
 
 	$effect(() => {

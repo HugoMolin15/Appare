@@ -74,9 +74,9 @@
 		$folders.filter((f) => f.parentId === folderId).map((f) => ({
 			...f,
 			wordCount: $words.filter((w) => w.folderId === f.id).length
-		}))
+		})).sort((a, b) => b.createdAt - a.createdAt)
 	);
-	let folderWords = $derived($words.filter((w) => w.folderId === folderId));
+	let folderWords = $derived($words.filter((w) => w.folderId === folderId).sort((a, b) => b.createdAt - a.createdAt));
 
 	let searchQuery = $state('');
 
