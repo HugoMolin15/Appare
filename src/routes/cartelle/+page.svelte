@@ -8,6 +8,11 @@
 	import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
 	let showModal = $state(false);
+	type FolderSort = 'newest' | 'oldest' | 'name-az';
+	let folderSortMode = $state<FolderSort>('newest');
+	const folderSortLabels: Record<FolderSort, string> = { newest: 'Più recenti', oldest: 'Meno recenti', 'name-az': 'A-Z' };
+	const folderSortCycle: FolderSort[] = ['newest', 'oldest', 'name-az'];
+	function cycleFolderSort() { folderSortMode = folderSortCycle[(folderSortCycle.indexOf(folderSortMode) + 1) % folderSortCycle.length]; }
 
 	function folderWithCount(f: typeof $folders[number]) {
 		const childIds = new Set($folders.filter(sub => sub.parentId === f.id).map(sub => sub.id));
@@ -27,7 +32,11 @@
 		$folders
 			.filter((f) => !f.parentId && f.id !== MY_WORDS_FOLDER_ID)
 			.map(folderWithCount)
-			.sort((a, b) => b.createdAt - a.createdAt)
+			.sort((a, b) => {
+				if (folderSortMode === 'oldest') return a.createdAt - b.createdAt;
+				if (folderSortMode === 'name-az') return a.name.localeCompare(b.name, 'it');
+				return b.createdAt - a.createdAt;
+			})
 	);
 </script>
 
@@ -37,6 +46,10 @@
 
 <div class="page page-enter">
 	<PageHeader title="Cartelle" />
+
+	<div class="sort-row">
+		<button class="sort-btn" onclick={cycleFolderSort}>↕ {folderSortLabels[folderSortMode]}</button>
+	</div>
 
 	<div class="folder-list">
 		{#if myWordsFolder}
@@ -98,6 +111,22 @@
 		min-height: 100dvh;
 		display: flex;
 		flex-direction: column;
+	}
+
+	.sort-row {
+		margin-bottom: 0.5rem;
+	}
+
+	.sort-btn {
+		background: none;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-full);
+		padding: 0.3rem 0.85rem;
+		font-size: 0.78rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		color: var(--color-text-secondary);
+		cursor: pointer;
 	}
 
 	.folder-list {

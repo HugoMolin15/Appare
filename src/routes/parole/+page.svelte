@@ -12,6 +12,8 @@
 	let typeFilter = $state<'all' | 'word' | 'phrase'>('all');
 	let selectedGroups = $state(new Set<string>());
 	let showFilterSheet = $state(false);
+	type WordSort = 'newest' | 'oldest' | 'it-az' | 'jp-az';
+	let sortMode = $state<WordSort>('newest');
 
 	const categoryGroups = Object.entries(CATEGORIES) as [string, readonly string[]][];
 
@@ -55,6 +57,9 @@
 			);
 			result = result.filter(w => w.category !== undefined && allowed.has(w.category));
 		}
+		if (sortMode === 'oldest') return result.sort((a, b) => a.createdAt - b.createdAt);
+		if (sortMode === 'it-az') return result.sort((a, b) => a.italiano.localeCompare(b.italiano, 'it'));
+		if (sortMode === 'jp-az') return result.sort((a, b) => (a.hiragana || a.katakana || '').localeCompare(b.hiragana || b.katakana || '', 'ja'));
 		return result.sort((a, b) => b.createdAt - a.createdAt);
 	});
 
@@ -162,6 +167,24 @@
 						>
 							<span>{label}</span>
 							{#if typeFilter === val}
+								<Icon name="check" size={18} strokeWidth={3} />
+							{/if}
+						</button>
+					{/each}
+				</div>
+			</div>
+
+			<div class="filter-section">
+				<span class="section-label">Ordina</span>
+				<div class="option-list">
+					{#each [['newest', 'Più recenti'], ['oldest', 'Meno recenti'], ['it-az', 'A-Z Italiano'], ['jp-az', 'A-Z Giapponese']] as [val, label]}
+						<button
+							class="option-row"
+							class:selected={sortMode === val}
+							onclick={() => sortMode = val as WordSort}
+						>
+							<span>{label}</span>
+							{#if sortMode === val}
 								<Icon name="check" size={18} strokeWidth={3} />
 							{/if}
 						</button>

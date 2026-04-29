@@ -10,6 +10,9 @@
 
 	let wordId = $derived($page.params.id);
 	let word = $derived($words.find((w) => w.id === wordId));
+	let createdAtFormatted = $derived(
+		word ? new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(word.createdAt)) : ''
+	);
 
 	let italiano = $state('');
 	let hiragana = $state('');
@@ -122,6 +125,11 @@
 				<label for="input-kanji" class="field-label">Kanji</label>
 				<ClearableInput bind:value={kanji} placeholder="es. 大きい" id="input-kanji" japanese lang="ja" />
 			</div>
+
+			<div class="field">
+				<span class="field-label">Data creazione</span>
+				<div class="date-field">{createdAtFormatted}</div>
+			</div>
 		</div>
 
 		<div class="type-picker">
@@ -210,6 +218,15 @@
 	.req {
 		color: var(--color-primary);
 		font-weight: 700;
+	}
+
+	.date-field {
+		padding: 0.75rem 1rem;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+		font-size: 0.95rem;
+		color: var(--color-text-secondary);
 	}
 
 	.type-picker {
