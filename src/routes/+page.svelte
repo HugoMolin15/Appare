@@ -130,10 +130,10 @@
 
 	.header-title {
 		font-size: 1.45rem;
-		font-weight: 600;
+		font-weight: 800;
 		line-height: 1.1;
-		font-family: var(--font-jp);
-		letter-spacing: 0.01em;
+		letter-spacing: -0.02em;
+		color: var(--color-primary);
 	}
 
 	.header-subtitle {
