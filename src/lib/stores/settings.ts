@@ -38,8 +38,8 @@ function persisted<T>(key: string, defaultValue: T) {
 	return store;
 }
 
-/** Japanese font size in px for flashcard display */
-export const japaneseFontSize = persisted<number>('appare_jp_font_size', 48);
+/** Global font scale percentage (80–130, default 100) */
+export const appFontScale = persisted<number>('appare_font_scale', 100);
 
 /** Number of words the user aims to study each day */
 export const studyGoal = persisted<number>('appare_study_goal', 10);
@@ -51,12 +51,13 @@ export const cardOrder = persisted<string[]>('appare_card_order', ['italiano', '
 export const randomCardOrder = persisted<boolean>('appare_random_card_order', false);
 /** Clear settings (used on logout) */
 export function clearSettings() {
-	japaneseFontSize.set(48);
+	appFontScale.set(100);
 	studyGoal.set(10);
 	cardOrder.set(['italiano', 'hiragana', 'katakana', 'romaji', 'kanji']);
 	randomCardOrder.set(false);
 
 	if (browser) {
+		localStorage.removeItem('appare_font_scale');
 		localStorage.removeItem('appare_jp_font_size');
 		localStorage.removeItem('appare_study_goal');
 		localStorage.removeItem('appare_card_order');

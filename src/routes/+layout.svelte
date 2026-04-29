@@ -7,6 +7,12 @@
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { ensureSeeded } from '$lib/stores/words';
+	import { appFontScale } from '$lib/stores/settings';
+
+	$effect(() => {
+		if (!browser) return;
+		document.documentElement.style.fontSize = $appFontScale + '%';
+	});
 
 	let { children } = $props();
 	let path = $derived($page.url.pathname);

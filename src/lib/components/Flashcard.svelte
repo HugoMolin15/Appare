@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
 	import type { Word } from '$lib/types/word';
-	import { japaneseFontSize, cardOrder, randomCardOrder } from '$lib/stores/settings';
+	import { cardOrder, randomCardOrder } from '$lib/stores/settings';
 	import { shuffle } from '$lib/utils/shuffle';
 
 	interface CardSide {
@@ -87,7 +87,7 @@
 		<span class="card-category" data-category={word.category}>{word.category}</span>
 	</div>
 	<div class="card-center">
-		<span class="card-text" class:font-jp={activeSide.japanese} style={activeSide.japanese ? `font-size: ${$japaneseFontSize}px` : ''}>{activeSide.text}</span>
+		<span class="card-text" class:font-jp={activeSide.japanese}>{activeSide.text}</span>
 	</div>
 	<span class="card-hint">Tocca per continuare</span>
 </button>
@@ -160,7 +160,7 @@
 	}
 
 	.card-text {
-		font-size: 2rem;
+		font-size: 3rem;
 		font-weight: 700;
 		color: var(--color-text);
 		text-align: center;

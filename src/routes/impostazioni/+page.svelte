@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { studyGoal, japaneseFontSize, cardOrder, randomCardOrder } from '$lib/stores/settings';
+	import { studyGoal, appFontScale, cardOrder, randomCardOrder } from '$lib/stores/settings';
 	import { manualWordCount } from '$lib/stores/words';
 	import { currentUser, signOut } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
@@ -9,12 +9,12 @@
 		await signOut();
 	}
 
-	// Slider progress percentage (24–72 range)
-	let sliderProgress = $derived(Math.round((($japaneseFontSize - 24) / (72 - 24)) * 100));
+	// Slider progress percentage (80–130 range)
+	let sliderProgress = $derived(Math.round((($appFontScale - 80) / (130 - 80)) * 100));
 
 	function handleSliderInput(e: Event) {
 		const target = e.target as HTMLInputElement;
-		japaneseFontSize.set(Number(target.value));
+		appFontScale.set(Number(target.value));
 	}
 
 	function handleGoalInput(e: Event) {
@@ -101,13 +101,15 @@
 
 	<!-- Font Size Section -->
 	<section class="section">
-		<h2 class="section-heading">Dimensione testo giapponese</h2>
-		<p class="section-subtitle">Regola la dimensione dei caratteri kanji e kana nelle flashcard.</p>
+		<h2 class="section-heading">Dimensione testo</h2>
+		<p class="section-subtitle">Regola la dimensione di tutto il testo nell'app.</p>
 
 		<div class="preview-card">
-			<span class="preview-text font-jp" style="font-size: {$japaneseFontSize}px; color: var(--color-primary);">
-				大きい
-			</span>
+			<div class="preview-inner">
+				<span class="preview-label" style="font-size: {$appFontScale * 0.01 * 0.82}rem; color: var(--color-text-secondary);">Tutte le parole</span>
+				<span class="preview-title" style="font-size: {$appFontScale * 0.01 * 1.75}rem;">I miei progressi</span>
+				<span class="preview-jp font-jp" style="font-size: {$appFontScale * 0.01 * 3}rem; color: var(--color-primary);">大きい</span>
+			</div>
 		</div>
 
 		<div class="slider-row">
@@ -115,10 +117,10 @@
 			<div class="slider-container">
 				<input
 					type="range"
-					min="24"
-					max="72"
+					min="80"
+					max="130"
 					step="1"
-					value={$japaneseFontSize}
+					value={$appFontScale}
 					oninput={handleSliderInput}
 					class="font-slider"
 					style="--progress: {sliderProgress}%"
@@ -328,17 +330,35 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 2rem 1rem;
+		padding: 1.5rem 1rem;
 		background-color: var(--color-surface);
 		border-radius: var(--radius-xl);
 		margin-bottom: 1rem;
 		min-height: 100px;
 	}
 
-	.preview-text {
-		font-weight: 700;
-		transition: font-size 0.15s ease;
+	.preview-inner {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.15rem;
 		user-select: none;
+	}
+
+	.preview-label {
+		font-weight: 600;
+		color: var(--color-text-secondary);
+		line-height: 1.2;
+	}
+
+	.preview-title {
+		font-weight: 700;
+		line-height: 1.2;
+	}
+
+	.preview-jp {
+		font-weight: 700;
+		line-height: 1.2;
 	}
 
 	/* ---- Slider ---- */
