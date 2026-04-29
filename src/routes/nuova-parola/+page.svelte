@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import type { CategoryValue } from '$lib/types/word';
-	import { addWord } from '$lib/stores/words';
+	import { CATEGORIES, type CategoryValue } from '$lib/types/word';
+	import { addWord, words } from '$lib/stores/words';
 	import { folders } from '$lib/stores/folders';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import ClearableInput from '$lib/components/ClearableInput.svelte';
@@ -16,21 +16,36 @@
 	let hiragana = $state('');
 	let romaji = $state('');
 	let kanji = $state('');
-	let selectedCategory = $state<CategoryValue | null>('Verbo Godan');
+	let selectedTags = $state<string[]>(['Verbo Godan']);
 	let wordType = $state<'word' | 'phrase'>('word');
 	let destFolderId = $state(urlFolderId ?? MY_WORDS_FOLDER_ID);
 
 	let topFolders = $derived($folders.filter(f => !f.parentId));
 
+	const allPresetValues = new Set(Object.values(CATEGORIES).flat() as string[]);
+
+	// Duplicate detection
+	let dupItaliano = $derived(
+		italiano.trim().length > 0 &&
+		$words.some(w => w.italiano.toLowerCase() === italiano.trim().toLowerCase())
+	);
+	let dupHiragana = $derived(
+		hiragana.trim().length > 0 &&
+		$words.some(w => (w.hiragana || w.katakana || '').toLowerCase() === hiragana.trim().toLowerCase())
+	);
+	let dupKanji = $derived(
+		kanji.trim().length > 0 &&
+		$words.some(w => w.kanji?.trim().length > 0 && w.kanji.trim() === kanji.trim())
+	);
+
 	let isValid = $derived(
 		italiano.trim().length > 0 &&
 		hiragana.trim().length > 0 &&
-		(wordType === 'phrase' || selectedCategory !== null)
+		(wordType === 'phrase' || selectedTags.length > 0)
 	);
 
 	function handleSave() {
 		if (!isValid) return;
-		if (wordType === 'word' && !selectedCategory) return;
 
 		addWord({
 			italiano: italiano.trim(),
@@ -38,7 +53,8 @@
 			katakana: '',
 			romaji: romaji.trim(),
 			kanji: kanji.trim(),
-			category: selectedCategory ?? undefined,
+			category: (selectedTags.find(t => allPresetValues.has(t)) as CategoryValue | undefined),
+			tags: selectedTags.length > 0 ? selectedTags : undefined,
 			wordType,
 			folderId: destFolderId || undefined
 		});
@@ -58,11 +74,23 @@
 		<div class="field">
 			<label for="input-italiano" class="field-label">Italiano <span class="req">*</span></label>
 			<ClearableInput bind:value={italiano} placeholder="es. grande" id="input-italiano" />
+			{#if dupItaliano}
+				<span class="dup-warn">
+					<Icon name="close" size={12} strokeWidth={3} />
+					Attenzione: nel database è già presente una parola con questo campo
+				</span>
+			{/if}
 		</div>
 
 		<div class="field">
 			<label for="input-hiragana" class="field-label">Hiragana/Katakana <span class="req">*</span></label>
 			<ClearableInput bind:value={hiragana} placeholder="es. おおきい / オオキイ" id="input-hiragana" japanese lang="ja" />
+			{#if dupHiragana}
+				<span class="dup-warn">
+					<Icon name="close" size={12} strokeWidth={3} />
+					Attenzione: nel database è già presente una parola con questo campo
+				</span>
+			{/if}
 		</div>
 
 		<div class="field">
@@ -73,6 +101,12 @@
 		<div class="field">
 			<label for="input-kanji" class="field-label">Kanji</label>
 			<ClearableInput bind:value={kanji} placeholder="es. 大きい" id="input-kanji" japanese lang="ja" />
+			{#if dupKanji}
+				<span class="dup-warn">
+					<Icon name="close" size={12} strokeWidth={3} />
+					Attenzione: nel database è già presente una parola con questo campo
+				</span>
+			{/if}
 		</div>
 
 		<div class="field">
@@ -93,7 +127,7 @@
 
 	{#if wordType === 'word'}
 		<div class="category-area">
-			<CategoryPicker bind:selected={selectedCategory} />
+			<CategoryPicker bind:selectedTags={selectedTags} />
 		</div>
 	{/if}
 
@@ -145,6 +179,16 @@
 	.req {
 		color: var(--color-primary);
 		font-weight: 700;
+	}
+
+	.dup-warn {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: #b45309;
+		margin-top: 0.15rem;
 	}
 
 	.folder-select {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import type { CategoryValue } from '$lib/types/word';
+	import { CATEGORIES, type CategoryValue } from '$lib/types/word';
 	import { words, updateWord, removeWord } from '$lib/stores/words';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import ClearableInput from '$lib/components/ClearableInput.svelte';
@@ -18,39 +18,55 @@
 	let hiragana = $state('');
 	let romaji = $state('');
 	let kanji = $state('');
-	let selectedCategory = $state<CategoryValue | null>(null);
+	let selectedTags = $state<string[]>([]);
 	let wordType = $state<'word' | 'phrase'>('word');
 	let initialized = $state(false);
 
 	$effect(() => {
 		if (word && !initialized) {
 			italiano = word.italiano;
-			// Prefer hiragana; fall back to katakana for words entered before the merge
 			hiragana = word.hiragana || word.katakana;
 			romaji = word.romaji;
 			kanji = word.kanji;
-			selectedCategory = word.category ?? null;
+			// Migrate: if no tags yet, fall back to single category
+			selectedTags = word.tags ?? (word.category ? [word.category] : []);
 			wordType = word.wordType ?? 'word';
 			initialized = true;
 		}
 	});
 
+	const allPresetValues = new Set(Object.values(CATEGORIES).flat() as string[]);
+
+	// Duplicate detection (exclude self)
+	let dupItaliano = $derived(
+		italiano.trim().length > 0 &&
+		$words.some(w => w.id !== wordId && w.italiano.toLowerCase() === italiano.trim().toLowerCase())
+	);
+	let dupHiragana = $derived(
+		hiragana.trim().length > 0 &&
+		$words.some(w => w.id !== wordId && (w.hiragana || w.katakana || '').toLowerCase() === hiragana.trim().toLowerCase())
+	);
+	let dupKanji = $derived(
+		kanji.trim().length > 0 &&
+		$words.some(w => w.id !== wordId && w.kanji?.trim().length > 0 && w.kanji.trim() === kanji.trim())
+	);
+
 	let isValid = $derived(
 		italiano.trim().length > 0 &&
 		hiragana.trim().length > 0 &&
-		(wordType === 'phrase' || selectedCategory !== null)
+		(wordType === 'phrase' || selectedTags.length > 0)
 	);
 
 	function handleSave() {
 		if (!isValid || !wordId) return;
-		if (wordType === 'word' && !selectedCategory) return;
 		updateWord(wordId, {
 			italiano: italiano.trim(),
 			hiragana: hiragana.trim(),
 			katakana: '',
 			romaji: romaji.trim(),
 			kanji: kanji.trim(),
-			category: selectedCategory ?? undefined,
+			category: (selectedTags.find(t => allPresetValues.has(t)) as CategoryValue | undefined),
+			tags: selectedTags.length > 0 ? selectedTags : undefined,
 			wordType,
 			folderId: word?.folderId
 		});
@@ -109,11 +125,23 @@
 			<div class="field">
 				<label for="input-italiano" class="field-label">Italiano <span class="req">*</span></label>
 				<ClearableInput bind:value={italiano} placeholder="es. grande" id="input-italiano" />
+				{#if dupItaliano}
+					<span class="dup-warn">
+						<Icon name="close" size={12} strokeWidth={3} />
+						Attenzione: nel database è già presente una parola con questo campo
+					</span>
+				{/if}
 			</div>
 
 			<div class="field">
 				<label for="input-hiragana" class="field-label">Hiragana/Katakana <span class="req">*</span></label>
 				<ClearableInput bind:value={hiragana} placeholder="es. おおきい / オオキイ" id="input-hiragana" japanese lang="ja" />
+				{#if dupHiragana}
+					<span class="dup-warn">
+						<Icon name="close" size={12} strokeWidth={3} />
+						Attenzione: nel database è già presente una parola con questo campo
+					</span>
+				{/if}
 			</div>
 
 			<div class="field">
@@ -124,6 +152,12 @@
 			<div class="field">
 				<label for="input-kanji" class="field-label">Kanji</label>
 				<ClearableInput bind:value={kanji} placeholder="es. 大きい" id="input-kanji" japanese lang="ja" />
+				{#if dupKanji}
+					<span class="dup-warn">
+						<Icon name="close" size={12} strokeWidth={3} />
+						Attenzione: nel database è già presente una parola con questo campo
+					</span>
+				{/if}
 			</div>
 
 			<div class="field">
@@ -139,7 +173,7 @@
 
 		{#if wordType === 'word'}
 			<div class="category-area">
-				<CategoryPicker bind:selected={selectedCategory} />
+				<CategoryPicker bind:selectedTags={selectedTags} />
 			</div>
 		{/if}
 
@@ -218,6 +252,16 @@
 	.req {
 		color: var(--color-primary);
 		font-weight: 700;
+	}
+
+	.dup-warn {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: #b45309;
+		margin-top: 0.15rem;
 	}
 
 	.date-field {

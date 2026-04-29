@@ -18,7 +18,8 @@ export interface Word {
 	katakana: string;
 	romaji: string;
 	kanji: string;
-	category?: CategoryValue;
+	category?: CategoryValue;  // legacy single category — kept for seed words
+	tags?: string[];           // multi-label support (includes category values + custom)
 	wordType?: 'word' | 'phrase';
 	folderId?: string;   // Optional folder assignment
 	createdAt: number;   // Unix ms timestamp

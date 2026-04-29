@@ -321,7 +321,16 @@
 								{word.hiragana || word.katakana || word.romaji || word.kanji}
 							</span>
 						</div>
-						<span class="word-cat" data-category={word.category}>{word.category}</span>
+						{#if word.tags && word.tags.length > 0}
+							<div class="word-tags">
+								<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
+								{#if word.tags.length > 1}
+									<span class="word-tag-more">+{word.tags.length - 1}</span>
+								{/if}
+							</div>
+						{:else if word.category}
+							<span class="word-cat" data-category={word.category}>{word.category}</span>
+						{/if}
 					</div>
 				{/each}
 			</div>
@@ -618,6 +627,13 @@
 		color: var(--color-text-secondary);
 	}
 
+	.word-tags {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		flex-shrink: 0;
+	}
+
 	.word-cat {
 		font-size: 0.65rem;
 		font-weight: 700;
@@ -629,6 +645,13 @@
 		letter-spacing: 0.05em;
 		white-space: nowrap;
 		flex-shrink: 0;
+	}
+
+	.word-tag-more {
+		font-size: 0.65rem;
+		font-weight: 700;
+		color: var(--color-text-tertiary);
+		white-space: nowrap;
 	}
 
 	.study-folder-btn {
