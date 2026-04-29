@@ -119,7 +119,7 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader title="Cartelle" />
+	<PageHeader title="Cartelle" hideBackOnDesktop />
 
 	{#if allFolderCount === 0}
 		<EmptyState

@@ -186,9 +186,10 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader 
-		title={getTitle()} 
-		onback={path.length > 0 ? navigateUp : () => window.history.back()} 
+	<PageHeader
+		title={getTitle()}
+		onback={path.length > 0 ? navigateUp : () => window.history.back()}
+		hideBackOnDesktop={path.length === 0}
 	/>
 
 	<div class="content">
@@ -539,6 +540,18 @@
 		padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
 		z-index: 101;
 		box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+	}
+
+	@media (min-width: 768px) {
+		.color-sheet {
+			left: 50%;
+			right: auto;
+			bottom: 2rem;
+			width: 320px;
+			transform: translateX(-50%);
+			border-radius: var(--radius-xl);
+			padding-bottom: 1.75rem;
+		}
 	}
 
 	.sheet-header {

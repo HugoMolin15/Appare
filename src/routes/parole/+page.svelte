@@ -99,7 +99,7 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader title="Tutte le parole" backHref="/">
+	<PageHeader title="Tutte le parole" backHref="/" hideBackOnDesktop>
 		{#snippet actions()}
 			<button
 				class="filter-btn"
