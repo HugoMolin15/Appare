@@ -20,9 +20,10 @@
 	let studySet = $state<typeof allWordsData>([]);
 	
 	if (selectedIds.size > 0) {
-		// User selected specific words via checkboxes
-		studySet = allWordsData.filter(w => selectedIds.has(w.id));
-		// Clear selection so next time it doesn't persist forever
+		// Preserve insertion order of the Set (callers may shuffle before setSelectedWords)
+		studySet = [...selectedIds]
+			.map(id => allWordsData.find(w => w.id === id))
+			.filter((w): w is (typeof allWordsData)[number] => w !== undefined);
 		clearSelection();
 	} else {
 		// Global study mode (from Home): Pick unstudied words
