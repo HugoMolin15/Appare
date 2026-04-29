@@ -3,6 +3,7 @@ import { browser } from '$app/environment';
 import type { Folder } from '$lib/types/word';
 import { currentUserId } from '$lib/stores/auth';
 import { pushFolder, deleteFolder as dbDeleteFolder } from '$lib/services/sync';
+import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
 const STORAGE_KEY = 'appare_folders';
 const SEEDED_KEY = 'appare_folders_seeded';
@@ -286,6 +287,12 @@ function loadFolders(): Folder[] {
 			const newSeeds = SEED_FOLDERS.filter((f) => !existingIds.has(f.id));
 			folders = [...folders, ...newSeeds];
 			localStorage.setItem(SEEDED_KEY, SEED_VERSION);
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(folders));
+		}
+
+		// Ensure the protected "Le mie parole" folder always exists
+		if (!folders.find(f => f.id === MY_WORDS_FOLDER_ID)) {
+			folders = [{ id: MY_WORDS_FOLDER_ID, name: 'Le mie parole', createdAt: Date.now() }, ...folders];
 			localStorage.setItem(STORAGE_KEY, JSON.stringify(folders));
 		}
 

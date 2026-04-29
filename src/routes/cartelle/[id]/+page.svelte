@@ -11,10 +11,11 @@
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import { FOLDER_COLORS } from '$lib/constants';
+	import { FOLDER_COLORS, MY_WORDS_FOLDER_ID } from '$lib/constants';
 	import { fade, fly } from 'svelte/transition';
 
 	let folderId = $derived($page.params.id);
+	let isProtected = $derived(folderId === MY_WORDS_FOLDER_ID);
 	let showFolderModal = $state(false);
 	let showAddWordsModal = $state(false);
 	let showOptionsSheet = $state(false);
@@ -31,7 +32,11 @@
 	}
 
 	function saveEdits() {
-		if (folderId && editName.trim()) {
+		if (!folderId) return;
+		if (isProtected) {
+			updateFolder(folderId, folder?.name ?? '', editColor || undefined);
+			showOptionsSheet = false;
+		} else if (editName.trim()) {
 			updateFolder(folderId, editName.trim(), editColor || undefined);
 			showOptionsSheet = false;
 		}
@@ -223,6 +228,7 @@
 			</div>
 
 			<div class="sheet-body">
+				{#if !isProtected}
 				<div class="sheet-section">
 					<label class="sheet-label" for="edit-folder-name">Nome</label>
 					<input
@@ -233,6 +239,7 @@
 						onkeydown={(e) => e.key === 'Enter' && saveEdits()}
 					/>
 				</div>
+				{/if}
 
 				<div class="sheet-section">
 					<span class="sheet-label">Colore</span>
@@ -265,10 +272,11 @@
 			</div>
 
 			<div class="sheet-footer">
-				<button class="save-btn" onclick={saveEdits} disabled={!editName.trim()}>
+				<button class="save-btn" onclick={saveEdits} disabled={!isProtected && !editName.trim()}>
 					Salva modifiche
 				</button>
 
+				{#if !isProtected}
 				<div class="sheet-divider"></div>
 
 				{#if folderWords.length > 0}
@@ -285,6 +293,7 @@
 					</svg>
 					Elimina cartella
 				</button>
+				{/if}
 			</div>
 		</div>
 	{/if}

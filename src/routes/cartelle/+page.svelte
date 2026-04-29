@@ -5,18 +5,29 @@
 	import FolderModal from '$lib/components/FolderModal.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
 	let showModal = $state(false);
 
-	// Compute word count per folder including subfolders
+	function folderWithCount(f: typeof $folders[number]) {
+		const childIds = new Set($folders.filter(sub => sub.parentId === f.id).map(sub => sub.id));
+		return {
+			...f,
+			wordCount: $words.filter((w) => w.folderId === f.id || (w.folderId && childIds.has(w.folderId))).length
+		};
+	}
+
+	let myWordsFolder = $derived(
+		$folders.find(f => f.id === MY_WORDS_FOLDER_ID)
+			? folderWithCount($folders.find(f => f.id === MY_WORDS_FOLDER_ID)!)
+			: null
+	);
+
 	let folderList = $derived(
-		$folders.filter((f) => !f.parentId).map((f) => {
-			const childIds = new Set($folders.filter(sub => sub.parentId === f.id).map(sub => sub.id));
-			return {
-				...f,
-				wordCount: $words.filter((w) => w.folderId === f.id || (w.folderId && childIds.has(w.folderId))).length
-			};
-		}).sort((a, b) => b.createdAt - a.createdAt)
+		$folders
+			.filter((f) => !f.parentId && f.id !== MY_WORDS_FOLDER_ID)
+			.map(folderWithCount)
+			.sort((a, b) => b.createdAt - a.createdAt)
 	);
 </script>
 
@@ -27,14 +38,29 @@
 <div class="page page-enter">
 	<PageHeader title="Cartelle" />
 
-	{#if folderList.length === 0}
-		<EmptyState
-			icon="📁"
-			title="Nessuna cartella"
-			subtitle="Le cartelle raggruppano le parole per argomento."
-		/>
-	{:else}
-		<div class="folder-list">
+	<div class="folder-list">
+		{#if myWordsFolder}
+			<a href="/cartelle/{myWordsFolder.id}" class="folder-item">
+				<div class="folder-icon" style={myWordsFolder.color ? `color: ${myWordsFolder.color}` : ''}>
+					<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+					</svg>
+				</div>
+				<div class="folder-text">
+					<span class="folder-name">{myWordsFolder.name}</span>
+					<span class="folder-count">{myWordsFolder.wordCount} parole</span>
+				</div>
+				<Icon name="chevron-right" class="folder-chevron" />
+			</a>
+		{/if}
+
+		{#if folderList.length === 0 && !myWordsFolder}
+			<EmptyState
+				icon="📁"
+				title="Nessuna cartella"
+				subtitle="Le cartelle raggruppano le parole per argomento."
+			/>
+		{:else}
 			{#each folderList as folder}
 				<a href="/cartelle/{folder.id}" class="folder-item">
 					<div class="folder-icon" style={folder.color ? `color: ${folder.color}` : ''}>
@@ -49,8 +75,8 @@
 					<Icon name="chevron-right" class="folder-chevron" />
 				</a>
 			{/each}
-		</div>
-	{/if}
+		{/if}
+	</div>
 
 	<!-- FAB for New Folder -->
 	<div class="fab-container">

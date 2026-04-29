@@ -1,3 +1,5 @@
+export const MY_WORDS_FOLDER_ID = 'protected-le-mie-parole';
+
 export const FOLDER_COLORS = [
 	'#e96010',
 	'#6c8936',

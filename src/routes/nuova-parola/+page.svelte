@@ -3,12 +3,14 @@
 	import { goto } from '$app/navigation';
 	import type { CategoryValue } from '$lib/types/word';
 	import { addWord } from '$lib/stores/words';
+	import { folders } from '$lib/stores/folders';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import ClearableInput from '$lib/components/ClearableInput.svelte';
 	import CategoryPicker from '$lib/components/CategoryPicker.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
-	const folderId = $page.url.searchParams.get('folderId');
+	const urlFolderId = $page.url.searchParams.get('folderId');
 
 	let italiano = $state('');
 	let hiragana = $state('');
@@ -16,6 +18,9 @@
 	let kanji = $state('');
 	let selectedCategory = $state<CategoryValue | null>('Verbo Godan');
 	let wordType = $state<'word' | 'phrase'>('word');
+	let destFolderId = $state(urlFolderId ?? MY_WORDS_FOLDER_ID);
+
+	let topFolders = $derived($folders.filter(f => !f.parentId));
 
 	let isValid = $derived(
 		italiano.trim().length > 0 &&
@@ -35,14 +40,10 @@
 			kanji: kanji.trim(),
 			category: selectedCategory ?? undefined,
 			wordType,
-			folderId: folderId || undefined
+			folderId: destFolderId || undefined
 		});
 
-		if (folderId) {
-			goto(`/cartelle/${folderId}`);
-		} else {
-			goto('/');
-		}
+		goto(destFolderId ? `/cartelle/${destFolderId}` : '/');
 	}
 </script>
 
@@ -72,6 +73,16 @@
 		<div class="field">
 			<label for="input-kanji" class="field-label">Kanji</label>
 			<ClearableInput bind:value={kanji} placeholder="es. 大きい" id="input-kanji" japanese lang="ja" />
+		</div>
+
+		<div class="field">
+			<label for="dest-folder" class="field-label">Cartella di destinazione</label>
+			<select id="dest-folder" class="folder-select" bind:value={destFolderId}>
+				{#each topFolders as f}
+					<option value={f.id}>{f.name}</option>
+				{/each}
+				<option value="">Nessuna cartella</option>
+			</select>
 		</div>
 	</div>
 
@@ -134,6 +145,25 @@
 	.req {
 		color: var(--color-primary);
 		font-weight: 700;
+	}
+
+	.folder-select {
+		width: 100%;
+		padding: 0.75rem 1rem;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+		font-size: 0.95rem;
+		font-weight: 500;
+		font-family: var(--font-sans);
+		color: var(--color-text);
+		appearance: none;
+		-webkit-appearance: none;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-position: right 0.85rem center;
+		padding-right: 2.5rem;
+		cursor: pointer;
 	}
 
 	.type-picker {
