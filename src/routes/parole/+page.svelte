@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { words } from '$lib/stores/words';
 	import { CATEGORIES } from '$lib/types/word';
+	import type { WordScore } from '$lib/types/word';
+	import { wordScores } from '$lib/stores/wordScores';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
@@ -8,6 +10,7 @@
 	import { fade, fly } from 'svelte/transition';
 
 	let searchQuery = $state('');
+	let scoreFilter = $state<'all' | WordScore>('all');
 	let sourceFilter = $state<'all' | 'app' | 'mine'>('all');
 	let typeFilter = $state<'all' | 'word' | 'phrase'>('all');
 	let selectedGroups = $state(new Set<string>());
@@ -43,8 +46,26 @@
 		return pills;
 	});
 
+	const SCORE_LABELS: Record<string, string> = {
+		all: 'Tutti',
+		none: 'Non valutate',
+		unknown: 'Non la so',
+		learning: 'Così così',
+		known: 'La so',
+	};
+
+	const SCORE_COLORS: Record<string, string> = {
+		none: 'var(--color-border)',
+		unknown: '#C5221F',
+		learning: '#D97706',
+		known: '#1D6FA4',
+	};
+
 	let filteredWords = $derived.by(() => {
 		let result = filterWords($words, searchQuery);
+		if (scoreFilter !== 'all') {
+			result = result.filter(w => ($wordScores[w.id] ?? 'none') === scoreFilter);
+		}
 		if (sourceFilter === 'app') result = result.filter(w => w.id.startsWith('seed-'));
 		else if (sourceFilter === 'mine') result = result.filter(w => !w.id.startsWith('seed-'));
 		if (typeFilter === 'word') result = result.filter(w => (w.wordType ?? 'word') === 'word');
@@ -100,6 +121,23 @@
 
 	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
+	<!-- Score filter chips -->
+	<div class="score-filter-row">
+		{#each (['all', 'none', 'unknown', 'learning', 'known'] as const) as s}
+			<button
+				class="score-chip"
+				class:active={scoreFilter === s}
+				onclick={() => scoreFilter = s}
+				style={s !== 'all' ? `--chip-color: ${SCORE_COLORS[s]}` : ''}
+			>
+				{#if s !== 'all'}
+					<span class="score-chip-dot" style="background:{SCORE_COLORS[s]}"></span>
+				{/if}
+				{SCORE_LABELS[s]}
+			</button>
+		{/each}
+	</div>
+
 	{#if activePills.length > 0}
 		<div class="pills-row">
 			{#each activePills as pill}
@@ -124,16 +162,22 @@
 						{word.hiragana || word.katakana || word.romaji || word.kanji}
 					</span>
 				</div>
-				{#if word.tags && word.tags.length > 0}
-					<div class="word-tags">
-						<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
-						{#if word.tags.length > 1}
-							<span class="word-tag-more">+{word.tags.length - 1}</span>
-						{/if}
-					</div>
-				{:else if word.category}
-					<span class="word-cat" data-category={word.category}>{word.category}</span>
-				{/if}
+				<div class="word-right">
+					{#if word.tags && word.tags.length > 0}
+						<div class="word-tags">
+							<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
+							{#if word.tags.length > 1}
+								<span class="word-tag-more">+{word.tags.length - 1}</span>
+							{/if}
+						</div>
+					{:else if word.category}
+						<span class="word-cat" data-category={word.category}>{word.category}</span>
+					{/if}
+					<span
+						class="word-score-dot"
+						style="background:{SCORE_COLORS[$wordScores[word.id] ?? 'none']}"
+					></span>
+				</div>
 			</a>
 		{/each}
 	</div>
@@ -270,6 +314,65 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+	}
+
+	/* ---- Score filter chips ---- */
+	.score-filter-row {
+		display: flex;
+		gap: 0.4rem;
+		overflow-x: auto;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+		margin-bottom: 0.75rem;
+		padding-bottom: 0.1rem;
+	}
+
+	.score-filter-row::-webkit-scrollbar { display: none; }
+
+	.score-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		padding: 0.35rem 0.75rem;
+		border-radius: var(--radius-full);
+		border: 1.5px solid var(--color-border);
+		background: var(--color-bg);
+		color: var(--color-text-secondary);
+		font-size: 0.78rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		cursor: pointer;
+		white-space: nowrap;
+		flex-shrink: 0;
+		transition: border-color 0.15s ease, color 0.15s ease;
+	}
+
+	.score-chip.active {
+		border-color: var(--chip-color, var(--color-primary));
+		color: var(--chip-color, var(--color-primary));
+		background: color-mix(in srgb, var(--chip-color, var(--color-primary)) 10%, transparent);
+	}
+
+	.score-chip-dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		flex-shrink: 0;
+	}
+
+	/* ---- Word score dot ---- */
+	.word-right {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-shrink: 0;
+	}
+
+	.word-score-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		flex-shrink: 0;
 	}
 
 	/* ---- Active pills row ---- */

@@ -2,6 +2,7 @@ import { writable, get } from 'svelte/store';
 import { browser } from '$app/environment';
 import { currentUserId } from '$lib/stores/auth';
 import { pushSettingsUpdate } from '$lib/services/sync';
+import { type CardLayout, DEFAULT_CARD_LAYOUT } from '$lib/types/word';
 
 /**
  * Creates a writable store that persists to localStorage and syncs to Supabase
@@ -49,12 +50,17 @@ export const cardOrder = persisted<string[]>('appare_card_order', ['italiano', '
 
 /** Whether to randomize flashcard side order each time */
 export const randomCardOrder = persisted<boolean>('appare_random_card_order', false);
+
+/** User-defined card layout: ordered list of cards, each with one or more fields */
+export const cardLayout = persisted<CardLayout>('appare_card_layout', DEFAULT_CARD_LAYOUT);
+
 /** Clear settings (used on logout) */
 export function clearSettings() {
 	appFontScale.set(100);
 	studyGoal.set(10);
 	cardOrder.set(['italiano', 'hiragana', 'katakana', 'romaji', 'kanji']);
 	randomCardOrder.set(false);
+	cardLayout.set(DEFAULT_CARD_LAYOUT);
 
 	if (browser) {
 		localStorage.removeItem('appare_font_scale');
@@ -63,5 +69,6 @@ export function clearSettings() {
 		localStorage.removeItem('appare_card_order');
 		localStorage.removeItem('appare_random_card_order');
 		localStorage.removeItem('appare_daily_words');
+		localStorage.removeItem('appare_card_layout');
 	}
 }

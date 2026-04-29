@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { studyGoal, appFontScale, cardOrder, randomCardOrder } from '$lib/stores/settings';
+	import { studyGoal, appFontScale, cardLayout, randomCardOrder } from '$lib/stores/settings';
+	import type { CardField } from '$lib/types/word';
 	import { manualWordCount } from '$lib/stores/words';
 	import { currentUser, signOut } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
@@ -25,7 +26,8 @@
 		studyGoal.set(value);
 	}
 
-	const SIDE_LABELS: Record<string, string> = {
+	const ALL_FIELDS: CardField[] = ['italiano', 'hiragana', 'katakana', 'romaji', 'kanji'];
+	const FIELD_LABELS: Record<CardField, string> = {
 		italiano: 'Italiano',
 		hiragana: 'Hiragana',
 		katakana: 'Katakana',
@@ -33,18 +35,56 @@
 		kanji: 'Kanji',
 	};
 
-	function moveUp(index: number) {
-		if (index === 0) return;
-		const next = [...$cardOrder];
-		[next[index - 1], next[index]] = [next[index], next[index - 1]];
-		cardOrder.set(next);
+	// ---- Card layout helpers ----
+	function addCard() {
+		cardLayout.update(l => [...l, { fields: [] }]);
 	}
 
-	function moveDown(index: number) {
-		if (index === $cardOrder.length - 1) return;
-		const next = [...$cardOrder];
-		[next[index], next[index + 1]] = [next[index + 1], next[index]];
-		cardOrder.set(next);
+	function removeCard(i: number) {
+		cardLayout.update(l => {
+			if (l.length <= 1) return l;
+			return l.filter((_, idx) => idx !== i);
+		});
+	}
+
+	function moveCardUp(i: number) {
+		cardLayout.update(l => {
+			if (i === 0) return l;
+			const next = [...l];
+			[next[i - 1], next[i]] = [next[i], next[i - 1]];
+			return next;
+		});
+	}
+
+	function moveCardDown(i: number) {
+		cardLayout.update(l => {
+			if (i === l.length - 1) return l;
+			const next = [...l];
+			[next[i], next[i + 1]] = [next[i + 1], next[i]];
+			return next;
+		});
+	}
+
+	function addFieldToCard(cardIdx: number, field: CardField) {
+		cardLayout.update(l => {
+			const next = l.map((c, i) =>
+				i === cardIdx ? { fields: [...c.fields, field] } : c
+			);
+			return next;
+		});
+	}
+
+	function removeFieldFromCard(cardIdx: number, fieldIdx: number) {
+		cardLayout.update(l => {
+			const card = l[cardIdx];
+			const newFields = card.fields.filter((_, i) => i !== fieldIdx);
+			if (newFields.length === 0) {
+				// Remove the whole card if it becomes empty
+				if (l.length <= 1) return l; // keep at least one card
+				return l.filter((_, i) => i !== cardIdx);
+			}
+			return l.map((c, i) => i === cardIdx ? { fields: newFields } : c);
+		});
 	}
 </script>
 
@@ -139,11 +179,12 @@
 	<!-- Divider -->
 	<div class="divider"></div>
 
-	<!-- Card Order Section -->
+	<!-- Card Layout Section -->
 	<section class="section">
-		<h2 class="section-heading">Ordine delle flashcard</h2>
-		<p class="section-subtitle">Scegli in che ordine vuoi vedere i lati delle flashcard durante lo studio.</p>
+		<h2 class="section-heading">Struttura flashcard</h2>
+		<p class="section-subtitle">Definisci le carte che appaiono durante lo studio. Ogni carta può mostrare uno o più campi.</p>
 
+		<!-- Random order toggle -->
 		<div class="order-toggle" onclick={() => randomCardOrder.set(!$randomCardOrder)} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && randomCardOrder.set(!$randomCardOrder)}>
 			<div class="order-toggle-left">
 				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -152,44 +193,81 @@
 					<polyline points="21 16 21 21 16 21" />
 					<line x1="15" y1="15" x2="21" y2="21" />
 				</svg>
-				<span class="order-toggle-label">Ordine casuale</span>
+				<span class="order-toggle-label">Ordine casuale delle carte</span>
 			</div>
 			<div class="toggle-switch" class:on={$randomCardOrder}>
 				<div class="toggle-thumb"></div>
 			</div>
 		</div>
 
-		{#if !$randomCardOrder}
-			<div class="order-list">
-				{#each $cardOrder as key, i}
-					<div class="order-row">
-						<div class="order-drag-handle">
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-								<line x1="8" y1="6" x2="21" y2="6" />
-								<line x1="8" y1="12" x2="21" y2="12" />
-								<line x1="8" y1="18" x2="21" y2="18" />
-								<line x1="3" y1="6" x2="3.01" y2="6" />
-								<line x1="3" y1="12" x2="3.01" y2="12" />
-								<line x1="3" y1="18" x2="3.01" y2="18" />
-							</svg>
-						</div>
-						<span class="order-label">{SIDE_LABELS[key]}</span>
-						<div class="order-arrows">
-							<button class="arrow-btn" onclick={() => moveUp(i)} disabled={i === 0} aria-label="Sposta su">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+		<!-- Card builder -->
+		<div class="card-builder">
+			{#each $cardLayout as card, ci}
+				<div class="builder-card">
+					<!-- Card header -->
+					<div class="builder-card-header">
+						<span class="builder-card-title">Carta {ci + 1}</span>
+						<div class="builder-card-actions">
+							<button class="arrow-btn" onclick={() => moveCardUp(ci)} disabled={ci === 0} aria-label="Sposta su">
+								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 									<polyline points="18 15 12 9 6 15" />
 								</svg>
 							</button>
-							<button class="arrow-btn" onclick={() => moveDown(i)} disabled={i === $cardOrder.length - 1} aria-label="Sposta giù">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<button class="arrow-btn" onclick={() => moveCardDown(ci)} disabled={ci === $cardLayout.length - 1} aria-label="Sposta giù">
+								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 									<polyline points="6 9 12 15 18 9" />
 								</svg>
 							</button>
+							{#if $cardLayout.length > 1}
+								<button class="remove-card-btn" onclick={() => removeCard(ci)} aria-label="Rimuovi carta">
+									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+										<line x1="18" y1="6" x2="6" y2="18" />
+										<line x1="6" y1="6" x2="18" y2="18" />
+									</svg>
+								</button>
+							{/if}
 						</div>
 					</div>
-				{/each}
-			</div>
-		{/if}
+
+					<!-- Fields on this card -->
+					{#each card.fields as field, fi}
+						<div class="builder-field-row">
+							<span class="builder-field-dot"></span>
+							<span class="builder-field-label">{FIELD_LABELS[field]}</span>
+							<button class="remove-field-btn" onclick={() => removeFieldFromCard(ci, fi)} aria-label="Rimuovi campo">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+									<line x1="18" y1="6" x2="6" y2="18" />
+									<line x1="6" y1="6" x2="18" y2="18" />
+								</svg>
+							</button>
+						</div>
+					{/each}
+
+					<!-- Add field chips -->
+					<div class="builder-add-field-row">
+						{#each ALL_FIELDS as f}
+							<button
+								class="field-chip"
+								class:disabled={card.fields.includes(f)}
+								onclick={() => { if (!card.fields.includes(f)) addFieldToCard(ci, f); }}
+								disabled={card.fields.includes(f)}
+							>
+								+ {FIELD_LABELS[f]}
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/each}
+
+			<!-- Add card button -->
+			<button class="add-card-btn" onclick={addCard}>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+					<line x1="12" y1="5" x2="12" y2="19" />
+					<line x1="5" y1="12" x2="19" y2="12" />
+				</svg>
+				Aggiungi carta
+			</button>
+		</div>
 	</section>
 
 	<!-- Divider -->
@@ -446,7 +524,7 @@
 		cursor: pointer;
 	}
 
-	/* ---- Card Order ---- */
+	/* ---- Card Layout / Toggle ---- */
 	.order-toggle {
 		display: flex;
 		align-items: center;
@@ -456,7 +534,7 @@
 		border-radius: var(--radius-lg);
 		border: 1px solid var(--color-border);
 		cursor: pointer;
-		margin-bottom: 0.75rem;
+		margin-bottom: 1rem;
 		user-select: none;
 	}
 
@@ -502,44 +580,39 @@
 		transform: translateX(18px);
 	}
 
-	.order-list {
+	/* ---- Card Builder ---- */
+	.card-builder {
 		display: flex;
 		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	.builder-card {
+		background: var(--color-surface);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
-		overflow: hidden;
+		padding: 0.75rem 1rem;
 	}
 
-	.order-row {
+	.builder-card-header {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
-		padding: 0.85rem 1rem;
-		background: var(--color-surface);
-		border-bottom: 1px solid var(--color-border);
+		justify-content: space-between;
+		margin-bottom: 0.5rem;
 	}
 
-	.order-row:last-child {
-		border-bottom: none;
+	.builder-card-title {
+		font-size: 0.8rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--color-text-secondary);
 	}
 
-	.order-drag-handle {
-		color: var(--color-text-tertiary);
-		flex-shrink: 0;
+	.builder-card-actions {
 		display: flex;
 		align-items: center;
-	}
-
-	.order-label {
-		flex: 1;
-		font-size: 0.95rem;
-		font-weight: 600;
-		color: var(--color-text);
-	}
-
-	.order-arrows {
-		display: flex;
-		gap: 0.25rem;
+		gap: 0.15rem;
 	}
 
 	.arrow-btn {
@@ -557,6 +630,102 @@
 	.arrow-btn:disabled {
 		opacity: 0.25;
 		cursor: default;
+	}
+
+	.remove-card-btn {
+		background: none;
+		border: none;
+		padding: 0.3rem;
+		cursor: pointer;
+		color: var(--color-text-tertiary);
+		border-radius: var(--radius-md);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-left: 0.25rem;
+	}
+
+	.builder-field-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.3rem 0;
+		border-bottom: 1px solid var(--color-border-light, var(--color-border));
+	}
+
+	.builder-field-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--color-primary);
+		flex-shrink: 0;
+	}
+
+	.builder-field-label {
+		flex: 1;
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: var(--color-text);
+	}
+
+	.remove-field-btn {
+		background: none;
+		border: none;
+		padding: 0.25rem;
+		cursor: pointer;
+		color: var(--color-text-tertiary);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: var(--radius-sm, 4px);
+	}
+
+	.builder-add-field-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		padding-top: 0.6rem;
+	}
+
+	.field-chip {
+		padding: 0.3rem 0.7rem;
+		border-radius: var(--radius-full);
+		border: 1.5px solid var(--color-border);
+		background: var(--color-bg);
+		color: var(--color-text);
+		font-size: 0.78rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		cursor: pointer;
+		transition: opacity 0.15s ease;
+	}
+
+	.field-chip.disabled {
+		opacity: 0.3;
+		cursor: default;
+	}
+
+	.add-card-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		width: 100%;
+		padding: 0.75rem;
+		border: 1.5px dashed var(--color-border);
+		border-radius: var(--radius-lg);
+		background: none;
+		color: var(--color-text-secondary);
+		font-size: 0.88rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		cursor: pointer;
+		transition: border-color 0.15s ease, color 0.15s ease;
+	}
+
+	.add-card-btn:hover {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
 	}
 
 	/* ---- Archive Row ---- */

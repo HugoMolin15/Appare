@@ -10,6 +10,22 @@ export const CATEGORIES = {
 export type CategoryValue =
 	(typeof CATEGORIES)[keyof typeof CATEGORIES][number];
 
+// ---- Flashcard layout ----
+export type CardField = 'italiano' | 'hiragana' | 'katakana' | 'romaji' | 'kanji';
+export interface CardDefinition { fields: CardField[]; }
+export type CardLayout = CardDefinition[];
+
+export const DEFAULT_CARD_LAYOUT: CardLayout = [
+	{ fields: ['italiano'] },
+	{ fields: ['hiragana'] },
+	{ fields: ['katakana'] },
+	{ fields: ['romaji'] },
+	{ fields: ['kanji'] },
+];
+
+// ---- Word self-assessment score ----
+export type WordScore = 'none' | 'unknown' | 'learning' | 'known';
+
 /** A single vocabulary word */
 export interface Word {
 	id: string;
