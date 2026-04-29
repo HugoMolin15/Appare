@@ -48,7 +48,7 @@
 			<img src="/secondary_icon.png" alt="Appare logo" class="sidebar-icon" />
 			<div class="sidebar-text">
 				<span class="sidebar-title">Appare</span>
-				<span class="sidebar-subtitle">Scuola di lingua <span class="subtitle-highlight">Giapponese</span><br>di Tomoko Yamane</span>
+				<span class="sidebar-subtitle">Scuola di lingua Giapponese<br>di Tomoko Yamane</span>
 			</div>
 		</div>
 
@@ -154,7 +154,7 @@
 		font-weight: 800;
 		letter-spacing: -0.02em;
 		line-height: 1.1;
-		color: var(--color-primary);
+		color: #E8192C;
 	}
 
 	.sidebar-subtitle {
@@ -166,10 +166,6 @@
 		margin-top: 0.1rem;
 	}
 
-	.subtitle-highlight {
-		color: #E8192C;
-		font-weight: 700;
-	}
 
 	.sidebar-nav {
 		display: flex;
