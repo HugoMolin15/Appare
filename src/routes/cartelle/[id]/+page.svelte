@@ -98,7 +98,7 @@
 </script>
 
 <svelte:head>
-	<title>Appare — {folder?.name ?? 'Cartella'}</title>
+	<title>Anki-jin — {folder?.name ?? 'Cartella'}</title>
 </svelte:head>
 
 <div class="page page-enter">

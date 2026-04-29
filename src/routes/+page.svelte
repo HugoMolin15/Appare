@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Home</title>
+	<title>Anki-jin — Home</title>
 </svelte:head>
 
 <div class="page page-enter">
@@ -15,7 +15,7 @@
 		<div class="header-left">
 			<div class="header-text">
 				<span class="header-label">日本語</span>
-				<span class="header-title">Appare</span>
+				<span class="header-title">Anki-jin</span>
 			</div>
 		</div>
 		<a href="/impostazioni" class="settings-btn" aria-label="Impostazioni">

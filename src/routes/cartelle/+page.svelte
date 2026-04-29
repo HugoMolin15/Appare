@@ -21,7 +21,7 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Cartelle</title>
+	<title>Anki-jin — Cartelle</title>
 </svelte:head>
 
 <div class="page page-enter">

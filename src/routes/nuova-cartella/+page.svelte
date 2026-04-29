@@ -21,7 +21,7 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Nuova cartella</title>
+	<title>Anki-jin — Nuova cartella</title>
 </svelte:head>
 
 <div class="page page-enter">

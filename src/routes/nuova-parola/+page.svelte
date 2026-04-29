@@ -54,7 +54,7 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Nuova parola</title>
+	<title>Anki-jin — Nuova parola</title>
 </svelte:head>
 
 <div class="page page-enter">

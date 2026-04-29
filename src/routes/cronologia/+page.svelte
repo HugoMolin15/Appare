@@ -138,7 +138,7 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Cronologia</title>
+	<title>Anki-jin — Cronologia</title>
 </svelte:head>
 
 <div class="page page-enter">

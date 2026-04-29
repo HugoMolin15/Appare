@@ -1,6 +1,6 @@
 {
-  "name": "Appare",
-  "short_name": "Appare",
+  "name": "Anki-jin",
+  "short_name": "Anki-jin",
   "description": "Impara il giapponese con le flashcard",
   "start_url": "/",
   "display": "standalone",

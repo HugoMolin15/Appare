@@ -122,7 +122,7 @@
 <svelte:window onbeforeunload={handleBeforeUnload} />
 
 <svelte:head>
-	<title>Appare — Studia</title>
+	<title>Anki-jin — Studia</title>
 </svelte:head>
 
 <!-- Custom Modal -->

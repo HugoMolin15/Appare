@@ -25,7 +25,7 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Seleziona parole</title>
+	<title>Anki-jin — Seleziona parole</title>
 </svelte:head>
 
 <div class="page page-enter">

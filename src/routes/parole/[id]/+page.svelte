@@ -75,7 +75,7 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Modifica parola</title>
+	<title>Anki-jin — Modifica parola</title>
 </svelte:head>
 
 {#if showDeleteModal}

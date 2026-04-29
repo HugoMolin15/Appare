@@ -49,7 +49,7 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Accedi</title>
+	<title>Anki-jin — Accedi</title>
 </svelte:head>
 
 <div class="login-page">
@@ -57,7 +57,7 @@
 		<!-- Logo -->
 		<div class="logo">
 			<span class="logo-jp">日本語</span>
-			<span class="logo-title">Appare</span>
+			<span class="logo-title">Anki-jin</span>
 		</div>
 
 		<h1 class="heading">{mode === 'login' ? 'Bentornato' : 'Crea account'}</h1>

@@ -40,7 +40,7 @@
 	<aside class="sidebar" class:hidden={isLoginPage}>
 		<div class="sidebar-logo">
 			<span class="sidebar-jp">日本語</span>
-			<span class="sidebar-title">Appare</span>
+			<span class="sidebar-title">Anki-jin</span>
 		</div>
 
 		<nav class="sidebar-nav">

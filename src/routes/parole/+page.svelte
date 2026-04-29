@@ -66,7 +66,7 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Tutte le parole</title>
+	<title>Anki-jin — Tutte le parole</title>
 </svelte:head>
 
 <div class="page page-enter">

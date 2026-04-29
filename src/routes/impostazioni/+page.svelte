@@ -49,7 +49,7 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Impostazioni</title>
+	<title>Anki-jin — Impostazioni</title>
 </svelte:head>
 
 <div class="page page-enter">
