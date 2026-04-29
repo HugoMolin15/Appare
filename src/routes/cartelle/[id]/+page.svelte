@@ -378,7 +378,7 @@
 							{/if}
 						</div>
 					{:else}
-						<a href="/parole/{word.id}" class="word-row">
+						<a href="/parole/{word.id}?from=/cartelle/{folderId}" class="word-row">
 							<div class="word-main">
 								<span class="word-it">{word.italiano}</span>
 								<span class="word-jp font-jp">{word.hiragana || word.katakana || word.romaji || word.kanji}</span>
