@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { studyHistory } from '$lib/stores/history';
 	import { words } from '$lib/stores/words';
-	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, skipExitGuard } from '$lib/stores/studySession';
+	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection } from '$lib/stores/studySession';
 	import { dateColors, setDateColor } from '$lib/stores/dateColors';
 	import { FOLDER_COLORS } from '$lib/constants';
 	import { goto } from '$app/navigation';
@@ -144,7 +144,6 @@
 		const unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
 		if (unique.length === 0) return;
 		setSelectedWords(shuffle(unique));
-		skipExitGuard.set(true);
 		goto('/studia');
 	}
 
@@ -271,7 +270,6 @@
 					} else {
 						setSelectedWords(dayWords.map(w => w.id));
 					}
-					skipExitGuard.set(true);
 					goto('/studia');
 				}}>
 					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

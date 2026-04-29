@@ -4,7 +4,7 @@
 	import { folders } from '$lib/stores/folders';
 	import { words } from '$lib/stores/words';
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
-	import { setSelectedWords, skipExitGuard } from '$lib/stores/studySession';
+	import { setSelectedWords } from '$lib/stores/studySession';
 	import { shuffle } from '$lib/utils/shuffle';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import FolderModal from '$lib/components/FolderModal.svelte';
@@ -92,7 +92,6 @@
 		const ids = shuffle([...new Set(Array.from(selectedFolderIds).flatMap(collect))]);
 		if (ids.length === 0) return;
 		setSelectedWords(ids);
-		skipExitGuard.set(true);
 		goto('/studia');
 	}
 </script>

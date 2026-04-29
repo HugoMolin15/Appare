@@ -3,7 +3,7 @@
 	import { goto, onNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { words } from '$lib/stores/words';
-	import { selectedWordIds, clearSelection, skipExitGuard } from '$lib/stores/studySession';
+	import { selectedWordIds, clearSelection } from '$lib/stores/studySession';
 	import { allStudiedWordIds, recordStudy } from '$lib/stores/history';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Flashcard from '$lib/components/Flashcard.svelte';
@@ -14,9 +14,6 @@
 	const allWordsData = get(words);
 	const selectedIds = get(selectedWordIds);
 	const studiedIds = get(allStudiedWordIds);
-	const noGuard = get(skipExitGuard);
-	skipExitGuard.set(false);
-
 	let studySet = $state<typeof allWordsData>([]);
 	
 	if (selectedIds.size > 0) {
@@ -67,7 +64,7 @@
 
 	// Intercept internal navigation to warn user
 	onNavigate((navigation) => {
-		if (bypassGuard || noGuard) return;
+		if (bypassGuard) return;
 
 		if (!finished && studySet.length > 0 && studiedCount < studySet.length) {
 			showExitModal = true;
@@ -93,7 +90,6 @@
 
 	// Intercept browser refresh/close
 	function handleBeforeUnload(e: BeforeUnloadEvent) {
-		if (noGuard) return;
 		if (!finished && studySet.length > 0 && studiedCount < studySet.length) {
 			e.preventDefault();
 			e.returnValue = '';
@@ -102,8 +98,6 @@
 
 	// Trap browser back button and iOS swipe-back gesture
 	onMount(() => {
-		if (noGuard) return;
-
 		// Push a dummy state so back button/swipe triggers popstate instead of navigating
 		history.pushState(null, '', window.location.href);
 
