@@ -13,7 +13,7 @@
 	let { parentId, onClose }: Props = $props();
 
 	let name = $state('');
-	let selectedColor = $state('#8B1A1A');
+	let selectedColor = $state(FOLDER_COLORS[0]);
 
 	const colors = FOLDER_COLORS;
 
