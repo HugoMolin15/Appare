@@ -3,6 +3,7 @@ import { browser } from '$app/environment';
 import type { Word } from '$lib/types/word';
 import { currentUserId } from '$lib/stores/auth';
 import { pushWord, pushWords, deleteWord as dbDeleteWord } from '$lib/services/sync';
+import { UNCATEGORIZED_TAG } from '$lib/constants';
 
 const STORAGE_KEY = 'appare_words';
 const SEEDED_KEY = 'appare_seeded';
@@ -132,13 +133,13 @@ export function removeWordsFromFolder(wordIds: string[]) {
 		pushWords(toSync, uid);
 	}
 }
-/** Strip a custom tag from every word that has it */
+/** Strip a custom tag from every word that has it; words left with no tags get UNCATEGORIZED_TAG */
 export function removeTagFromAllWords(tag: string) {
 	words.update((current) =>
 		current.map((w) => {
 			if (!w.tags?.includes(tag)) return w;
 			const tags = w.tags.filter((t) => t !== tag);
-			return { ...w, tags: tags.length > 0 ? tags : undefined };
+			return { ...w, tags: tags.length > 0 ? tags : [UNCATEGORIZED_TAG] };
 		})
 	);
 	const uid = get(currentUserId);
