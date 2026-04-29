@@ -130,9 +130,11 @@
 		<div class="empty-state">
 			<span class="empty-icon">📝</span>
 			<p class="empty-text">Cartella vuota.</p>
-			<button class="study-folder-btn" style="width: auto; padding: 0.8rem 1.5rem; margin-top: 1rem;" onclick={() => showAddWordsModal = true}>
-				Aggiungi la prima parola
-			</button>
+			{#if !isProtected}
+				<button class="study-folder-btn" style="width: auto; padding: 0.8rem 1.5rem; margin-top: 1rem;" onclick={() => showAddWordsModal = true}>
+					Aggiungi la prima parola
+				</button>
+			{/if}
 		</div>
 	{:else}
 		{#if subfolders.length > 0}
@@ -298,7 +300,7 @@
 		</div>
 	{/if}
 
-	{#if folderWords.length === 0 && folder}
+	{#if folderWords.length === 0 && folder && !isProtected}
 		<div class="fab-container">
 			<button class="fab" onclick={() => showFolderModal = true}>
 				<Icon name="plus" size={18} strokeWidth={2.5} />
