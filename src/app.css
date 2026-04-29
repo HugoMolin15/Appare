@@ -216,23 +216,6 @@ body {
   animation: fade-in 0.15s ease-out both;
 }
 
-/* Disable landscape on small devices */
-@media (orientation: landscape) and (max-height: 500px) {
-  body::before {
-    content: 'Ruota il dispositivo';
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    background: var(--color-bg);
-    color: var(--color-text);
-    font-family: var(--font-sans);
-    font-size: 1.2rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
 
 /* Custom scrollbar (thin, subtle) */
 ::-webkit-scrollbar {
