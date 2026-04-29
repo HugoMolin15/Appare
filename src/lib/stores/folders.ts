@@ -6,7 +6,7 @@ import { pushFolder, deleteFolder as dbDeleteFolder } from '$lib/services/sync';
 
 const STORAGE_KEY = 'appare_folders';
 const SEEDED_KEY = 'appare_folders_seeded';
-const SEED_VERSION = '16';
+const SEED_VERSION = '17';
 
 /** Seed folder IDs */
 export const SEED_FOLDER_ID = 'seed-folder-luoghi';
@@ -193,7 +193,7 @@ const SEED_FOLDERS: Folder[] = [
 	},
 	{
 		id: SEED_FOLDER_LEZIONI,
-		name: 'Lezioni',
+		name: 'Quaderno di grammatica giapponese',
 		createdAt: 1713830400003
 	},
 	{
