@@ -93,16 +93,40 @@
 		folderWords.filter(w => $selectedWordIds.has(w.id)).length
 	);
 
-	// All folders except the current one, for the move sheet
-	let movableFolders = $derived(
-		$folders.filter(f => !f.parentId && f.id !== folderId)
+	// Drill-down state for the move sheet
+	let moveBreadcrumb = $state<string[]>([]); // stack of parent IDs navigated into
+	let moveCurrentParent = $derived(moveBreadcrumb.length > 0 ? moveBreadcrumb[moveBreadcrumb.length - 1] : null);
+
+	let moveFoldersAtLevel = $derived(
+		$folders.filter(f =>
+			(moveCurrentParent === null ? !f.parentId : f.parentId === moveCurrentParent) &&
+			f.id !== folderId
+		)
 	);
+
+	function folderHasChildren(id: string) {
+		return $folders.some(f => f.parentId === id);
+	}
+
+	function moveSheetDrillInto(id: string) {
+		moveBreadcrumb = [...moveBreadcrumb, id];
+	}
+
+	function moveSheetBack() {
+		moveBreadcrumb = moveBreadcrumb.slice(0, -1);
+	}
 
 	function moveSelected(targetFolderId: string) {
 		const ids = folderWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id);
 		moveWordsToFolder(ids, targetFolderId);
 		clearSelection();
 		showMoveSheet = false;
+		moveBreadcrumb = [];
+	}
+
+	function openMoveSheet() {
+		moveBreadcrumb = [];
+		showMoveSheet = true;
 	}
 
 	$effect(() => {
@@ -196,7 +220,7 @@
 				</div>
 				{#if selectedInFolder > 0}
 					<div class="controls-right">
-						<button class="text-link move" onclick={() => showMoveSheet = true}>Sposta</button>
+						<button class="text-link move" onclick={openMoveSheet}>Sposta</button>
 						<button class="text-link" onclick={clearSelection}>Deseleziona</button>
 					</div>
 				{/if}
@@ -333,21 +357,48 @@
 		<div class="sheet-backdrop" transition:fade={{ duration: 200 }} onclick={() => showMoveSheet = false}></div>
 		<div class="options-sheet" transition:fly={{ y: 300, duration: 300 }}>
 			<div class="sheet-header">
-				<h2 class="sheet-title">Sposta in cartella</h2>
+				{#if moveBreadcrumb.length > 0}
+					<button class="sheet-back" onclick={moveSheetBack}>
+						<Icon name="chevron-left" size={20} strokeWidth={2.5} />
+					</button>
+				{/if}
+				<h2 class="sheet-title">
+					{moveBreadcrumb.length > 0
+						? ($folders.find(f => f.id === moveCurrentParent)?.name ?? 'Cartella')
+						: 'Sposta in cartella'}
+				</h2>
 				<button class="sheet-close" onclick={() => showMoveSheet = false}>Annulla</button>
 			</div>
 			<div class="move-folder-list">
-				{#each movableFolders as f}
-					<button class="move-folder-row" onclick={() => moveSelected(f.id)}>
-						<div class="move-folder-icon" style={f.color ? `color: ${f.color}` : ''}>
-							<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-								<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+				{#each moveFoldersAtLevel as f}
+					{#if folderHasChildren(f.id)}
+						<button class="move-folder-row" onclick={() => moveSheetDrillInto(f.id)}>
+							<div class="move-folder-icon" style={f.color ? `color: ${f.color}` : ''}>
+								<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+									<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+								</svg>
+							</div>
+							<span class="move-folder-name">{f.name}</span>
+							<Icon name="chevron-right" size={18} />
+						</button>
+					{:else}
+						<button class="move-folder-row move-folder-leaf" onclick={() => moveSelected(f.id)}>
+							<div class="move-folder-icon" style={f.color ? `color: ${f.color}` : ''}>
+								<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+									<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+								</svg>
+							</div>
+							<span class="move-folder-name">{f.name}</span>
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<polyline points="20 12 20 22 4 22 4 12"></polyline>
+								<polyline points="22 7 12 17 2 7"></polyline>
 							</svg>
-						</div>
-						<span class="move-folder-name">{f.name}</span>
-						<Icon name="chevron-right" size={18} />
-					</button>
+						</button>
+					{/if}
 				{/each}
+				{#if moveFoldersAtLevel.length === 0}
+					<p class="move-empty">Nessuna cartella disponibile.</p>
+				{/if}
 			</div>
 		</div>
 	{/if}
@@ -836,6 +887,17 @@
 		color: #C5221F;
 	}
 
+	.sheet-back {
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		color: var(--color-text-secondary);
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+	}
+
 	.move-folder-list {
 		display: flex;
 		flex-direction: column;
@@ -863,6 +925,10 @@
 		border-bottom: none;
 	}
 
+	.move-folder-leaf {
+		color: var(--color-text);
+	}
+
 	.move-folder-icon {
 		display: flex;
 		align-items: center;
@@ -874,5 +940,12 @@
 		flex: 1;
 		font-size: 1rem;
 		font-weight: 600;
+	}
+
+	.move-empty {
+		font-size: 0.9rem;
+		color: var(--color-text-secondary);
+		padding: 1.5rem 0;
+		text-align: center;
 	}
 </style>
