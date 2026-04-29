@@ -14,7 +14,7 @@ import { studyHistory } from '$lib/stores/history';
 import { dateColors } from '$lib/stores/dateColors';
 import {
 	studyGoal,
-	japaneseFontSize,
+	appFontScale,
 	cardOrder,
 	randomCardOrder
 } from '$lib/stores/settings';
@@ -175,7 +175,9 @@ async function pullSettings(userId: string) {
 	if (get(currentUserId) !== userId) return;
 
 	studyGoal.set(data.study_goal);
-	japaneseFontSize.set(data.japanese_font_size);
+	// Guard against old 24–72 px values stored before the font-scale migration
+	const scale = data.japanese_font_size >= 80 ? data.japanese_font_size : 100;
+	appFontScale.set(scale);
 	cardOrder.set(data.card_order);
 	randomCardOrder.set(data.random_card_order);
 }
@@ -257,7 +259,7 @@ async function pushSettings(userId: string) {
 	await supabase.from('settings').upsert({
 		user_id: userId,
 		study_goal: get(studyGoal),
-		japanese_font_size: get(japaneseFontSize),
+		japanese_font_size: get(appFontScale),
 		card_order: get(cardOrder),
 		random_card_order: get(randomCardOrder)
 	});
