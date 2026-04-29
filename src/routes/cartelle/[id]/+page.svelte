@@ -13,9 +13,10 @@
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { FOLDER_COLORS, MY_WORDS_FOLDER_ID } from '$lib/constants';
+	import { shuffle } from '$lib/utils/shuffle';
 	import { fade, fly } from 'svelte/transition';
 
-	let folderId = $derived($page.params.id);
+	let folderId = $derived($page.params.id as string);
 	let isProtected = $derived(folderId === MY_WORDS_FOLDER_ID);
 	let showFolderModal = $state(false);
 	let showAddWordsModal = $state(false);
@@ -26,6 +27,19 @@
 	let itemToDelete = $state<{ type: 'word' | 'folder' | 'selection', id?: string, name?: string, ids?: string[] } | null>(null);
 
 	let folder = $derived($folders.find((f) => f.id === folderId));
+
+	// Select mode — hidden by default, user must tap "Seleziona"
+	let selectMode = $state(false);
+
+	function enterSelectMode() {
+		clearSelection();
+		selectMode = true;
+	}
+
+	function exitSelectMode() {
+		selectMode = false;
+		clearSelection();
+	}
 
 	function openOptions() {
 		editName = folder?.name ?? '';
@@ -65,6 +79,7 @@
 		} else if (itemToDelete.type === 'selection' && itemToDelete.ids) {
 			itemToDelete.ids.forEach(id => removeWord(id));
 			clearSelection();
+			selectMode = false;
 		} else if (itemToDelete.type === 'folder' && itemToDelete.id) {
 			const parent = folder?.parentId;
 			removeFolder(itemToDelete.id);
@@ -121,13 +136,23 @@
 
 	let filteredWords = $derived(filterWords(folderWords, searchQuery));
 
-	// Count how many selected words are in this specific folder
 	let selectedInFolder = $derived(
 		folderWords.filter(w => $selectedWordIds.has(w.id)).length
 	);
 
-	// Drill-down state for the move sheet
-	let moveBreadcrumb = $state<string[]>([]); // stack of parent IDs navigated into
+	function studyAll() {
+		setSelectedWords(shuffle(folderWords.map(w => w.id)));
+		goto('/studia');
+	}
+
+	function studySelected() {
+		const ids = folderWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id);
+		setSelectedWords(shuffle(ids));
+		goto('/studia');
+	}
+
+	// Drill-down state for the move sheet (Finder-style)
+	let moveBreadcrumb = $state<string[]>([]);
 	let moveCurrentParent = $derived(moveBreadcrumb.length > 0 ? moveBreadcrumb[moveBreadcrumb.length - 1] : null);
 
 	let moveFoldersAtLevel = $derived(
@@ -153,6 +178,7 @@
 		const ids = folderWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id);
 		moveWordsToFolder(ids, targetFolderId);
 		clearSelection();
+		selectMode = false;
 		showMoveSheet = false;
 		moveBreadcrumb = [];
 	}
@@ -177,8 +203,8 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader 
-		title={folder?.name ?? 'Cartella'} 
+	<PageHeader
+		title={folder?.name ?? 'Cartella'}
 		backHref={folder?.parentId ? `/cartelle/${folder.parentId}` : "/cartelle"}
 	>
 		{#snippet actions()}
@@ -267,71 +293,97 @@
 		{/if}
 
 		{#if folderWords.length > 0}
+			<!-- Search always visible at top of word section -->
 			<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
-			<button class="study-folder-btn" style="margin-bottom: 1rem;" onclick={() => {
-				if (selectedInFolder > 0) {
-					const selected = folderWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id);
-					setSelectedWords(selected);
-				} else {
-					setSelectedWords(folderWords.map(w => w.id));
-				}
-				goto('/studia');
-			}}>
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-					<polygon points="5 3 19 12 5 21 5 3" />
-				</svg>
-				{selectedInFolder > 0 ? `Studia ${selectedInFolder} selezionate` : 'Studia cartella'}
-			</button>
+			<!-- Controls bar: count + select toggle -->
+			<div class="controls-bar">
+				<span class="word-count-label">{folderWords.length} {folderWords.length === 1 ? 'parola' : 'parole'}</span>
+				<div class="controls-right">
+					{#if selectMode}
+						<button class="select-toggle-btn" onclick={exitSelectMode}>Fine</button>
+					{:else}
+						<button class="select-toggle-btn" onclick={enterSelectMode}>Seleziona</button>
+					{/if}
+				</div>
+			</div>
 
-			<div class="sort-row">
+			<!-- Action bar: context-dependent -->
+			{#if selectMode && selectedInFolder > 0}
+				<div class="select-actions">
+					<button class="select-action-btn primary" onclick={studySelected}>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<polygon points="5 3 19 12 5 21 5 3" />
+						</svg>
+						Studia {selectedInFolder}
+					</button>
+					<button class="select-action-btn" onclick={openMoveSheet}>Sposta</button>
+					<button class="select-action-btn danger" onclick={confirmDeleteSelected}>Elimina</button>
+					<button class="select-action-btn muted" onclick={() => clearSelection()}>Deseleziona</button>
+				</div>
+			{:else if !selectMode}
+				<button class="study-folder-btn" onclick={studyAll}>
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						<polygon points="5 3 19 12 5 21 5 3" />
+					</svg>
+					Studia cartella
+				</button>
+			{/if}
+
+			<!-- Sort row -->
+			<div class="sort-row" style="margin-top: 0.75rem;">
 				<button class="sort-btn" onclick={cycleWordSort}>
 					↕ {wordSortLabels[wordSortMode]}
 				</button>
 			</div>
 
-			<div class="folder-controls">
-				<div class="controls-left">
-					<p class="word-count-label">{folderWords.length} parole in questa cartella</p>
-					{#if selectedInFolder > 0}
-						<button class="text-link delete" onclick={confirmDeleteSelected}>Elimina selezionate</button>
-					{/if}
-				</div>
-				{#if selectedInFolder > 0}
-					<div class="controls-right">
-						<button class="text-link move" onclick={openMoveSheet}>Sposta</button>
-						<button class="text-link" onclick={clearSelection}>Deseleziona</button>
-					</div>
-				{/if}
-			</div>
-
+			<!-- Word list -->
 			<div class="word-list">
 				{#each filteredWords as word (word.id)}
-					<div class="word-row">
-						<!-- svelte-ignore a11y_click_events_have_key_events -->
-						<!-- svelte-ignore a11y_no_static_element_interactions -->
-						<div class="word-checkbox-area" onclick={() => toggleWordSelection(word.id)}>
+					{#if selectMode}
+						<!-- svelte-ignore a11y_interactive_supports_focus -->
+						<div class="word-row word-row-selectable" role="checkbox" aria-checked={$selectedWordIds.has(word.id)} onclick={() => toggleWordSelection(word.id)}>
 							<div class="word-checkbox" class:checked={$selectedWordIds.has(word.id)}>
 								<Icon name="check" strokeWidth={3} />
 							</div>
-						</div>
-						<div class="word-main">
-							<span class="word-it">{word.italiano}</span>
-							<span class="word-jp font-jp">
-								{word.hiragana || word.katakana || word.romaji || word.kanji}
-							</span>
-						</div>
-						{#if word.tags && word.tags.length > 0}
-							<div class="word-tags">
-								<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
-								{#if word.tags.length > 1}
-									<span class="word-tag-more">+{word.tags.length - 1}</span>
-								{/if}
+							<div class="word-main">
+								<span class="word-it">{word.italiano}</span>
+								<span class="word-jp font-jp">
+									{word.hiragana || word.katakana || word.romaji || word.kanji}
+								</span>
 							</div>
-						{:else if word.category}
-							<span class="word-cat" data-category={word.category}>{word.category}</span>
-						{/if}
-					</div>
+							{#if word.tags && word.tags.length > 0}
+								<div class="word-tags">
+									<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
+									{#if word.tags.length > 1}
+										<span class="word-tag-more">+{word.tags.length - 1}</span>
+									{/if}
+								</div>
+							{:else if word.category}
+								<span class="word-cat" data-category={word.category}>{word.category}</span>
+							{/if}
+						</div>
+					{:else}
+						<a href="/parole/{word.id}" class="word-row word-row-link">
+							<div class="word-main">
+								<span class="word-it">{word.italiano}</span>
+								<span class="word-jp font-jp">
+									{word.hiragana || word.katakana || word.romaji || word.kanji}
+								</span>
+							</div>
+							{#if word.tags && word.tags.length > 0}
+								<div class="word-tags">
+									<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
+									{#if word.tags.length > 1}
+										<span class="word-tag-more">+{word.tags.length - 1}</span>
+									{/if}
+								</div>
+							{:else if word.category}
+								<span class="word-cat" data-category={word.category}>{word.category}</span>
+							{/if}
+							<Icon name="chevron-right" size={16} class="word-chevron" />
+						</a>
+					{/if}
 				{/each}
 			</div>
 		{/if}
@@ -407,12 +459,10 @@
 				{#if !isProtected}
 				<div class="sheet-divider"></div>
 
-				{#if folderWords.length > 0}
-					<button class="sheet-action" onclick={() => { showOptionsSheet = false; showAddWordsModal = true; }}>
-						<Icon name="plus" size={18} />
-						Aggiungi parole
-					</button>
-				{/if}
+				<button class="sheet-action" onclick={() => { showOptionsSheet = false; showAddWordsModal = true; }}>
+					<Icon name="plus" size={18} />
+					Aggiungi parole
+				</button>
 
 				<button class="sheet-action danger" onclick={confirmDeleteFolder}>
 					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -439,6 +489,7 @@
 		<FolderModal parentId={folderId} onClose={() => showFolderModal = false} />
 	{/if}
 
+	<!-- Move sheet — Finder style: every folder selectable + chevron to drill in -->
 	{#if showMoveSheet}
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -447,7 +498,7 @@
 			<div class="sheet-header">
 				{#if moveBreadcrumb.length > 0}
 					<button class="sheet-back" onclick={moveSheetBack}>
-						<Icon name="chevron-left" size={20} strokeWidth={2.5} />
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
 					</button>
 				{/if}
 				<h2 class="sheet-title">
@@ -458,19 +509,31 @@
 				<button class="sheet-close" onclick={() => showMoveSheet = false}>Annulla</button>
 			</div>
 			<div class="move-folder-list">
+				<!-- When drilled in: "Sposta qui" places words in the current folder -->
+				{#if moveBreadcrumb.length > 0}
+					<div class="move-folder-entry">
+						<button class="move-folder-select metti-qui" onclick={() => moveSelected(moveCurrentParent!)}>
+							Sposta qui
+						</button>
+					</div>
+				{/if}
+
 				{#each moveFoldersAtLevel as f}
-					{#if folderHasChildren(f.id)}
-						<button class="move-folder-row" onclick={() => moveSheetDrillInto(f.id)}>
-							<span class="move-folder-name">{f.name}</span>
-							<Icon name="chevron-right" size={18} />
-						</button>
-					{:else}
-						<button class="move-folder-row move-folder-leaf" onclick={() => moveSelected(f.id)}>
+					<div class="move-folder-entry">
+						<!-- Tap name → select this folder as destination -->
+						<button class="move-folder-select" onclick={() => moveSelected(f.id)}>
 							<span class="move-folder-name">{f.name}</span>
 						</button>
-					{/if}
+						<!-- Tap chevron → drill into subfolders (only if has children) -->
+						{#if folderHasChildren(f.id)}
+							<button class="move-folder-drill" onclick={() => moveSheetDrillInto(f.id)} aria-label="Apri {f.name}">
+								<Icon name="chevron-right" size={18} />
+							</button>
+						{/if}
+					</div>
 				{/each}
-				{#if moveFoldersAtLevel.length === 0}
+
+				{#if moveFoldersAtLevel.length === 0 && moveBreadcrumb.length === 0}
 					<p class="move-empty">Nessuna cartella disponibile.</p>
 				{/if}
 			</div>
@@ -478,10 +541,10 @@
 	{/if}
 
 	{#if itemToDelete}
-		<ConfirmationModal 
+		<ConfirmationModal
 			title={itemToDelete.type === 'folder' ? 'Elimina cartella' : 'Elimina parole'}
-			message={itemToDelete.type === 'folder' 
-				? `Vuoi davvero eliminare la cartella "${itemToDelete.name}" e tutto il suo contenuto?` 
+			message={itemToDelete.type === 'folder'
+				? `Vuoi davvero eliminare la cartella "${itemToDelete.name}" e tutto il suo contenuto?`
 				: `Vuoi davvero eliminare le ${itemToDelete.ids?.length} parole selezionate?`}
 			confirmLabel="Elimina"
 			isDanger={true}
@@ -511,6 +574,14 @@
 		border-radius: var(--radius-full);
 	}
 
+	/* ---- Controls bar ---- */
+	.controls-bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 0.75rem;
+	}
+
 	.word-count-label {
 		font-size: 0.82rem;
 		font-weight: 500;
@@ -518,49 +589,63 @@
 		margin: 0;
 	}
 
-	/* ---- Folder Controls ---- */
-	.folder-controls {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-end;
-		margin-bottom: 2rem;
-		gap: 1rem;
-	}
-
-	.controls-left {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 0.5rem;
-	}
-
 	.controls-right {
 		display: flex;
 		align-items: center;
-		gap: 1.25rem;
+		gap: 0.75rem;
 	}
 
-	.text-link {
+	.select-toggle-btn {
 		background: none;
 		border: none;
-		padding: 0;
+		font-size: 0.9rem;
+		font-weight: 700;
+		font-family: var(--font-sans);
+		color: var(--color-primary);
+		cursor: pointer;
+		padding: 0.25rem 0;
+	}
+
+	/* ---- Select actions bar ---- */
+	.select-actions {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		margin-bottom: 0.75rem;
+	}
+
+	.select-action-btn {
+		padding: 0.5rem 0.85rem;
+		border-radius: var(--radius-full);
+		border: 1px solid var(--color-border);
 		font-size: 0.82rem;
 		font-weight: 700;
-		color: var(--color-text-secondary);
+		font-family: var(--font-sans);
 		cursor: pointer;
-		text-decoration: underline;
-		text-decoration-thickness: 1px;
-		text-underline-offset: 2px;
-	}
-
-	.text-link.delete {
-		color: var(--color-primary);
-	}
-
-	.text-link.move {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		background: var(--color-surface);
 		color: var(--color-text);
+		transition: all 0.15s ease;
 	}
 
+	.select-action-btn.primary {
+		background: var(--color-primary);
+		color: white;
+		border-color: var(--color-primary);
+	}
+
+	.select-action-btn.danger {
+		color: #C5221F;
+		border-color: #C5221F;
+	}
+
+	.select-action-btn.muted {
+		color: var(--color-text-secondary);
+	}
+
+	/* ---- Word list ---- */
 	.word-list {
 		display: flex;
 		flex-direction: column;
@@ -571,7 +656,8 @@
 		align-items: center;
 		justify-content: flex-start;
 		gap: 1rem;
-		padding: 1rem 0;
+		padding: 0.85rem 0;
+		border-bottom: 1px solid var(--color-border-light, var(--color-border));
 		user-select: none;
 	}
 
@@ -579,9 +665,18 @@
 		border-bottom: none;
 	}
 
-	.word-checkbox-area {
-		padding: 0.25rem;
+	.word-row-link {
+		text-decoration: none;
+		color: inherit;
+	}
+
+	.word-row-selectable {
 		cursor: pointer;
+		background: none;
+		border: none;
+		border-bottom: 1px solid var(--color-border-light, var(--color-border));
+		width: 100%;
+		text-align: left;
 	}
 
 	.word-checkbox {
@@ -654,6 +749,12 @@
 		white-space: nowrap;
 	}
 
+	:global(.word-chevron) {
+		color: var(--color-text-tertiary);
+		flex-shrink: 0;
+	}
+
+	/* ---- Study button ---- */
 	.study-folder-btn {
 		width: 100%;
 		padding: 0.9rem;
@@ -681,6 +782,32 @@
 		transform: translateY(0);
 	}
 
+	/* ---- Sort row ---- */
+	.sort-row {
+		margin-bottom: 0.5rem;
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	.sort-btn {
+		background: none;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-full);
+		padding: 0.3rem 0.85rem;
+		font-size: 0.78rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		color: var(--color-text-secondary);
+		cursor: pointer;
+	}
+
+	.sort-btn.reorder-active {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+	}
+
+	/* ---- Empty state ---- */
 	.empty-state {
 		flex: 1;
 		display: flex;
@@ -703,10 +830,11 @@
 		margin: 0;
 	}
 
+	/* ---- Folder list ---- */
 	.folder-list {
 		display: flex;
 		flex-direction: column;
-		margin-bottom: 2rem;
+		margin-bottom: 1.5rem;
 	}
 
 	.folder-item {
@@ -717,6 +845,7 @@
 		text-decoration: none;
 		color: inherit;
 		transition: background-color 0.12s ease;
+		border-bottom: 1px solid var(--color-border-light, var(--color-border));
 	}
 
 	.folder-item:last-child {
@@ -749,11 +878,12 @@
 		margin-top: 0.1rem;
 	}
 
-	.folder-chevron {
+	:global(.folder-chevron) {
 		color: var(--color-text-tertiary);
 		flex-shrink: 0;
 	}
 
+	/* ---- FAB ---- */
 	.fab-container {
 		position: fixed;
 		bottom: 2rem;
@@ -778,7 +908,38 @@
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 	}
 
-	/* ---- Options Sheet ---- */
+	/* ---- Reorder buttons ---- */
+	.reorder-btns {
+		display: flex;
+		gap: 0.25rem;
+		flex-shrink: 0;
+	}
+
+	.reorder-btn {
+		width: 32px;
+		height: 32px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		font-size: 1rem;
+		cursor: pointer;
+		color: var(--color-text);
+		transition: background-color 0.1s ease;
+	}
+
+	.reorder-btn:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+
+	.reorder-btn:not(:disabled):active {
+		background: var(--color-border);
+	}
+
+	/* ---- Bottom sheets ---- */
 	.sheet-backdrop {
 		position: fixed;
 		top: 0;
@@ -819,6 +980,7 @@
 		font-weight: 800;
 		color: var(--color-text-primary);
 		margin: 0;
+		flex: 1;
 	}
 
 	.sheet-close {
@@ -984,8 +1146,10 @@
 		display: flex;
 		align-items: center;
 		flex-shrink: 0;
+		margin-right: 0.5rem;
 	}
 
+	/* ---- Move sheet — Finder style ---- */
 	.move-folder-list {
 		display: flex;
 		flex-direction: column;
@@ -994,87 +1158,57 @@
 		padding: 0.5rem 0;
 	}
 
-	.move-folder-row {
+	/* Wrapper row — contains select button + optional drill button */
+	.move-folder-entry {
 		display: flex;
-		align-items: center;
-		gap: 1rem;
-		padding: 1rem 0;
-		background: none;
-		border: none;
-		border-bottom: 1px solid var(--color-border-light);
-		font-family: inherit;
-		cursor: pointer;
-		width: 100%;
-		text-align: left;
-		color: var(--color-text);
+		align-items: stretch;
+		border-bottom: 1px solid var(--color-border-light, var(--color-border));
 	}
 
-	.move-folder-row:last-child {
+	.move-folder-entry:last-child {
 		border-bottom: none;
 	}
 
-	.move-folder-leaf {
-		color: var(--color-text);
-	}
-
-	.sort-row {
-		margin-bottom: 0.5rem;
+	/* Tap name to SELECT this folder as destination */
+	.move-folder-select {
+		flex: 1;
 		display: flex;
-		gap: 0.5rem;
-		flex-wrap: wrap;
-	}
-
-	.sort-btn {
+		align-items: center;
+		padding: 1rem 0;
 		background: none;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-full);
-		padding: 0.3rem 0.85rem;
-		font-size: 0.78rem;
-		font-weight: 600;
-		font-family: var(--font-sans);
-		color: var(--color-text-secondary);
+		border: none;
+		font-family: inherit;
 		cursor: pointer;
+		text-align: left;
+		color: var(--color-text);
+		min-width: 0;
 	}
 
-	.sort-btn.reorder-active {
-		border-color: var(--color-primary);
+	.move-folder-select.metti-qui {
+		font-size: 0.95rem;
+		font-weight: 700;
 		color: var(--color-primary);
 	}
 
-	.reorder-btns {
-		display: flex;
-		gap: 0.25rem;
-		flex-shrink: 0;
-	}
-
-	.reorder-btn {
-		width: 32px;
-		height: 32px;
+	/* Tap chevron to DRILL INTO subfolders */
+	.move-folder-drill {
+		padding: 1rem 0 1rem 1rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--color-text-tertiary);
 		display: flex;
 		align-items: center;
-		justify-content: center;
-		background: var(--color-surface);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		font-size: 1rem;
-		cursor: pointer;
-		color: var(--color-text);
-		transition: background-color 0.1s ease;
-	}
-
-	.reorder-btn:disabled {
-		opacity: 0.3;
-		cursor: not-allowed;
-	}
-
-	.reorder-btn:not(:disabled):active {
-		background: var(--color-border);
+		flex-shrink: 0;
 	}
 
 	.move-folder-name {
 		flex: 1;
 		font-size: 1rem;
 		font-weight: 600;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.move-empty {

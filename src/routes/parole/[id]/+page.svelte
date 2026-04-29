@@ -261,7 +261,7 @@
 		<div class="sheet-header">
 			{#if moveBreadcrumb.length > 0}
 				<button class="sheet-back" onclick={moveSheetBack}>
-					<Icon name="chevron-left" size={20} strokeWidth={2.5} />
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
 				</button>
 			{/if}
 			<h2 class="sheet-title">
@@ -273,25 +273,38 @@
 		</div>
 
 		<div class="move-folder-list">
+			<!-- Root: "Nessuna cartella" option / Drilled in: "Metti qui" option -->
 			{#if moveBreadcrumb.length > 0}
-				<button class="move-folder-row move-folder-leaf" onclick={() => selectDestFolder(moveCurrentParent!)}>
-					<span class="move-folder-name">Metti qui</span>
-				</button>
+				<div class="move-folder-entry">
+					<button class="move-folder-select metti-qui" onclick={() => selectDestFolder(moveCurrentParent!)}>
+						Sposta qui
+					</button>
+				</div>
+			{:else}
+				<div class="move-folder-entry">
+					<button class="move-folder-select metti-qui" onclick={() => { destFolderId = undefined; showMoveSheet = false; }}>
+						Nessuna cartella
+					</button>
+				</div>
 			{/if}
+
 			{#each moveFoldersAtLevel as f}
-				{#if folderHasChildren(f.id)}
-					<button class="move-folder-row" onclick={() => moveSheetDrillInto(f.id)}>
-						<span class="move-folder-name">{f.name}</span>
-						<Icon name="chevron-right" size={18} />
-					</button>
-				{:else}
-					<button class="move-folder-row move-folder-leaf" onclick={() => selectDestFolder(f.id)}>
+				<div class="move-folder-entry">
+					<!-- Tap name → select this folder as destination -->
+					<button class="move-folder-select" onclick={() => selectDestFolder(f.id)}>
 						<span class="move-folder-name">{f.name}</span>
 					</button>
-				{/if}
+					<!-- Tap chevron → drill into subfolders -->
+					{#if folderHasChildren(f.id)}
+						<button class="move-folder-drill" onclick={() => moveSheetDrillInto(f.id)} aria-label="Apri {f.name}">
+							<Icon name="chevron-right" size={18} />
+						</button>
+					{/if}
+				</div>
 			{/each}
-			{#if moveFoldersAtLevel.length === 0 && moveBreadcrumb.length === 0}
-				<p class="move-empty">Nessuna cartella disponibile.</p>
+
+			{#if moveFoldersAtLevel.length === 0 && moveBreadcrumb.length > 0}
+				<p class="move-empty">Nessuna sottocartella.</p>
 			{/if}
 		</div>
 	</div>
@@ -618,29 +631,57 @@
 		flex: 1;
 	}
 
-	.move-folder-row {
+	/* ---- Move sheet — Finder style ---- */
+	.move-folder-entry {
+		display: flex;
+		align-items: stretch;
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	.move-folder-entry:last-child {
+		border-bottom: none;
+	}
+
+	/* Tap name to SELECT this folder */
+	.move-folder-select {
+		flex: 1;
 		display: flex;
 		align-items: center;
-		gap: 1rem;
 		padding: 1rem 0;
 		background: none;
 		border: none;
-		border-bottom: 1px solid var(--color-border);
 		font-family: inherit;
 		cursor: pointer;
-		width: 100%;
 		text-align: left;
 		color: var(--color-text);
+		min-width: 0;
 	}
 
-	.move-folder-row:last-child { border-bottom: none; }
+	.move-folder-select.metti-qui {
+		font-size: 0.95rem;
+		font-weight: 700;
+		color: var(--color-primary);
+	}
 
-	.move-folder-leaf { color: var(--color-primary); }
+	/* Tap chevron to DRILL INTO subfolders */
+	.move-folder-drill {
+		padding: 1rem 0 1rem 1rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--color-text-tertiary);
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+	}
 
 	.move-folder-name {
 		flex: 1;
 		font-size: 0.95rem;
 		font-weight: 600;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.move-empty {
