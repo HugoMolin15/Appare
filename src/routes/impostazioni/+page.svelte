@@ -128,6 +128,12 @@
 			</div>
 			<span class="slider-label-lg">A</span>
 		</div>
+
+		{#if $appFontScale !== 100}
+			<button class="reset-btn" onclick={() => appFontScale.set(100)}>
+				Ripristina dimensione predefinita
+			</button>
+		{/if}
 	</section>
 
 	<!-- Divider -->
@@ -384,6 +390,19 @@
 
 	.slider-container {
 		flex: 1;
+	}
+
+	.reset-btn {
+		margin-top: 0.75rem;
+		background: none;
+		border: none;
+		padding: 0;
+		font-size: 0.82rem;
+		font-family: var(--font-sans);
+		font-weight: 600;
+		color: var(--color-primary);
+		cursor: pointer;
+		text-align: left;
 	}
 
 	.font-slider {
