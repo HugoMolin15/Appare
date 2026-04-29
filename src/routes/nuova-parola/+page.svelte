@@ -12,21 +12,14 @@
 
 	let italiano = $state('');
 	let hiragana = $state('');
-	let katakana = $state('');
 	let romaji = $state('');
 	let kanji = $state('');
 	let selectedCategory = $state<CategoryValue | null>('Verbo Godan');
 	let wordType = $state<'word' | 'phrase'>('word');
 
-	let hasReading = $derived(
-		hiragana.trim().length > 0 ||
-		katakana.trim().length > 0 ||
-		romaji.trim().length > 0
-	);
-
 	let isValid = $derived(
 		italiano.trim().length > 0 &&
-		(hasReading || kanji.trim().length > 0) &&
+		hiragana.trim().length > 0 &&
 		(wordType === 'phrase' || selectedCategory !== null)
 	);
 
@@ -37,7 +30,7 @@
 		addWord({
 			italiano: italiano.trim(),
 			hiragana: hiragana.trim(),
-			katakana: katakana.trim(),
+			katakana: '',
 			romaji: romaji.trim(),
 			kanji: kanji.trim(),
 			category: selectedCategory ?? undefined,
@@ -62,18 +55,13 @@
 
 	<div class="fields">
 		<div class="field">
-			<label for="input-italiano" class="field-label">Italiano</label>
+			<label for="input-italiano" class="field-label">Italiano <span class="req">*</span></label>
 			<ClearableInput bind:value={italiano} placeholder="es. grande" id="input-italiano" />
 		</div>
 
 		<div class="field">
-			<label for="input-hiragana" class="field-label">Hiragana</label>
-			<ClearableInput bind:value={hiragana} placeholder="es. おおきい" id="input-hiragana" japanese lang="ja" />
-		</div>
-
-		<div class="field">
-			<label for="input-katakana" class="field-label">Katakana</label>
-			<ClearableInput bind:value={katakana} placeholder="es. オオキイ" id="input-katakana" japanese lang="ja" />
+			<label for="input-hiragana" class="field-label">Hiragana/Katakana <span class="req">*</span></label>
+			<ClearableInput bind:value={hiragana} placeholder="es. おおきい / オオキイ" id="input-hiragana" japanese lang="ja" />
 		</div>
 
 		<div class="field">
@@ -141,6 +129,11 @@
 		font-size: 0.82rem;
 		font-weight: 600;
 		color: var(--color-text);
+	}
+
+	.req {
+		color: var(--color-primary);
+		font-weight: 700;
 	}
 
 	.type-picker {
