@@ -13,7 +13,7 @@
 	let { parentId, onClose }: Props = $props();
 
 	let name = $state('');
-	let selectedColor = $state(FOLDER_COLORS[0]);
+	let selectedColor = $state('');
 
 	const colors = FOLDER_COLORS;
 
@@ -47,10 +47,19 @@
 		<div class="field">
 			<label class="field-label">Colore</label>
 			<div class="color-grid">
+				<button
+					type="button"
+					class="color-option color-none"
+					class:selected={selectedColor === ''}
+					onclick={() => selectedColor = ''}
+					aria-label="Nessun colore"
+				>
+					<Icon name="close" size={14} strokeWidth={2.5} />
+				</button>
 				{#each colors as color}
-					<button 
-						type="button" 
-						class="color-option" 
+					<button
+						type="button"
+						class="color-option"
 						style="background-color: {color}"
 						class:selected={selectedColor === color}
 						onclick={() => selectedColor = color}
@@ -178,6 +187,16 @@
 	}
 
 	.color-option.selected {
+		border-color: var(--color-text-primary);
+	}
+
+	.color-none {
+		background: var(--color-surface);
+		border-color: var(--color-border);
+		color: var(--color-text-secondary);
+	}
+
+	.color-none.selected {
 		border-color: var(--color-text-primary);
 	}
 
