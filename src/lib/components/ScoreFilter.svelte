@@ -15,9 +15,9 @@
 	const LABELS: Record<ScoreFilterValue, string> = {
 		all: 'Tutti',
 		none: 'Non valutate',
-		unknown: 'Non la so',
-		learning: 'Così così',
-		known: 'La so',
+		unknown: 'Difficile',
+		learning: 'Buono',
+		known: 'Facile',
 	};
 
 	const COLORS: Record<WordScore, string> = {

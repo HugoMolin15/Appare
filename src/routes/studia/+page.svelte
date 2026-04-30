@@ -200,13 +200,13 @@
 		<div class="assess-area">
 			<div class="assess-row">
 				<button type="button" class="assess-btn assess-unknown" onclick={() => assess('unknown')}>
-					Non la so
+					Difficile
 				</button>
 				<button type="button" class="assess-btn assess-learning" onclick={() => assess('learning')}>
-					Così così
+					Buono
 				</button>
 				<button type="button" class="assess-btn assess-known" onclick={() => assess('known')}>
-					La so
+					Facile
 				</button>
 			</div>
 			<button
