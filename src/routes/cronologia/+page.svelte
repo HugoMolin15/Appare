@@ -104,6 +104,9 @@
 	const wordSortCycle: WordSort[] = ['newest', 'oldest', 'it-az', 'jp-az'];
 	function cycleWordSort() { wordSortMode = wordSortCycle[(wordSortCycle.indexOf(wordSortMode) + 1) % wordSortCycle.length]; }
 
+	let periodSortMode = $state<'newest' | 'oldest'>('newest');
+	function cyclePeriodSort() { periodSortMode = periodSortMode === 'newest' ? 'oldest' : 'newest'; }
+
 	let daySelectMode = $state(false);
 
 	// When viewing a day, path.length === 4 and currentItems() returns string[] (word ids)
@@ -124,16 +127,24 @@
 	let filteredWords = $derived(filterWords(dayWords, searchQuery));
 
 	let filteredPeriodKeys = $derived.by(() => {
-		const keys = Object.keys(currentItems()).sort().reverse();
-		if (!periodSearchQuery.trim()) return keys;
+		const keys = Object.keys(currentItems()).sort();
+		const sorted = periodSortMode === 'oldest' ? keys : [...keys].reverse();
+		if (!periodSearchQuery.trim()) return sorted;
 		const q = periodSearchQuery.trim().toLowerCase();
-		return keys.filter(key => {
+		return sorted.filter(key => {
 			const label =
 				path.length === 1 ? monthNames[parseInt(key) - 1] :
 				path.length === 3 ? getDayName(key) :
 				key;
 			return label.toLowerCase().includes(q);
 		});
+	});
+
+	let currentLevelWordCount = $derived.by(() => {
+		const items = currentItems();
+		return new Set(
+			Object.values(items as Record<string, unknown>).flatMap(v => collectWordIdsFromNode(v))
+		).size;
 	});
 
 	let selectedInDayView = $derived(dayWords.filter(w => $selectedWordIds.has(w.id)).length);
@@ -174,6 +185,15 @@
 		goto('/studia');
 	}
 
+	function studyAllPeriods() {
+		const items = currentItems();
+		const allIds = Object.values(items as Record<string, unknown>).flatMap(v => collectWordIdsFromNode(v));
+		const unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
+		if (unique.length === 0) return;
+		setSelectedWords(shuffle(unique));
+		goto('/studia');
+	}
+
 	// Reset select mode when navigating
 	$effect(() => {
 		path; // track path changes
@@ -181,6 +201,7 @@
 		selectedKeys = new Set();
 		daySelectMode = false;
 		wordSortMode = 'newest';
+		periodSortMode = 'newest';
 		periodSearchQuery = '';
 		clearSelection();
 	});
@@ -241,6 +262,28 @@
 					{selectMode ? 'Fine' : 'Seleziona'}
 				</button>
 			</div>
+
+			{#if selectMode && selectedKeys.size > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={studySelectedPeriods} disabled={selectedNodeWordCount === 0}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia {selectedNodeWordCount} {selectedNodeWordCount === 1 ? 'parola' : 'parole'}
+					</button>
+					<button class="action-pill muted" onclick={exitSelectMode}>Deseleziona</button>
+				</div>
+			{:else if currentLevelWordCount > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={studyAllPeriods}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia tutto ({currentLevelWordCount})
+					</button>
+				</div>
+			{/if}
+
+			<div class="sort-row">
+				<button class="sort-btn" onclick={cyclePeriodSort}>↕ {periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}</button>
+			</div>
+
 			<div class="folder-list">
 				{#each filteredPeriodKeys as key}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -276,20 +319,6 @@
 					</div>
 				{/each}
 			</div>
-
-			{#if selectMode && selectedKeys.size > 0}
-				<div class="study-bar">
-					<span class="study-bar-info">
-						{selectedKeys.size} {selectedKeys.size === 1 ? 'periodo' : 'periodi'} · {selectedNodeWordCount} parole
-					</span>
-					<button class="study-bar-btn" onclick={studySelectedPeriods} disabled={selectedNodeWordCount === 0}>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-							<polygon points="5 3 19 12 5 21 5 3" />
-						</svg>
-						Studia
-					</button>
-				</div>
-			{/if}
 		{:else}
 			<!-- Show Words for the selected day -->
 			<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
@@ -434,48 +463,6 @@
 		color: white;
 	}
 
-	.study-bar {
-		position: fixed;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		background: var(--color-bg);
-		border-top: 1px solid var(--color-border);
-		padding: 0.85rem var(--spacing-page);
-		padding-bottom: calc(0.85rem + env(safe-area-inset-bottom));
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-		z-index: 50;
-	}
-
-	.study-bar-info {
-		font-size: 0.85rem;
-		font-weight: 600;
-		color: var(--color-text-secondary);
-	}
-
-	.study-bar-btn {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		padding: 0.65rem 1.25rem;
-		background: var(--color-primary);
-		color: white;
-		border: none;
-		border-radius: var(--radius-full);
-		font-size: 0.9rem;
-		font-weight: 700;
-		font-family: var(--font-sans);
-		cursor: pointer;
-		white-space: nowrap;
-	}
-
-	.study-bar-btn:disabled {
-		opacity: 0.4;
-		cursor: not-allowed;
-	}
 
 	.folder-list {
 		display: flex;
