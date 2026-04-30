@@ -50,13 +50,6 @@
 		return pills;
 	});
 
-	const SCORE_COLORS: Record<string, string> = {
-		none: 'var(--color-border)',
-		unknown: '#C5221F',
-		learning: '#D97706',
-		known: '#1D6FA4',
-	};
-
 	let filteredWords = $derived.by(() => {
 		let result = filterWords($words, searchQuery);
 		if (scoreFilter !== 'all') {
@@ -125,14 +118,7 @@
 
 	<div class="word-list">
 		{#each filteredWords as word (word.id)}
-			<WordRow {word} href="/parole/{word.id}">
-				{#snippet trailing()}
-					<span
-						class="word-score-dot"
-						style="background:{SCORE_COLORS[$wordScores[word.id] ?? 'none']}"
-					></span>
-				{/snippet}
-			</WordRow>
+			<WordRow {word} href="/parole/{word.id}" />
 		{/each}
 	</div>
 </div>
@@ -266,14 +252,6 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-	}
-
-	/* ---- Word score dot ---- */
-	.word-score-dot {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		flex-shrink: 0;
 	}
 
 	/* ---- Word list ---- */

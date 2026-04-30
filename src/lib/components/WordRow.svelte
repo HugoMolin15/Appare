@@ -1,6 +1,14 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { Word } from '$lib/types/word';
+	import { wordScores } from '$lib/stores/wordScores';
+
+	const SCORE_COLORS: Record<string, string> = {
+		none: 'var(--color-border)',
+		unknown: '#C5221F',
+		learning: '#D97706',
+		known: '#1D6FA4',
+	};
 
 	interface Props {
 		word: Word;
@@ -25,6 +33,7 @@
 	}: Props = $props();
 
 	const jp = $derived(word.hiragana || word.katakana || word.romaji || word.kanji);
+	const scoreColor = $derived(SCORE_COLORS[$wordScores[word.id] ?? 'none']);
 </script>
 
 {#if href}
@@ -34,15 +43,18 @@
 			<span class="word-it">{word.italiano}</span>
 			<span class="word-jp font-jp">{jp}</span>
 		</div>
-		{#if word.tags && word.tags.length > 0}
-			<div class="word-tags">
-				<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
-				{#if word.tags.length > 1}<span class="word-tag-more">+{word.tags.length - 1}</span>{/if}
-			</div>
-		{:else if word.category}
-			<span class="word-cat" data-category={word.category}>{word.category}</span>
-		{/if}
-		{#if trailing}{@render trailing()}{/if}
+		<div class="word-trailing">
+			<span class="word-score-dot" style="background:{scoreColor}"></span>
+			{#if word.tags && word.tags.length > 0}
+				<div class="word-tags">
+					<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
+					{#if word.tags.length > 1}<span class="word-tag-more">+{word.tags.length - 1}</span>{/if}
+				</div>
+			{:else if word.category}
+				<span class="word-cat" data-category={word.category}>{word.category}</span>
+			{/if}
+			{#if trailing}{@render trailing()}{/if}
+		</div>
 	</a>
 {:else}
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -60,15 +72,18 @@
 			<span class="word-it">{word.italiano}</span>
 			<span class="word-jp font-jp">{jp}</span>
 		</div>
-		{#if word.tags && word.tags.length > 0}
-			<div class="word-tags">
-				<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
-				{#if word.tags.length > 1}<span class="word-tag-more">+{word.tags.length - 1}</span>{/if}
-			</div>
-		{:else if word.category}
-			<span class="word-cat" data-category={word.category}>{word.category}</span>
-		{/if}
-		{#if trailing}{@render trailing()}{/if}
+		<div class="word-trailing">
+			<span class="word-score-dot" style="background:{scoreColor}"></span>
+			{#if word.tags && word.tags.length > 0}
+				<div class="word-tags">
+					<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
+					{#if word.tags.length > 1}<span class="word-tag-more">+{word.tags.length - 1}</span>{/if}
+				</div>
+			{:else if word.category}
+				<span class="word-cat" data-category={word.category}>{word.category}</span>
+			{/if}
+			{#if trailing}{@render trailing()}{/if}
+		</div>
 	</div>
 {/if}
 
@@ -107,6 +122,20 @@
 	.word-jp {
 		font-size: 0.85rem;
 		color: var(--color-text-secondary);
+	}
+
+	.word-trailing {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-shrink: 0;
+	}
+
+	.word-score-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		flex-shrink: 0;
 	}
 
 	.word-tags {
