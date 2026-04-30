@@ -44,7 +44,6 @@
 			<span class="word-jp font-jp">{jp}</span>
 		</div>
 		<div class="word-trailing">
-			<span class="word-score-dot" style="background:{scoreColor}"></span>
 			{#if word.tags && word.tags.length > 0}
 				<div class="word-tags">
 					<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
@@ -53,6 +52,7 @@
 			{:else if word.category}
 				<span class="word-cat" data-category={word.category}>{word.category}</span>
 			{/if}
+			<span class="word-score-dot" style="background:{scoreColor}"></span>
 			{#if trailing}{@render trailing()}{/if}
 		</div>
 	</a>
@@ -73,7 +73,6 @@
 			<span class="word-jp font-jp">{jp}</span>
 		</div>
 		<div class="word-trailing">
-			<span class="word-score-dot" style="background:{scoreColor}"></span>
 			{#if word.tags && word.tags.length > 0}
 				<div class="word-tags">
 					<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
@@ -82,6 +81,7 @@
 			{:else if word.category}
 				<span class="word-cat" data-category={word.category}>{word.category}</span>
 			{/if}
+			<span class="word-score-dot" style="background:{scoreColor}"></span>
 			{#if trailing}{@render trailing()}{/if}
 		</div>
 	</div>

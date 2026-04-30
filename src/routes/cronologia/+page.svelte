@@ -13,6 +13,14 @@
 	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { fly } from 'svelte/transition';
 	import { shuffle } from '$lib/utils/shuffle';
+	import { wordScores } from '$lib/stores/wordScores';
+
+	const SCORE_COLORS: Record<string, string> = {
+		none: 'var(--color-border)',
+		unknown: '#C5221F',
+		learning: '#D97706',
+		known: '#1D6FA4',
+	};
 
 	// Path state: [Year, Month, Week, Date]
 	let path = $state<string[]>([]);
@@ -367,7 +375,10 @@
 								{word.hiragana || word.katakana || word.romaji || word.kanji}
 							</span>
 						</div>
-						<span class="word-cat" data-category={word.category}>{word.category}</span>
+						<div class="word-trailing">
+							{#if word.category}<span class="word-cat" data-category={word.category}>{word.category}</span>{/if}
+							<span class="word-score-dot" style="background:{SCORE_COLORS[$wordScores[word.id] ?? 'none']}"></span>
+						</div>
 					</div>
 				{/each}
 			</div>
@@ -755,6 +766,20 @@
 	.word-jp {
 		font-size: 0.85rem;
 		color: var(--color-text-secondary);
+	}
+
+	.word-trailing {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-shrink: 0;
+	}
+
+	.word-score-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		flex-shrink: 0;
 	}
 
 	.word-cat {

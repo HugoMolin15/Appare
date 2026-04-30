@@ -398,11 +398,7 @@
 							{/snippet}
 						</WordRow>
 					{:else}
-						<WordRow {word} href="/parole/{word.id}?from=/cartelle/{folderId}">
-							{#snippet trailing()}
-								<Icon name="chevron-right" size={16} class="item-chevron" />
-							{/snippet}
-						</WordRow>
+						<WordRow {word} href="/parole/{word.id}?from=/cartelle/{folderId}" />
 					{/if}
 				{/each}
 			</div>
