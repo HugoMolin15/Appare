@@ -2,7 +2,7 @@ import { writable, get } from 'svelte/store';
 import { browser } from '$app/environment';
 import { currentUserId } from '$lib/stores/auth';
 import { pushSettingsUpdate } from '$lib/services/sync';
-import { type CardLayout, DEFAULT_CARD_LAYOUT } from '$lib/types/word';
+import { type CardField, type CardLayout, DEFAULT_CARD_FIELDS, DEFAULT_CARD_LAYOUT } from '$lib/types/word';
 
 /**
  * Creates a writable store that persists to localStorage and syncs to Supabase
@@ -46,7 +46,7 @@ export const appFontScale = persisted<number>('appare_font_scale', 100);
 export const studyGoal = persisted<number>('appare_study_goal', 10);
 
 /** Order of flashcard sides (array of field keys) */
-export const cardOrder = persisted<string[]>('appare_card_order', ['italiano', 'hiragana', 'katakana', 'romaji', 'kanji']);
+export const cardOrder = persisted<CardField[]>('appare_card_order', [...DEFAULT_CARD_FIELDS]);
 
 /** Whether to randomize flashcard side order each time */
 export const randomCardOrder = persisted<boolean>('appare_random_card_order', false);
@@ -58,7 +58,7 @@ export const cardLayout = persisted<CardLayout>('appare_card_layout', DEFAULT_CA
 export function clearSettings() {
 	appFontScale.set(100);
 	studyGoal.set(10);
-	cardOrder.set(['italiano', 'hiragana', 'katakana', 'romaji', 'kanji']);
+	cardOrder.set([...DEFAULT_CARD_FIELDS]);
 	randomCardOrder.set(false);
 	cardLayout.set(DEFAULT_CARD_LAYOUT);
 

@@ -4,9 +4,6 @@ import type { Word } from '$lib/types/word';
 // IDs of words selected for the current study session
 export const selectedWordIds = writable<Set<string>>(new Set());
 
-// When true, the study page skips the exit confirmation guard
-export const skipExitGuard = writable<boolean>(false);
-
 export function toggleWordSelection(id: string) {
 	selectedWordIds.update(current => {
 		const next = new Set(current);

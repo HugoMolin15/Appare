@@ -15,13 +15,9 @@ export type CardField = 'italiano' | 'hiragana' | 'katakana' | 'romaji' | 'kanji
 export interface CardDefinition { fields: CardField[]; }
 export type CardLayout = CardDefinition[];
 
-export const DEFAULT_CARD_LAYOUT: CardLayout = [
-	{ fields: ['italiano'] },
-	{ fields: ['hiragana'] },
-	{ fields: ['katakana'] },
-	{ fields: ['romaji'] },
-	{ fields: ['kanji'] },
-];
+export const DEFAULT_CARD_FIELDS: CardField[] = ['italiano', 'hiragana', 'katakana', 'romaji', 'kanji'];
+
+export const DEFAULT_CARD_LAYOUT: CardLayout = DEFAULT_CARD_FIELDS.map((f) => ({ fields: [f] }));
 
 // ---- Word self-assessment score ----
 export type WordScore = 'none' | 'unknown' | 'learning' | 'known';

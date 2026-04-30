@@ -135,6 +135,10 @@ export function removeWordsFromFolder(wordIds: string[]) {
 }
 /** Strip a custom tag from every word that has it; words left with no tags get UNCATEGORIZED_TAG */
 export function removeTagFromAllWords(tag: string) {
+	const affectedIds = get(words)
+		.filter((w) => w.tags?.includes(tag))
+		.map((w) => w.id);
+	if (affectedIds.length === 0) return;
 	words.update((current) =>
 		current.map((w) => {
 			if (!w.tags?.includes(tag)) return w;
@@ -144,8 +148,9 @@ export function removeTagFromAllWords(tag: string) {
 	);
 	const uid = get(currentUserId);
 	if (uid) {
-		const affected = get(words).filter((w) => !w.tags?.includes(tag));
-		if (affected.length > 0) pushWords(affected, uid);
+		const idSet = new Set(affectedIds);
+		const toSync = get(words).filter((w) => idSet.has(w.id));
+		pushWords(toSync, uid);
 	}
 }
 

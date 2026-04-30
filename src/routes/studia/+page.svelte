@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { get } from 'svelte/store';
-	import { goto, onNavigate } from '$app/navigation';
+	import { goto, beforeNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { words } from '$lib/stores/words';
 	import { selectedWordIds, clearSelection } from '$lib/stores/studySession';
@@ -69,13 +69,13 @@
 	let bypassGuard = false;
 
 	// Intercept internal navigation to warn user
-	onNavigate((navigation) => {
+	beforeNavigate((navigation) => {
 		if (bypassGuard) return;
 
 		if (!finished && studySet.length > 0 && studiedCount < studySet.length) {
 			showExitModal = true;
 			pendingUrl = navigation.to?.url.pathname || '/';
-			(navigation as any).cancel();
+			navigation.cancel();
 		}
 	});
 
