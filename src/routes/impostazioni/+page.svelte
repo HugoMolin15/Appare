@@ -95,86 +95,24 @@
 <div class="page page-enter">
 	<PageHeader title="Impostazioni" />
 
-	<!-- Study Goal Section -->
-	<section class="section">
-		<h2 class="section-heading">Obiettivo di studio</h2>
-		<p class="section-subtitle">Quante parole vuoi imparare ogni giorno? Questo influenzerà i colori della tua heatmap.</p>
-
-		<div class="goal-input-container">
-			<input 
-				type="number" 
-				class="goal-input" 
-				value={$studyGoal} 
-				oninput={handleGoalInput}
-				min="1"
-				max="100"
-			/>
-			<span class="goal-unit">parole al giorno</span>
+	<!-- Account / Login -->
+	{#if $currentUser}
+		<div class="account-row">
+			<div class="account-info">
+				<span class="account-label">Account</span>
+				<span class="account-email">{$currentUser.email ?? ''}</span>
+			</div>
+			<button class="signout-btn" onclick={handleSignOut}>Esci</button>
 		</div>
-
-		<div class="intensity-legend">
-			<div class="legend-item">
-				<div class="legend-color intensity-0"></div>
-				<span class="legend-text">0</span>
+	{:else}
+		<div class="login-cta">
+			<div class="login-cta-text">
+				<span class="login-cta-title">Salva i tuoi progressi</span>
+				<span class="login-cta-sub">Crea un account per sincronizzare i dati su tutti i tuoi dispositivi.</span>
 			</div>
-			<div class="legend-item">
-				<div class="legend-color intensity-1"></div>
-				<span class="legend-text">1-{Math.max(1, Math.floor($studyGoal * 0.5) - 1)}</span>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color intensity-2"></div>
-				<span class="legend-text">{Math.floor($studyGoal * 0.5)}+</span>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color intensity-3"></div>
-				<span class="legend-text">{Math.floor($studyGoal * 0.75)}+</span>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color intensity-4"></div>
-				<span class="legend-text">{$studyGoal}+</span>
-			</div>
+			<a href="/login" class="login-cta-btn">Accedi / Registrati</a>
 		</div>
-	</section>
-
-	<!-- Divider -->
-	<div class="divider"></div>
-
-	<!-- Font Size Section -->
-	<section class="section">
-		<h2 class="section-heading">Dimensione testo</h2>
-		<p class="section-subtitle">Regola la dimensione di tutto il testo nell'app.</p>
-
-		<div class="preview-card">
-			<div class="preview-inner">
-				<span class="preview-label" style="font-size: {$appFontScale * 0.01 * 0.82}rem; color: var(--color-text-secondary);">Tutte le parole</span>
-				<span class="preview-title" style="font-size: {$appFontScale * 0.01 * 1.75}rem;">I miei progressi</span>
-				<span class="preview-jp font-jp" style="font-size: {$appFontScale * 0.01 * 3}rem; color: var(--color-primary);">大きい</span>
-			</div>
-		</div>
-
-		<div class="slider-row">
-			<span class="slider-label-sm">A</span>
-			<div class="slider-container">
-				<input
-					type="range"
-					min="80"
-					max="130"
-					step="1"
-					value={$appFontScale}
-					oninput={handleSliderInput}
-					class="font-slider"
-					style="--progress: {sliderProgress}%"
-				/>
-			</div>
-			<span class="slider-label-lg">A</span>
-		</div>
-
-		{#if $appFontScale !== 100}
-			<button class="reset-btn" onclick={() => appFontScale.set(100)}>
-				Ripristina dimensione predefinita
-			</button>
-		{/if}
-	</section>
+	{/if}
 
 	<!-- Divider -->
 	<div class="divider"></div>
@@ -273,6 +211,90 @@
 	<!-- Divider -->
 	<div class="divider"></div>
 
+	<!-- Font Size Section -->
+	<section class="section">
+		<h2 class="section-heading">Dimensione testo</h2>
+		<p class="section-subtitle">Regola la dimensione di tutto il testo nell'app.</p>
+
+		<div class="preview-card">
+			<div class="preview-inner">
+				<span class="preview-label" style="font-size: {$appFontScale * 0.01 * 0.82}rem; color: var(--color-text-secondary);">Tutte le parole</span>
+				<span class="preview-title" style="font-size: {$appFontScale * 0.01 * 1.75}rem;">I miei progressi</span>
+				<span class="preview-jp font-jp" style="font-size: {$appFontScale * 0.01 * 3}rem; color: var(--color-primary);">大きい</span>
+			</div>
+		</div>
+
+		<div class="slider-row">
+			<span class="slider-label-sm">A</span>
+			<div class="slider-container">
+				<input
+					type="range"
+					min="80"
+					max="130"
+					step="1"
+					value={$appFontScale}
+					oninput={handleSliderInput}
+					class="font-slider"
+					style="--progress: {sliderProgress}%"
+				/>
+			</div>
+			<span class="slider-label-lg">A</span>
+		</div>
+
+		{#if $appFontScale !== 100}
+			<button class="reset-btn" onclick={() => appFontScale.set(100)}>
+				Ripristina dimensione predefinita
+			</button>
+		{/if}
+	</section>
+
+	<!-- Divider -->
+	<div class="divider"></div>
+
+	<!-- Study Goal Section -->
+	<section class="section">
+		<h2 class="section-heading">Obiettivo di studio</h2>
+		<p class="section-subtitle">Quante parole vuoi imparare ogni giorno? Questo influenzerà i colori della tua heatmap.</p>
+
+		<div class="goal-input-container">
+			<input
+				type="number"
+				class="goal-input"
+				value={$studyGoal}
+				oninput={handleGoalInput}
+				min="1"
+				max="100"
+			/>
+			<span class="goal-unit">parole al giorno</span>
+		</div>
+
+		<div class="intensity-legend">
+			<div class="legend-item">
+				<div class="legend-color intensity-0"></div>
+				<span class="legend-text">0</span>
+			</div>
+			<div class="legend-item">
+				<div class="legend-color intensity-1"></div>
+				<span class="legend-text">1-{Math.max(1, Math.floor($studyGoal * 0.5) - 1)}</span>
+			</div>
+			<div class="legend-item">
+				<div class="legend-color intensity-2"></div>
+				<span class="legend-text">{Math.floor($studyGoal * 0.5)}+</span>
+			</div>
+			<div class="legend-item">
+				<div class="legend-color intensity-3"></div>
+				<span class="legend-text">{Math.floor($studyGoal * 0.75)}+</span>
+			</div>
+			<div class="legend-item">
+				<div class="legend-color intensity-4"></div>
+				<span class="legend-text">{$studyGoal}+</span>
+			</div>
+		</div>
+	</section>
+
+	<!-- Divider -->
+	<div class="divider"></div>
+
 	<!-- Archive Count -->
 	<div class="archive-row">
 		<div class="archive-left">
@@ -284,28 +306,6 @@
 		</div>
 		<span class="archive-count">{$manualWordCount}</span>
 	</div>
-
-	<!-- Divider -->
-	<div class="divider" style="margin-top: 1.5rem;"></div>
-
-	<!-- Account -->
-	{#if $currentUser}
-		<div class="account-row">
-			<div class="account-info">
-				<span class="account-label">Account</span>
-				<span class="account-email">{$currentUser.email ?? ''}</span>
-			</div>
-			<button class="signout-btn" onclick={handleSignOut}>Esci</button>
-		</div>
-	{:else}
-		<div class="login-cta">
-			<div class="login-cta-text">
-				<span class="login-cta-title">Salva i tuoi progressi</span>
-				<span class="login-cta-sub">Crea un account per sincronizzare i dati su tutti i tuoi dispositivi.</span>
-			</div>
-			<a href="/login" class="login-cta-btn">Accedi / Registrati</a>
-		</div>
-	{/if}
 
 	<!-- Website link -->
 	<div class="site-link-row">
