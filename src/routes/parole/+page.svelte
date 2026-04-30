@@ -5,6 +5,8 @@
 	import { wordScores } from '$lib/stores/wordScores';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import WordRow from '$lib/components/WordRow.svelte';
+	import ScoreFilter from '$lib/components/ScoreFilter.svelte';
+	import FilterPills from '$lib/components/FilterPills.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
@@ -46,14 +48,6 @@
 		for (const g of selectedGroups) pills.push({ label: g, remove: () => removeGroup(g) });
 		return pills;
 	});
-
-	const SCORE_LABELS: Record<string, string> = {
-		all: 'Tutti',
-		none: 'Non valutate',
-		unknown: 'Non la so',
-		learning: 'Così così',
-		known: 'La so',
-	};
 
 	const SCORE_COLORS: Record<string, string> = {
 		none: 'var(--color-border)',
@@ -122,35 +116,9 @@
 
 	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
-	<!-- Score filter chips -->
-	<div class="score-filter-row">
-		{#each (['all', 'none', 'unknown', 'learning', 'known'] as const) as s}
-			<button
-				class="score-chip"
-				class:active={scoreFilter === s}
-				onclick={() => scoreFilter = s}
-				style={s !== 'all' ? `--chip-color: ${SCORE_COLORS[s]}` : ''}
-			>
-				{#if s !== 'all'}
-					<span class="score-chip-dot" style="background:{SCORE_COLORS[s]}"></span>
-				{/if}
-				{SCORE_LABELS[s]}
-			</button>
-		{/each}
-	</div>
+	<ScoreFilter value={scoreFilter} onChange={(v) => scoreFilter = v} />
 
-	{#if activePills.length > 0}
-		<div class="pills-row">
-			{#each activePills as pill}
-				<span class="pill">
-					{pill.label}
-					<button class="pill-remove" onclick={pill.remove} aria-label="Rimuovi filtro {pill.label}">
-						<Icon name="close" size={12} strokeWidth={3} />
-					</button>
-				</span>
-			{/each}
-		</div>
-	{/if}
+	<FilterPills pills={activePills} />
 
 	<p class="word-count-label">{filteredWords.length} parole</p>
 
@@ -301,97 +269,11 @@
 		justify-content: center;
 	}
 
-	/* ---- Score filter chips ---- */
-	.score-filter-row {
-		display: flex;
-		gap: 0.4rem;
-		overflow-x: auto;
-		scrollbar-width: none;
-		-ms-overflow-style: none;
-		margin-bottom: 0.75rem;
-		padding-bottom: 0.1rem;
-	}
-
-	.score-filter-row::-webkit-scrollbar { display: none; }
-
-	.score-chip {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.3rem;
-		padding: 0.35rem 0.75rem;
-		border-radius: var(--radius-full);
-		border: 1.5px solid var(--color-border);
-		background: var(--color-bg);
-		color: var(--color-text-secondary);
-		font-size: 0.78rem;
-		font-weight: 600;
-		font-family: var(--font-sans);
-		cursor: pointer;
-		white-space: nowrap;
-		flex-shrink: 0;
-		transition: border-color 0.15s ease, color 0.15s ease;
-	}
-
-	.score-chip.active {
-		border-color: var(--chip-color, var(--color-primary));
-		color: var(--chip-color, var(--color-primary));
-		background: color-mix(in srgb, var(--chip-color, var(--color-primary)) 10%, transparent);
-	}
-
-	.score-chip-dot {
-		width: 7px;
-		height: 7px;
-		border-radius: 50%;
-		flex-shrink: 0;
-	}
-
 	/* ---- Word score dot ---- */
 	.word-score-dot {
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		flex-shrink: 0;
-	}
-
-	/* ---- Active pills row ---- */
-	.pills-row {
-		display: flex;
-		gap: 0.4rem;
-		overflow-x: auto;
-		scrollbar-width: none;
-		-ms-overflow-style: none;
-		margin-bottom: 0.75rem;
-		padding-bottom: 0.1rem;
-	}
-
-	.pills-row::-webkit-scrollbar { display: none; }
-
-	.pill {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.35rem;
-		padding: 0.35rem 0.5rem 0.35rem 0.75rem;
-		background-color: var(--color-primary);
-		color: white;
-		border-radius: var(--radius-full);
-		font-size: 0.8rem;
-		font-weight: 600;
-		white-space: nowrap;
-		flex-shrink: 0;
-	}
-
-	.pill-remove {
-		background: rgba(255,255,255,0.25);
-		border: none;
-		border-radius: 50%;
-		width: 18px;
-		height: 18px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		color: white;
-		padding: 0;
 		flex-shrink: 0;
 	}
 
