@@ -9,10 +9,12 @@
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import type { Word } from '$lib/types/word';
+	import type { Word, WordScore } from '$lib/types/word';
 	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { fly } from 'svelte/transition';
 	import { shuffle } from '$lib/utils/shuffle';
+	import ScoreFilter from '$lib/components/ScoreFilter.svelte';
+	import { wordScores } from '$lib/stores/wordScores';
 
 	// Path state: [Year, Month, Week, Date]
 	let path = $state<string[]>([]);
@@ -97,20 +99,36 @@
 
 	let searchQuery = $state('');
 
+	type WordSort = 'newest' | 'oldest' | 'it-az' | 'jp-az';
+	let wordSortMode = $state<WordSort>('newest');
+	const wordSortLabels: Record<WordSort, string> = { newest: 'Più recenti', oldest: 'Meno recenti', 'it-az': 'A-Z Italiano', 'jp-az': 'A-Z Giapponese' };
+	const wordSortCycle: WordSort[] = ['newest', 'oldest', 'it-az', 'jp-az'];
+	function cycleWordSort() { wordSortMode = wordSortCycle[(wordSortCycle.indexOf(wordSortMode) + 1) % wordSortCycle.length]; }
+
+	let scoreFilter = $state<'all' | WordScore>('all');
+	let daySelectMode = $state(false);
+
 	// When viewing a day, path.length === 4 and currentItems() returns string[] (word ids)
 	let isDayView = $derived(path.length === 4);
 
-	let dayWords = $derived(
-		isDayView
-			? (currentItems() as string[]).map(id => $words.find(w => w.id === id)).filter((w): w is Word => w !== undefined)
-			: [] as Word[]
-	);
+	let dayWords = $derived.by(() => {
+		if (!isDayView) return [] as Word[];
+		const base = (currentItems() as string[])
+			.map(id => $words.find(w => w.id === id))
+			.filter((w): w is Word => w !== undefined);
+		const arr = [...base];
+		if (wordSortMode === 'oldest') return arr.sort((a, b) => a.createdAt - b.createdAt);
+		if (wordSortMode === 'it-az') return arr.sort((a, b) => a.italiano.localeCompare(b.italiano, 'it'));
+		if (wordSortMode === 'jp-az') return arr.sort((a, b) => (a.hiragana || a.katakana).localeCompare(b.hiragana || b.katakana, 'ja'));
+		return arr;
+	});
 
-	let filteredWords = $derived(filterWords(dayWords, searchQuery));
-
-	let selectedInFolder = $derived(
-		dayWords.filter(w => $selectedWordIds.has(w.id)).length
+	let scoreFilteredWords = $derived(
+		scoreFilter === 'all' ? dayWords : dayWords.filter(w => ($wordScores[w.id] ?? 'none') === scoreFilter)
 	);
+	let filteredWords = $derived(filterWords(scoreFilteredWords, searchQuery));
+
+	let selectedInDayView = $derived(dayWords.filter(w => $selectedWordIds.has(w.id)).length);
 
 	// Folder select mode (at non-day levels)
 	let selectMode = $state(false);
@@ -153,6 +171,10 @@
 		path; // track path changes
 		selectMode = false;
 		selectedKeys = new Set();
+		daySelectMode = false;
+		scoreFilter = 'all';
+		wordSortMode = 'newest';
+		clearSelection();
 	});
 
 	// Color editing for folder nodes
@@ -264,42 +286,46 @@
 			<!-- Show Words for the selected day -->
 			<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
-			<div class="folder-actions" style="margin-bottom: 1.5rem;">
-				<button class="study-folder-btn" onclick={() => {
-					if (selectedInFolder > 0) {
-						const selected = dayWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id);
-						setSelectedWords(selected);
-					} else {
-						setSelectedWords(dayWords.map(w => w.id));
-					}
-					goto('/studia');
-				}}>
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-						<polygon points="5 3 19 12 5 21 5 3" />
-					</svg>
-					{#if selectedInFolder > 0}
-						Studia {selectedInFolder} {selectedInFolder === 1 ? 'selezionata' : 'selezionate'}
-					{:else}
-						Studia cartella
-					{/if}
+			<div class="controls-bar">
+				<span class="count-label">{dayWords.length} {dayWords.length === 1 ? 'parola' : 'parole'}</span>
+				<button class="select-toggle" onclick={() => { daySelectMode = !daySelectMode; if (!daySelectMode) clearSelection(); }}>
+					{daySelectMode ? 'Fine' : 'Seleziona'}
 				</button>
 			</div>
 
-			<div class="header-row-flex">
-				<p class="word-count-label">{dayWords.length} parole in questa cartella</p>
-				{#if selectedInFolder > 0}
-					<button class="clear-btn" onclick={clearSelection}>Deseleziona</button>
-				{/if}
+			{#if daySelectMode && selectedInDayView > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={() => { setSelectedWords(shuffle(dayWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id))); goto('/studia'); }}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia {selectedInDayView} {selectedInDayView === 1 ? 'parola' : 'parole'}
+					</button>
+					<button class="action-pill muted" onclick={clearSelection}>Deseleziona</button>
+				</div>
+			{:else if dayWords.length > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={() => { setSelectedWords(shuffle(dayWords.map(w => w.id))); goto('/studia'); }}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia tutto ({dayWords.length})
+					</button>
+				</div>
+			{/if}
+
+			<ScoreFilter value={scoreFilter} onChange={(v) => scoreFilter = v} />
+
+			<div class="sort-row">
+				<button class="sort-btn" onclick={cycleWordSort}>↕ {wordSortLabels[wordSortMode]}</button>
 			</div>
-			
+
 			<div class="word-list">
 				{#each filteredWords as word (word.id)}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
-					<div class="word-row" onclick={() => toggleWordSelection(word.id)}>
-						<div class="word-checkbox" class:checked={$selectedWordIds.has(word.id)}>
-							<Icon name="check" strokeWidth={3} />
-						</div>
+					<div class="word-row" class:selectable={daySelectMode} onclick={daySelectMode ? () => toggleWordSelection(word.id) : undefined}>
+						{#if daySelectMode}
+							<div class="word-checkbox" class:checked={$selectedWordIds.has(word.id)}>
+								<Icon name="check" strokeWidth={3} />
+							</div>
+						{/if}
 						<div class="word-main">
 							<span class="word-it">{word.italiano}</span>
 							<span class="word-jp font-jp">
@@ -610,61 +636,77 @@
 		cursor: pointer;
 	}
 
-	.study-folder-btn {
-		width: 100%;
-		padding: 0.9rem;
-		background-color: var(--color-primary);
-		color: white;
-		border: none;
-		border-radius: var(--radius-lg);
-		font-size: 0.95rem;
-		font-weight: 700;
-		font-family: var(--font-sans);
-		cursor: pointer;
+	/* ---- Day view controls ---- */
+	.controls-bar {
 		display: flex;
 		align-items: center;
-		justify-content: center;
-		gap: 0.5rem;
-		transition: all 0.2s ease;
-	}
-
-	.study-folder-btn:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(139, 26, 26, 0.3);
-	}
-
-	.study-folder-btn:active {
-		transform: translateY(0);
-	}
-
-	.header-row-flex {
-		display: flex;
 		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 1rem;
+		margin-bottom: 0.65rem;
 	}
 
-	.clear-btn {
-		background: none;
-		border: none;
-		color: var(--color-primary);
-		font-size: 0.82rem;
-		font-weight: 600;
-		cursor: pointer;
-		padding: 0;
-	}
-
-	.clear-btn:hover {
-		text-decoration: underline;
-	}
-
-	/* Word list styles */
-	.word-count-label {
+	.count-label {
 		font-size: 0.82rem;
 		font-weight: 500;
 		color: var(--color-text-secondary);
-		margin: 0;
 	}
+
+	.select-toggle {
+		background: none;
+		border: none;
+		font-size: 0.9rem;
+		font-weight: 700;
+		font-family: var(--font-sans);
+		color: var(--color-primary);
+		cursor: pointer;
+		padding: 0.25rem 0;
+	}
+
+	.action-row {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		align-items: center;
+		margin-bottom: 0.65rem;
+	}
+
+	.study-btn {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.6rem 1rem;
+		background: var(--color-primary);
+		color: white;
+		border: none;
+		border-radius: var(--radius-full);
+		font-size: 0.88rem;
+		font-weight: 700;
+		font-family: var(--font-sans);
+		cursor: pointer;
+		white-space: nowrap;
+	}
+
+	.action-pill {
+		padding: 0.5rem 0.85rem;
+		border-radius: var(--radius-full);
+		border: 1px solid var(--color-border);
+		font-size: 0.82rem;
+		font-weight: 700;
+		font-family: var(--font-sans);
+		cursor: pointer;
+		background: var(--color-surface);
+		color: var(--color-text);
+	}
+
+	.action-pill.muted { color: var(--color-text-secondary); }
+
+	.sort-row {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		margin-bottom: 0.75rem;
+	}
+
+	/* Word list styles */
 
 	.word-list {
 		display: flex;
@@ -678,6 +720,10 @@
 		gap: 1rem;
 		padding: 0.85rem 0;
 		border-bottom: 1px solid var(--color-border-light);
+		cursor: default;
+	}
+
+	.word-row.selectable {
 		cursor: pointer;
 		user-select: none;
 	}

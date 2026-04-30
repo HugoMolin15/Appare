@@ -835,7 +835,11 @@
 	}
 	.sheet-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1); }
 
-	.color-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+	.color-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; }
+
+	@media (min-width: 640px) {
+		.color-grid { grid-template-columns: repeat(8, 1fr); gap: 0.6rem; }
+	}
 
 	.color-swatch {
 		aspect-ratio: 1; border-radius: var(--radius-lg); border: 3px solid transparent;
