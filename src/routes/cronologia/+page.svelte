@@ -9,12 +9,10 @@
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import type { Word, WordScore } from '$lib/types/word';
+	import type { Word } from '$lib/types/word';
 	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { fly } from 'svelte/transition';
 	import { shuffle } from '$lib/utils/shuffle';
-	import ScoreFilter from '$lib/components/ScoreFilter.svelte';
-	import { wordScores } from '$lib/stores/wordScores';
 
 	// Path state: [Year, Month, Week, Date]
 	let path = $state<string[]>([]);
@@ -98,6 +96,7 @@
 	}
 
 	let searchQuery = $state('');
+	let periodSearchQuery = $state('');
 
 	type WordSort = 'newest' | 'oldest' | 'it-az' | 'jp-az';
 	let wordSortMode = $state<WordSort>('newest');
@@ -105,7 +104,6 @@
 	const wordSortCycle: WordSort[] = ['newest', 'oldest', 'it-az', 'jp-az'];
 	function cycleWordSort() { wordSortMode = wordSortCycle[(wordSortCycle.indexOf(wordSortMode) + 1) % wordSortCycle.length]; }
 
-	let scoreFilter = $state<'all' | WordScore>('all');
 	let daySelectMode = $state(false);
 
 	// When viewing a day, path.length === 4 and currentItems() returns string[] (word ids)
@@ -123,10 +121,20 @@
 		return arr;
 	});
 
-	let scoreFilteredWords = $derived(
-		scoreFilter === 'all' ? dayWords : dayWords.filter(w => ($wordScores[w.id] ?? 'none') === scoreFilter)
-	);
-	let filteredWords = $derived(filterWords(scoreFilteredWords, searchQuery));
+	let filteredWords = $derived(filterWords(dayWords, searchQuery));
+
+	let filteredPeriodKeys = $derived.by(() => {
+		const keys = Object.keys(currentItems()).sort().reverse();
+		if (!periodSearchQuery.trim()) return keys;
+		const q = periodSearchQuery.trim().toLowerCase();
+		return keys.filter(key => {
+			const label =
+				path.length === 1 ? monthNames[parseInt(key) - 1] :
+				path.length === 3 ? getDayName(key) :
+				key;
+			return label.toLowerCase().includes(q);
+		});
+	});
 
 	let selectedInDayView = $derived(dayWords.filter(w => $selectedWordIds.has(w.id)).length);
 
@@ -172,8 +180,8 @@
 		selectMode = false;
 		selectedKeys = new Set();
 		daySelectMode = false;
-		scoreFilter = 'all';
 		wordSortMode = 'newest';
+		periodSearchQuery = '';
 		clearSelection();
 	});
 
@@ -226,15 +234,15 @@
 			</div>
 		{:else if path.length < 4}
 			<!-- Show Folders -->
-			<div class="crono-sort-row">
-				{#if selectMode}
-					<button class="sort-btn select-active" onclick={exitSelectMode}>Fine</button>
-				{:else}
-					<button class="sort-btn" onclick={() => selectMode = true}>Seleziona</button>
-				{/if}
+			<SearchInput bind:value={periodSearchQuery} placeholder="Cerca..." />
+			<div class="controls-bar">
+				<span class="count-label">{filteredPeriodKeys.length} {filteredPeriodKeys.length === 1 ? 'periodo' : 'periodi'}</span>
+				<button class="select-toggle" onclick={() => selectMode ? exitSelectMode() : selectMode = true}>
+					{selectMode ? 'Fine' : 'Seleziona'}
+				</button>
 			</div>
 			<div class="folder-list">
-				{#each Object.keys(currentItems()).sort().reverse() as key}
+				{#each filteredPeriodKeys as key}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div class="folder-item" onclick={() => selectMode ? toggleKeySelect(key) : navigateTo(key)}>
@@ -309,8 +317,6 @@
 					</button>
 				</div>
 			{/if}
-
-			<ScoreFilter value={scoreFilter} onChange={(v) => scoreFilter = v} />
 
 			<div class="sort-row">
 				<button class="sort-btn" onclick={cycleWordSort}>↕ {wordSortLabels[wordSortMode]}</button>
@@ -395,12 +401,6 @@
 		text-align: center;
 	}
 
-	.crono-sort-row {
-		margin-bottom: 0.5rem;
-		display: flex;
-		gap: 0.5rem;
-	}
-
 	.sort-btn {
 		background: none;
 		border: 1px solid var(--color-border);
@@ -411,11 +411,6 @@
 		font-family: var(--font-sans);
 		color: var(--color-text-secondary);
 		cursor: pointer;
-	}
-
-	.sort-btn.select-active {
-		border-color: var(--color-primary);
-		color: var(--color-primary);
 	}
 
 	.folder-checkbox {
