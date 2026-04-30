@@ -4,6 +4,7 @@
 	import type { WordScore } from '$lib/types/word';
 	import { wordScores } from '$lib/stores/wordScores';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import WordRow from '$lib/components/WordRow.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
@@ -155,30 +156,14 @@
 
 	<div class="word-list">
 		{#each filteredWords as word (word.id)}
-			<a href="/parole/{word.id}" class="word-row">
-				<div class="word-main">
-					<span class="word-it">{word.italiano}</span>
-					<span class="word-jp font-jp">
-						{word.hiragana || word.katakana || word.romaji || word.kanji}
-					</span>
-				</div>
-				<div class="word-right">
-					{#if word.tags && word.tags.length > 0}
-						<div class="word-tags">
-							<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
-							{#if word.tags.length > 1}
-								<span class="word-tag-more">+{word.tags.length - 1}</span>
-							{/if}
-						</div>
-					{:else if word.category}
-						<span class="word-cat" data-category={word.category}>{word.category}</span>
-					{/if}
+			<WordRow {word} href="/parole/{word.id}">
+				{#snippet trailing()}
 					<span
 						class="word-score-dot"
 						style="background:{SCORE_COLORS[$wordScores[word.id] ?? 'none']}"
 					></span>
-				</div>
-			</a>
+				{/snippet}
+			</WordRow>
 		{/each}
 	</div>
 </div>
@@ -361,13 +346,6 @@
 	}
 
 	/* ---- Word score dot ---- */
-	.word-right {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		flex-shrink: 0;
-	}
-
 	.word-score-dot {
 		width: 8px;
 		height: 8px;
@@ -428,62 +406,6 @@
 	.word-list {
 		display: flex;
 		flex-direction: column;
-	}
-
-	.word-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-		padding: 1rem 0;
-		border-bottom: 1px solid var(--color-border);
-		text-decoration: none;
-		color: inherit;
-	}
-
-	.word-row:last-child { border-bottom: none; }
-
-	.word-main {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	.word-it {
-		font-size: 0.95rem;
-		font-weight: 600;
-		color: var(--color-text-primary);
-	}
-
-	.word-jp {
-		font-size: 0.85rem;
-		color: var(--color-text-secondary);
-	}
-
-	.word-tags {
-		display: flex;
-		align-items: center;
-		gap: 0.3rem;
-		flex-shrink: 0;
-	}
-
-	.word-cat {
-		font-size: 0.65rem;
-		font-weight: 700;
-		padding: 0.35rem 0.6rem;
-		border-radius: var(--radius-md);
-		background: var(--color-surface);
-		color: var(--color-text-secondary);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		white-space: nowrap;
-	}
-
-	.word-tag-more {
-		font-size: 0.65rem;
-		font-weight: 700;
-		color: var(--color-text-tertiary);
-		white-space: nowrap;
 	}
 
 	/* ---- Filter sheet ---- */

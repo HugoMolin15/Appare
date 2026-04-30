@@ -4,6 +4,7 @@
 	import { selectedWordIds, toggleWordSelection, selectedCount } from '$lib/stores/studySession';
 	import { goto } from '$app/navigation';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import WordRow from '$lib/components/WordRow.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
@@ -42,20 +43,19 @@
 			</div>
 		{:else}
 			{#each filteredWords as word (word.id)}
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<!-- svelte-ignore a11y_no_static_element_interactions -->
-				<div class="word-row" onclick={() => toggleWordSelection(word.id)}>
-					<div class="word-checkbox" class:checked={$selectedWordIds.has(word.id)}>
-						<Icon name="check" strokeWidth={3} />
-					</div>
-					<div class="word-main">
-						<span class="word-it">{word.italiano}</span>
-						<span class="word-jp font-jp">
-							{word.hiragana || word.katakana || word.romaji || word.kanji}
-						</span>
-					</div>
-					<span class="word-cat" data-category={word.category}>{word.category}</span>
-				</div>
+				<WordRow
+					{word}
+					selectable
+					role="checkbox"
+					ariaChecked={$selectedWordIds.has(word.id)}
+					onclick={() => toggleWordSelection(word.id)}
+				>
+					{#snippet leading()}
+						<div class="word-checkbox" class:checked={$selectedWordIds.has(word.id)}>
+							<Icon name="check" size={14} strokeWidth={3} />
+						</div>
+					{/snippet}
+				</WordRow>
 			{/each}
 		{/if}
 	</div>
@@ -93,21 +93,6 @@
 		flex-direction: column;
 	}
 
-	.word-row {
-		display: flex;
-		align-items: center;
-		justify-content: flex-start;
-		gap: 1rem;
-		padding: 1rem 0;
-		border-bottom: 1px solid var(--color-border);
-		cursor: pointer;
-		user-select: none;
-	}
-
-	.word-row:last-child {
-		border-bottom: none;
-	}
-
 	.word-checkbox {
 		width: 24px;
 		height: 24px;
@@ -121,45 +106,10 @@
 		flex-shrink: 0;
 	}
 
-	.word-checkbox svg {
-		width: 14px;
-		height: 14px;
-	}
-
 	.word-checkbox.checked {
 		background-color: var(--color-primary);
 		border-color: var(--color-primary);
 		color: white;
-	}
-
-	.word-main {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		flex-grow: 1;
-	}
-
-	.word-it {
-		font-size: 0.95rem;
-		font-weight: 600;
-		color: var(--color-text-primary);
-	}
-
-	.word-jp {
-		font-size: 0.85rem;
-		color: var(--color-text-secondary);
-	}
-
-	.word-cat {
-		font-size: 0.65rem;
-		font-weight: 700;
-		padding: 0.35rem 0.6rem;
-		border-radius: var(--radius-md);
-		background: var(--color-surface);
-		color: var(--color-text-secondary);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		white-space: nowrap;
 	}
 
 	.empty-state {

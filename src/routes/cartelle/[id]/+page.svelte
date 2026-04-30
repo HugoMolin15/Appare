@@ -10,6 +10,7 @@
 	import FolderModal from '$lib/components/FolderModal.svelte';
 	import WordSelectionModal from '$lib/components/WordSelectionModal.svelte';
 	import ConfirmationModal from '$lib/components/ConfirmationModal.svelte';
+	import WordRow from '$lib/components/WordRow.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
@@ -359,40 +360,25 @@
 			<div class="item-list">
 				{#each filteredWords as word (word.id)}
 					{#if selectMode}
-						<!-- svelte-ignore a11y_interactive_supports_focus -->
-						<div class="word-row selectable" role="checkbox" aria-checked={$selectedWordIds.has(word.id)} onclick={() => toggleWordSelection(word.id)}>
-							<div class="item-checkbox" class:checked={$selectedWordIds.has(word.id)}>
-								<Icon name="check" strokeWidth={3} />
-							</div>
-							<div class="word-main">
-								<span class="word-it">{word.italiano}</span>
-								<span class="word-jp font-jp">{word.hiragana || word.katakana || word.romaji || word.kanji}</span>
-							</div>
-							{#if word.tags && word.tags.length > 0}
-								<div class="word-tags">
-									<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
-									{#if word.tags.length > 1}<span class="word-tag-more">+{word.tags.length - 1}</span>{/if}
+						<WordRow
+							{word}
+							selectable
+							role="checkbox"
+							ariaChecked={$selectedWordIds.has(word.id)}
+							onclick={() => toggleWordSelection(word.id)}
+						>
+							{#snippet leading()}
+								<div class="item-checkbox" class:checked={$selectedWordIds.has(word.id)}>
+									<Icon name="check" strokeWidth={3} />
 								</div>
-							{:else if word.category}
-								<span class="word-cat" data-category={word.category}>{word.category}</span>
-							{/if}
-						</div>
+							{/snippet}
+						</WordRow>
 					{:else}
-						<a href="/parole/{word.id}?from=/cartelle/{folderId}" class="word-row">
-							<div class="word-main">
-								<span class="word-it">{word.italiano}</span>
-								<span class="word-jp font-jp">{word.hiragana || word.katakana || word.romaji || word.kanji}</span>
-							</div>
-							{#if word.tags && word.tags.length > 0}
-								<div class="word-tags">
-									<span class="word-cat" data-category={word.tags[0]}>{word.tags[0]}</span>
-									{#if word.tags.length > 1}<span class="word-tag-more">+{word.tags.length - 1}</span>{/if}
-								</div>
-							{:else if word.category}
-								<span class="word-cat" data-category={word.category}>{word.category}</span>
-							{/if}
-							<Icon name="chevron-right" size={16} class="item-chevron" />
-						</a>
+						<WordRow {word} href="/parole/{word.id}?from=/cartelle/{folderId}">
+							{#snippet trailing()}
+								<Icon name="chevron-right" size={16} class="item-chevron" />
+							{/snippet}
+						</WordRow>
 					{/if}
 				{/each}
 			</div>
@@ -641,8 +627,7 @@
 		margin-bottom: 0.5rem;
 	}
 
-	.folder-item,
-	.word-row {
+	.folder-item {
 		display: flex;
 		align-items: center;
 		gap: 1rem;
@@ -652,11 +637,9 @@
 		color: inherit;
 	}
 
-	.folder-item:last-child,
-	.word-row:last-child { border-bottom: none; }
+	.folder-item:last-child { border-bottom: none; }
 
-	.folder-item.selectable,
-	.word-row.selectable {
+	.folder-item.selectable {
 		cursor: pointer;
 		background: none;
 		border: none;
@@ -665,8 +648,7 @@
 		text-align: left;
 	}
 
-	.folder-item.selectable:last-child,
-	.word-row.selectable:last-child { border-bottom: none; }
+	.folder-item.selectable:last-child { border-bottom: none; }
 
 	.item-checkbox {
 		width: 24px;
@@ -716,51 +698,6 @@
 	}
 
 	:global(.item-chevron) { color: var(--color-text-tertiary); flex-shrink: 0; }
-
-	.word-main {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		gap: 0.15rem;
-		min-width: 0;
-	}
-
-	.word-it {
-		font-size: 0.95rem;
-		font-weight: 600;
-		color: var(--color-text-primary);
-	}
-
-	.word-jp {
-		font-size: 0.85rem;
-		color: var(--color-text-secondary);
-	}
-
-	.word-tags {
-		display: flex;
-		align-items: center;
-		gap: 0.3rem;
-		flex-shrink: 0;
-	}
-
-	.word-cat {
-		font-size: 0.65rem;
-		font-weight: 700;
-		padding: 0.35rem 0.6rem;
-		border-radius: var(--radius-md);
-		background: var(--color-surface);
-		color: var(--color-text-secondary);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		white-space: nowrap;
-		flex-shrink: 0;
-	}
-
-	.word-tag-more {
-		font-size: 0.65rem;
-		font-weight: 700;
-		color: var(--color-text-tertiary);
-	}
 
 	.no-results {
 		font-size: 0.9rem;
