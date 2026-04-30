@@ -1,28 +1,9 @@
-import { writable } from 'svelte/store';
-import { browser } from '$app/environment';
-
-const STORAGE_KEY = 'appare_folder_order';
+import { persisted } from '$lib/stores/persisted';
 
 // parentKey ('root' for top-level, folderId for subfolders) → ordered folder IDs
 export type OrderMap = Record<string, string[]>;
 
-function load(): OrderMap {
-	if (!browser) return {};
-	try {
-		const raw = localStorage.getItem(STORAGE_KEY);
-		return raw ? JSON.parse(raw) : {};
-	} catch { return {}; }
-}
-
-export const folderOrder = writable<OrderMap>(load());
-
-if (browser) {
-	folderOrder.subscribe(value => {
-		try {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-		} catch {}
-	});
-}
+export const folderOrder = persisted<OrderMap>('appare_folder_order', {});
 
 export function moveFolderInOrder(parentKey: string, id: string, direction: 'up' | 'down', currentIds: string[]) {
 	folderOrder.update(map => {
