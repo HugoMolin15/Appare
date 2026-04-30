@@ -110,8 +110,12 @@
 		const base = $folders
 			.filter((f) => f.parentId === folderId)
 			.map((f) => ({ ...f, wordCount: $words.filter((w) => w.folderId === f.id).length }));
-		if ($folderOrder[folderId]) return applyFolderOrder(base, $folderOrder, folderId);
-		return [...base].sort((a, b) => b.createdAt - a.createdAt);
+		// Default sort ('newest') honours the user's manual reorder if set;
+		// any other sort mode overrides it.
+		if (wordSortMode === 'newest' && $folderOrder[folderId]) {
+			return applyFolderOrder(base, $folderOrder, folderId);
+		}
+		return applySortFolders(base, wordSortMode);
 	});
 
 	function enterSubfolderReorder() {
@@ -136,7 +140,26 @@
 		return arr.sort((a, b) => b.createdAt - a.createdAt);
 	}
 
+	function applySortFolders<T extends { createdAt: number; name: string }>(list: T[], mode: WordSort): T[] {
+		const arr = [...list];
+		if (mode === 'oldest') return arr.sort((a, b) => a.createdAt - b.createdAt);
+		if (mode === 'it-az') return arr.sort((a, b) => a.name.localeCompare(b.name, 'it'));
+		if (mode === 'jp-az') return arr.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+		return arr.sort((a, b) => b.createdAt - a.createdAt);
+	}
+
 	let folderWords = $derived(applySortWords($words.filter((w) => w.folderId === folderId), wordSortMode));
+
+	// All words reachable from this folder (this folder + every descendant subfolder)
+	let allDescendantWordIds = $derived.by(() => {
+		const ws = $words; const fs = $folders;
+		function collect(fid: string): string[] {
+			const direct = ws.filter(w => w.folderId === fid).map(w => w.id);
+			const subs = fs.filter(f => f.parentId === fid).map(f => f.id);
+			return [...direct, ...subs.flatMap(collect)];
+		}
+		return collect(folderId);
+	});
 	let searchQuery = $state('');
 	let filteredSubfolders = $derived(
 		searchQuery.trim()
@@ -172,8 +195,8 @@
 
 	// ---- Study ----
 	function studyAll() {
-		if (folderWords.length === 0) return;
-		setSelectedWords(shuffle(folderWords.map(w => w.id)));
+		if (allDescendantWordIds.length === 0) return;
+		setSelectedWords(shuffle(allDescendantWordIds));
 		goto('/studia');
 	}
 
@@ -283,11 +306,11 @@
 				{/if}
 				<button class="action-pill muted" onclick={() => { clearSelection(); selectedSubfolderIds = new Set(); }}>Deseleziona</button>
 			</div>
-		{:else if folderWords.length > 0}
+		{:else if allDescendantWordIds.length > 0}
 			<div class="action-row">
 				<button class="study-btn" onclick={studyAll}>
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-					Studia tutto ({folderWords.length})
+					Studia tutto ({allDescendantWordIds.length})
 				</button>
 			</div>
 		{/if}
@@ -303,7 +326,7 @@
 					<button class="sort-btn" onclick={resetSubfolderOrder}>Reimposta</button>
 				{/if}
 			{/if}
-			{#if folderWords.length > 0}
+			{#if folderWords.length > 0 || subfolders.length > 0}
 				<button class="sort-btn" onclick={cycleWordSort}>↕ {wordSortLabels[wordSortMode]}</button>
 			{/if}
 		</div>
