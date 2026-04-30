@@ -16,7 +16,8 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { FOLDER_COLORS, MY_WORDS_FOLDER_ID } from '$lib/constants';
 	import { shuffle } from '$lib/utils/shuffle';
-	import { fade, fly } from 'svelte/transition';
+	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
+	import { fly } from 'svelte/transition';
 
 	let folderId = $derived($page.params.id as string);
 	let isProtected = $derived(folderId === MY_WORDS_FOLDER_ID);
@@ -407,9 +408,7 @@
 
 	<!-- Options sheet -->
 	{#if showOptionsSheet}
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="sheet-backdrop" transition:fade={{ duration: 200 }} onclick={() => showOptionsSheet = false}></div>
+		<SheetBackdrop onClose={() => showOptionsSheet = false} />
 		<div class="options-sheet" transition:fly={{ y: 300, duration: 300 }}>
 			<div class="sheet-header">
 				<h2 class="sheet-title">Opzioni cartella</h2>
@@ -454,9 +453,7 @@
 
 	<!-- Move sheet — Finder style -->
 	{#if showMoveSheet}
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="sheet-backdrop" transition:fade={{ duration: 200 }} onclick={() => showMoveSheet = false}></div>
+		<SheetBackdrop onClose={() => showMoveSheet = false} />
 		<div class="options-sheet" transition:fly={{ y: 300, duration: 300 }}>
 			<div class="sheet-header">
 				{#if moveBreadcrumb.length > 0}
@@ -762,13 +759,6 @@
 	}
 
 	/* ---- Bottom sheets ---- */
-	.sheet-backdrop {
-		position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-		background-color: rgba(0, 0, 0, 0.4);
-		backdrop-filter: blur(2px);
-		z-index: 100;
-	}
-
 	.options-sheet {
 		position: fixed; bottom: 0; left: 0; right: 0;
 		height: 90dvh;

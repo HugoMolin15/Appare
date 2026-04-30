@@ -7,10 +7,11 @@
 	import WordRow from '$lib/components/WordRow.svelte';
 	import ScoreFilter from '$lib/components/ScoreFilter.svelte';
 	import FilterPills from '$lib/components/FilterPills.svelte';
+	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import { fade, fly } from 'svelte/transition';
+	import { fly } from 'svelte/transition';
 
 	let searchQuery = $state('');
 	let scoreFilter = $state<'all' | WordScore>('all');
@@ -137,9 +138,7 @@
 </div>
 
 {#if showFilterSheet}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="sheet-backdrop" transition:fade={{ duration: 200 }} onclick={() => showFilterSheet = false}></div>
+	<SheetBackdrop onClose={() => showFilterSheet = false} />
 	<div class="filter-sheet" transition:fly={{ y: 400, duration: 300 }}>
 		<div class="sheet-header">
 			<h2 class="sheet-title">Filtri</h2>
@@ -291,14 +290,6 @@
 	}
 
 	/* ---- Filter sheet ---- */
-	.sheet-backdrop {
-		position: fixed;
-		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
-		backdrop-filter: blur(2px);
-		z-index: 100;
-	}
-
 	.filter-sheet {
 		position: fixed;
 		bottom: 0;

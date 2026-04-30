@@ -10,7 +10,8 @@
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import type { Word } from '$lib/types/word';
-	import { fade, fly } from 'svelte/transition';
+	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
+	import { fly } from 'svelte/transition';
 	import { shuffle } from '$lib/utils/shuffle';
 
 	// Path state: [Year, Month, Week, Date]
@@ -314,9 +315,7 @@
 </div>
 
 {#if editingColorKey}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="sheet-backdrop" transition:fade={{ duration: 200 }} onclick={() => editingColorKey = null}></div>
+	<SheetBackdrop onClose={() => editingColorKey = null} />
 	<div class="color-sheet" transition:fly={{ y: 300, duration: 300 }}>
 		<div class="sheet-header">
 			<h2 class="sheet-title">Colore</h2>
@@ -521,14 +520,6 @@
 	}
 
 	/* ---- Color sheet ---- */
-	.sheet-backdrop {
-		position: fixed;
-		inset: 0;
-		background: rgba(0,0,0,0.4);
-		backdrop-filter: blur(2px);
-		z-index: 100;
-	}
-
 	.color-sheet {
 		position: fixed;
 		bottom: 0;

@@ -9,7 +9,8 @@
 	import ClearableInput from '$lib/components/ClearableInput.svelte';
 	import CategoryPicker from '$lib/components/CategoryPicker.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import { fade, fly } from 'svelte/transition';
+	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
+	import { fly } from 'svelte/transition';
 
 	let wordId = $derived($page.params.id);
 	let word = $derived($words.find((w) => w.id === wordId));
@@ -255,9 +256,7 @@
 </div>
 
 {#if showMoveSheet}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="sheet-backdrop" transition:fade={{ duration: 200 }} onclick={() => showMoveSheet = false}></div>
+	<SheetBackdrop onClose={() => showMoveSheet = false} />
 	<div class="move-sheet" transition:fly={{ y: 300, duration: 300 }}>
 		<div class="sheet-header">
 			{#if moveBreadcrumb.length > 0}
@@ -565,14 +564,6 @@
 	}
 
 	/* ---- Move sheet ---- */
-	.sheet-backdrop {
-		position: fixed;
-		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
-		backdrop-filter: blur(2px);
-		z-index: 100;
-	}
-
 	.move-sheet {
 		position: fixed;
 		bottom: 0;
