@@ -48,6 +48,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		min-height: 40px;
 		margin-bottom: 1.5rem;
 	}
 
