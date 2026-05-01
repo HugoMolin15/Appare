@@ -1,9 +1,17 @@
+import { get } from 'svelte/store';
 import { persisted } from '$lib/stores/persisted';
+import { currentUserId } from '$lib/stores/auth';
+import { pushFolderOrderUpdate } from '$lib/services/sync';
+
+const syncToCloud = () => {
+	const uid = get(currentUserId);
+	if (uid) pushFolderOrderUpdate(uid);
+};
 
 // parentKey ('root' for top-level, folderId for subfolders) → ordered folder IDs
 export type OrderMap = Record<string, string[]>;
 
-export const folderOrder = persisted<OrderMap>('appare_folder_order', {});
+export const folderOrder = persisted<OrderMap>('appare_folder_order', {}, { onChange: syncToCloud });
 
 export function moveFolderInOrder(parentKey: string, id: string, direction: 'up' | 'down', currentIds: string[]) {
 	folderOrder.update(map => {
@@ -33,6 +41,10 @@ export function clearFolderOrder(parentKey: string) {
 		delete next[parentKey];
 		return next;
 	});
+}
+
+export function clearAllFolderOrder() {
+	folderOrder.set({});
 }
 
 export function applyFolderOrder<T extends { id: string; createdAt: number }>(

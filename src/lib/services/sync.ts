@@ -12,6 +12,8 @@ import { words } from '$lib/stores/words';
 import { folders } from '$lib/stores/folders';
 import { studyHistory } from '$lib/stores/history';
 import { dateColors } from '$lib/stores/dateColors';
+import { wordScores } from '$lib/stores/wordScores';
+import { folderOrder } from '$lib/stores/folderOrder';
 import {
 	studyGoal,
 	appFontScale,
@@ -180,6 +182,8 @@ async function pullSettings(userId: string) {
 	appFontScale.set(scale);
 	cardOrder.set(data.card_order);
 	randomCardOrder.set(data.random_card_order);
+	if (data.word_scores) wordScores.set(data.word_scores);
+	if (data.folder_order) folderOrder.set(data.folder_order);
 }
 
 // ---------------------------------------------------------------------------
@@ -261,7 +265,9 @@ async function pushSettings(userId: string) {
 		study_goal: get(studyGoal),
 		japanese_font_size: get(appFontScale),
 		card_order: get(cardOrder),
-		random_card_order: get(randomCardOrder)
+		random_card_order: get(randomCardOrder),
+		word_scores: get(wordScores),
+		folder_order: get(folderOrder)
 	});
 }
 
@@ -343,10 +349,26 @@ export async function pushDateColor(userId: string, key: string, color: string |
 }
 
 let settingsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let wordScoresDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let folderOrderDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function pushSettingsUpdate(userId: string) {
 	if (settingsDebounceTimer) clearTimeout(settingsDebounceTimer);
 	settingsDebounceTimer = setTimeout(() => {
+		if (get(currentUserId) === userId) pushSettings(userId);
+	}, 1000);
+}
+
+export function pushWordScoresUpdate(userId: string) {
+	if (wordScoresDebounceTimer) clearTimeout(wordScoresDebounceTimer);
+	wordScoresDebounceTimer = setTimeout(() => {
+		if (get(currentUserId) === userId) pushSettings(userId);
+	}, 1000);
+}
+
+export function pushFolderOrderUpdate(userId: string) {
+	if (folderOrderDebounceTimer) clearTimeout(folderOrderDebounceTimer);
+	folderOrderDebounceTimer = setTimeout(() => {
 		if (get(currentUserId) === userId) pushSettings(userId);
 	}, 1000);
 }
@@ -356,6 +378,8 @@ import { clearFolders } from '$lib/stores/folders';
 import { clearHistory, cancelPendingPushes as cancelHistoryPushes } from '$lib/stores/history';
 import { clearDateColors, cancelPendingPushes as cancelDateColorPushes } from '$lib/stores/dateColors';
 import { clearSettings } from '$lib/stores/settings';
+import { clearWordScores } from '$lib/stores/wordScores';
+import { clearAllFolderOrder } from '$lib/stores/folderOrder';
 import { browser } from '$app/environment';
 
 /**
@@ -365,15 +389,16 @@ import { browser } from '$app/environment';
 export function clearAllStores() {
 	cancelHistoryPushes();
 	cancelDateColorPushes();
-	if (settingsDebounceTimer) {
-		clearTimeout(settingsDebounceTimer);
-		settingsDebounceTimer = null;
-	}
+	if (settingsDebounceTimer) { clearTimeout(settingsDebounceTimer); settingsDebounceTimer = null; }
+	if (wordScoresDebounceTimer) { clearTimeout(wordScoresDebounceTimer); wordScoresDebounceTimer = null; }
+	if (folderOrderDebounceTimer) { clearTimeout(folderOrderDebounceTimer); folderOrderDebounceTimer = null; }
 	clearWords();
 	clearFolders();
 	clearHistory();
 	clearDateColors();
 	clearSettings();
+	clearWordScores();
+	clearAllFolderOrder();
 	if (browser) {
 		localStorage.removeItem(LOCAL_SYNCED_KEY);
 	}
