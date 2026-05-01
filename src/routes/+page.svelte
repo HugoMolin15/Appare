@@ -15,7 +15,7 @@
 		<div class="header-left">
 			<img src="/secondary_icon.png" alt="Appare logo" class="header-icon" />
 			<div class="header-text">
-				<span class="header-title">Appare</span>
+				<span class="header-title">APPARE!</span>
 				<span class="header-subtitle">Scuola di lingua Giapponese<br>di Tomoko Yamane</span>
 			</div>
 		</div>
