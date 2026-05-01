@@ -79,7 +79,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.1rem;
+		gap: 0;
 	}
 
 	.day-num {
@@ -93,6 +93,7 @@
 		font-weight: 600;
 		color: var(--color-text-secondary);
 		text-transform: uppercase;
+		margin-bottom: 0.5rem;
 	}
 
 	.day-square {
