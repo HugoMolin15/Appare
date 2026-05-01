@@ -57,6 +57,7 @@
 <style>
 	.score-filter-row {
 		display: flex;
+		flex-wrap: nowrap;
 		gap: 0.4rem;
 		overflow-x: auto;
 		scrollbar-width: none;
