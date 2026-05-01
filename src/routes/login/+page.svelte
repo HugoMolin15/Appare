@@ -145,13 +145,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 36px;
-		height: 36px;
-		border-radius: 50%;
-		background: var(--color-surface);
 		color: var(--color-text);
 		text-decoration: none;
-		flex-shrink: 0;
 	}
 
 	.logo-title {
