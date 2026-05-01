@@ -118,7 +118,7 @@
 		flex-direction: column;
 		align-items: center;
 		padding: 1.5rem 1.5rem 1.25rem;
-		background: var(--color-surface);
+		background: transparent;
 		border: none;
 		border-radius: var(--radius-xl);
 		cursor: pointer;

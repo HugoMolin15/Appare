@@ -120,6 +120,10 @@ a, button, input, textarea, select, [role="button"], label {
    instant transform to avoid conflicts.
    ======================================== */
 
+button, a.cta-button, a.back-btn, a.login-cta-btn {
+  border-radius: 8px !important;
+}
+
 button:not(:disabled):active,
 a:active,
 [role="button"]:not([aria-disabled="true"]):active,
