@@ -56,7 +56,9 @@
 	<div class="login-card">
 		<!-- Logo -->
 		<div class="logo">
-			<span class="logo-jp">日本語</span>
+			<a href="/impostazioni" class="back-btn" aria-label="Indietro">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+			</a>
 			<span class="logo-title">Anki-jin</span>
 		</div>
 
@@ -134,16 +136,22 @@
 
 	.logo {
 		display: flex;
-		flex-direction: column;
+		align-items: center;
+		gap: 0.75rem;
 		margin-bottom: 2rem;
 	}
 
-	.logo-jp {
-		font-size: 0.75rem;
-		font-weight: 500;
-		color: var(--color-text-secondary);
-		letter-spacing: 0.02em;
-		font-family: var(--font-jp);
+	.back-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 36px;
+		height: 36px;
+		border-radius: 50%;
+		background: var(--color-surface);
+		color: var(--color-text);
+		text-decoration: none;
+		flex-shrink: 0;
 	}
 
 	.logo-title {
