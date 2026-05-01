@@ -9,6 +9,8 @@
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import ScoreFilter from '$lib/components/ScoreFilter.svelte';
+	import type { WordScore } from '$lib/types/word';
 	import type { Word } from '$lib/types/word';
 	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { fly } from 'svelte/transition';
@@ -105,6 +107,7 @@
 
 	let searchQuery = $state('');
 	let periodSearchQuery = $state('');
+	let scoreFilter = $state<'all' | WordScore>('all');
 
 	type WordSort = 'newest' | 'oldest' | 'it-az' | 'jp-az';
 	let wordSortMode = $state<WordSort>('newest');
@@ -132,7 +135,11 @@
 		return arr;
 	});
 
-	let filteredWords = $derived(filterWords(dayWords, searchQuery));
+	let filteredWords = $derived.by(() => {
+		let result = filterWords(dayWords, searchQuery);
+		if (scoreFilter !== 'all') result = result.filter(w => ($wordScores[w.id] ?? 'none') === scoreFilter);
+		return result;
+	});
 
 	let filteredPeriodKeys = $derived.by(() => {
 		const keys = Object.keys(currentItems()).sort();
@@ -211,6 +218,7 @@
 		wordSortMode = 'newest';
 		periodSortMode = 'newest';
 		periodSearchQuery = '';
+		scoreFilter = 'all';
 		clearSelection();
 	});
 
@@ -355,9 +363,12 @@
 				</div>
 			{/if}
 
-			<div class="sort-row">
-				<button class="sort-btn" onclick={cycleWordSort}>↕ {wordSortLabels[wordSortMode]}</button>
-			</div>
+			<ScoreFilter
+				value={scoreFilter}
+				onChange={(v) => scoreFilter = v}
+				sortLabel={wordSortLabels[wordSortMode]}
+				onSortCycle={cycleWordSort}
+			/>
 
 			<div class="word-list">
 				{#each filteredWords as word (word.id)}
@@ -456,7 +467,7 @@
 	.folder-checkbox {
 		width: 24px;
 		height: 24px;
-		border-radius: 6px;
+		border-radius: 50%;
 		border: 2px solid var(--color-border);
 		display: flex;
 		align-items: center;
@@ -469,8 +480,8 @@
 	.folder-checkbox svg { width: 14px; height: 14px; }
 
 	.folder-checkbox.checked {
-		background-color: var(--color-primary);
-		border-color: #e0dce6;
+		background-color: #1A1A1A;
+		border-color: #1A1A1A;
 		color: white;
 	}
 
@@ -497,7 +508,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: var(--color-primary);
+		color: var(--color-text-secondary);
 		flex-shrink: 0;
 	}
 
@@ -728,7 +739,7 @@
 	.word-checkbox {
 		width: 24px;
 		height: 24px;
-		border-radius: 6px;
+		border-radius: 50%;
 		border: 2px solid var(--color-border);
 		display: flex;
 		align-items: center;
@@ -744,8 +755,8 @@
 	}
 
 	.word-checkbox.checked {
-		background-color: var(--color-primary);
-		border-color: #e0dce6;
+		background-color: #1A1A1A;
+		border-color: #1A1A1A;
 		color: white;
 	}
 

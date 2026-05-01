@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { words } from '$lib/stores/words';
 	import { wordScores } from '$lib/stores/wordScores';
-	import { allStudiedWordIds } from '$lib/stores/history';
 	import { selectedWordIds, toggleWordSelection, selectedCount } from '$lib/stores/studySession';
 	import { goto } from '$app/navigation';
 	import { CATEGORIES } from '$lib/types/word';
@@ -63,12 +62,8 @@
 		return a.localeCompare(b, 'it');
 	}
 
-	let unstudiedWords = $derived(
-		$words.filter(w => !$allStudiedWordIds.has(w.id) && w.italiano?.trim())
-	);
-
 	let filteredWords = $derived.by(() => {
-		let result = [...filterWords(unstudiedWords, searchQuery)];
+		let result = [...filterWords($words.filter(w => w.italiano?.trim()), searchQuery)];
 		if (scoreFilter !== 'all') {
 			result = result.filter(w => ($wordScores[w.id] ?? 'none') === scoreFilter);
 		}
