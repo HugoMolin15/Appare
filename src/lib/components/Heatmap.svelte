@@ -113,10 +113,10 @@
 
 	/* Intensities using brand colors */
 	.intensity-0 { background-color: var(--color-surface); border: 1px solid #e0dce6; }
-	.intensity-1 { background-color: rgba(139, 26, 26, 0.3) !important; border: none; }
-	.intensity-2 { background-color: rgba(139, 26, 26, 0.6) !important; border: none; }
-	.intensity-3 { background-color: rgba(139, 26, 26, 0.85) !important; border: none; }
-	.intensity-4 { background-color: rgba(139, 26, 26, 1) !important; border: none; }
+	.intensity-1 { background-color: rgba(239, 30, 41, 0.3) !important; border: none; }
+	.intensity-2 { background-color: rgba(239, 30, 41, 0.6) !important; border: none; }
+	.intensity-3 { background-color: rgba(239, 30, 41, 0.85) !important; border: none; }
+	.intensity-4 { background-color: rgba(239, 30, 41, 1) !important; border: none; }
 
 	/* Heatmap Container */
 	.heatmap-container {

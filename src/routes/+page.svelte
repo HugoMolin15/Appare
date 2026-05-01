@@ -260,24 +260,13 @@
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.875rem 1.5rem;
-		background-color: var(--color-accent);
-		color: var(--color-text);
 		border: none;
 		border-radius: var(--radius-full);
 		font-size: 0.95rem;
 		font-weight: 700;
 		font-family: var(--font-sans);
 		cursor: pointer;
-		transition: background-color 0.15s ease, transform 0.1s ease;
 		white-space: nowrap;
 		text-decoration: none;
-	}
-
-	.fab:hover {
-		background-color: var(--color-accent-hover);
-	}
-
-	.fab:active {
-		transform: scale(0.96);
 	}
 </style>

@@ -285,7 +285,7 @@
 		box-sizing: border-box;
 		padding: 0.75rem 1rem;
 		border: 1.5px solid var(--color-border);
-		border-radius: var(--radius-lg);
+		border-radius: 8px;
 		background: var(--color-surface);
 		color: var(--color-text);
 		font-family: var(--font-sans);
