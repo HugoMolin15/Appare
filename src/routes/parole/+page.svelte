@@ -110,11 +110,16 @@
 
 	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
-	<ScoreFilter value={scoreFilter} onChange={(v) => scoreFilter = v} />
+	<ScoreFilter
+		value={scoreFilter}
+		onChange={(v) => scoreFilter = v}
+		typeValue={typeFilter}
+		onTypeChange={(v) => typeFilter = v}
+	/>
 
 	<FilterPills pills={activePills} />
 
-	<p class="word-count-label">{filteredWords.length} parole</p>
+	<p class="word-count-label">{filteredWords.length} {typeFilter === 'phrase' ? 'frasi' : filteredWords.length === 1 ? 'parola' : 'parole'}</p>
 
 	<div class="word-list">
 		{#each filteredWords as word (word.id)}
