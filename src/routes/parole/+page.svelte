@@ -1,7 +1,21 @@
+<script module lang="ts">
+	import type { WordScore } from '$lib/types/word';
+	type WordSort = 'newest' | 'oldest' | 'it-az' | 'jp-az';
+
+	// Persists across navigation within the same SPA session
+	let saved = {
+		searchQuery: '',
+		scoreFilter: 'all' as 'all' | WordScore,
+		sourceFilter: 'all' as 'all' | 'app' | 'mine',
+		typeFilter: 'all' as 'all' | 'word' | 'phrase',
+		selectedGroups: [] as string[],
+		sortMode: 'newest' as WordSort,
+	};
+</script>
+
 <script lang="ts">
 	import { words } from '$lib/stores/words';
 	import { CATEGORIES } from '$lib/types/word';
-	import type { WordScore } from '$lib/types/word';
 	import { wordScores } from '$lib/stores/wordScores';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import WordRow from '$lib/components/WordRow.svelte';
@@ -13,18 +27,26 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { fly } from 'svelte/transition';
 
-	let searchQuery = $state('');
-	let scoreFilter = $state<'all' | WordScore>('all');
-	let sourceFilter = $state<'all' | 'app' | 'mine'>('all');
-	let typeFilter = $state<'all' | 'word' | 'phrase'>('all');
-	let selectedGroups = $state(new Set<string>());
+	let searchQuery = $state(saved.searchQuery);
+	let scoreFilter = $state(saved.scoreFilter);
+	let sourceFilter = $state(saved.sourceFilter);
+	let typeFilter = $state(saved.typeFilter);
+	let selectedGroups = $state(new Set<string>(saved.selectedGroups));
 	let showFilterSheet = $state(false);
-	type WordSort = 'newest' | 'oldest' | 'it-az' | 'jp-az';
-	let sortMode = $state<WordSort>('newest');
+	let sortMode = $state(saved.sortMode);
+
+	$effect(() => {
+		saved.searchQuery = searchQuery;
+		saved.scoreFilter = scoreFilter;
+		saved.sourceFilter = sourceFilter;
+		saved.typeFilter = typeFilter;
+		saved.selectedGroups = [...selectedGroups];
+		saved.sortMode = sortMode;
+	});
 
 	const categoryGroups = Object.entries(CATEGORIES) as [string, readonly string[]][];
 
-	const SORT_OPTIONS: WordSort[] = ['newest', 'oldest', 'it-az', 'jp-az'];
+	const SORT_OPTIONS: WordSort[] = ['newest', 'oldest', 'it-az', 'jp-az'] as const;
 	const SORT_LABELS: Record<WordSort, string> = {
 		newest: 'Più recenti',
 		oldest: 'Meno recenti',
@@ -71,7 +93,7 @@
 	}
 
 	let filteredWords = $derived.by(() => {
-		let result = [...filterWords($words, searchQuery)];
+		let result = [...filterWords($words, searchQuery)].filter(w => w.italiano?.trim());
 		if (scoreFilter !== 'all') {
 			result = result.filter(w => ($wordScores[w.id] ?? 'none') === scoreFilter);
 		}
