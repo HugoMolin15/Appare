@@ -132,7 +132,6 @@
 <div class="page page-enter">
 	<PageHeader title="Tutte le parole" backHref="/" hideBackOnDesktop>
 		{#snippet actions()}
-			<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." collapsible />
 			<button
 				class="filter-btn"
 				class:active={activePills.length > 0}
@@ -150,6 +149,8 @@
 			</button>
 		{/snippet}
 	</PageHeader>
+
+	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
 	<ScoreFilter
 		value={scoreFilter}

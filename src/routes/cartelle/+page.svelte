@@ -119,11 +119,7 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader title="Cartelle" hideBackOnDesktop>
-		{#snippet actions()}
-			<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle..." collapsible />
-		{/snippet}
-	</PageHeader>
+	<PageHeader title="Cartelle" hideBackOnDesktop />
 
 	{#if allFolderCount === 0}
 		<EmptyState
@@ -132,6 +128,7 @@
 			subtitle="Le cartelle raggruppano le parole per argomento."
 		/>
 	{:else}
+		<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle..." />
 
 		<!-- ② Controls bar -->
 		<div class="controls-bar">
