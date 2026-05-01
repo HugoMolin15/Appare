@@ -201,8 +201,8 @@
 	}
 
 	.chip.active {
-		background-color: var(--color-primary);
-		border-color: var(--color-primary);
+		background-color: #1A1A1A;
+		border-color: #1A1A1A;
 		color: white;
 	}
 
