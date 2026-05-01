@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { studyGoal, japaneseFontSize, cardOrder, randomCardOrder } from '$lib/stores/settings';
+	import { studyGoal, appFontScale, cardLayout, randomCardOrder } from '$lib/stores/settings';
+	import type { CardField } from '$lib/types/word';
 	import { manualWordCount } from '$lib/stores/words';
 	import { currentUser, signOut } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
@@ -9,12 +10,12 @@
 		await signOut();
 	}
 
-	// Slider progress percentage (24–72 range)
-	let sliderProgress = $derived(Math.round((($japaneseFontSize - 24) / (72 - 24)) * 100));
+	// Slider progress percentage (80–130 range)
+	let sliderProgress = $derived(Math.round((($appFontScale - 80) / (130 - 80)) * 100));
 
 	function handleSliderInput(e: Event) {
 		const target = e.target as HTMLInputElement;
-		japaneseFontSize.set(Number(target.value));
+		appFontScale.set(Number(target.value));
 	}
 
 	function handleGoalInput(e: Event) {
@@ -25,7 +26,8 @@
 		studyGoal.set(value);
 	}
 
-	const SIDE_LABELS: Record<string, string> = {
+	const ALL_FIELDS: CardField[] = ['italiano', 'hiragana', 'katakana', 'romaji', 'kanji'];
+	const FIELD_LABELS: Record<CardField, string> = {
 		italiano: 'Italiano',
 		hiragana: 'Hiragana',
 		katakana: 'Katakana',
@@ -33,27 +35,221 @@
 		kanji: 'Kanji',
 	};
 
-	function moveUp(index: number) {
-		if (index === 0) return;
-		const next = [...$cardOrder];
-		[next[index - 1], next[index]] = [next[index], next[index - 1]];
-		cardOrder.set(next);
+	// ---- Card layout helpers ----
+	function addCard() {
+		cardLayout.update(l => [...l, { fields: [] }]);
 	}
 
-	function moveDown(index: number) {
-		if (index === $cardOrder.length - 1) return;
-		const next = [...$cardOrder];
-		[next[index], next[index + 1]] = [next[index + 1], next[index]];
-		cardOrder.set(next);
+	function removeCard(i: number) {
+		cardLayout.update(l => {
+			if (l.length <= 1) return l;
+			return l.filter((_, idx) => idx !== i);
+		});
+	}
+
+	function moveCardUp(i: number) {
+		cardLayout.update(l => {
+			if (i === 0) return l;
+			const next = [...l];
+			[next[i - 1], next[i]] = [next[i], next[i - 1]];
+			return next;
+		});
+	}
+
+	function moveCardDown(i: number) {
+		cardLayout.update(l => {
+			if (i === l.length - 1) return l;
+			const next = [...l];
+			[next[i], next[i + 1]] = [next[i + 1], next[i]];
+			return next;
+		});
+	}
+
+	function addFieldToCard(cardIdx: number, field: CardField) {
+		cardLayout.update(l => {
+			const next = l.map((c, i) =>
+				i === cardIdx ? { fields: [...c.fields, field] } : c
+			);
+			return next;
+		});
+	}
+
+	function removeFieldFromCard(cardIdx: number, fieldIdx: number) {
+		cardLayout.update(l => {
+			const card = l[cardIdx];
+			const newFields = card.fields.filter((_, i) => i !== fieldIdx);
+			if (newFields.length === 0) {
+				// Remove the whole card if it becomes empty
+				if (l.length <= 1) return l; // keep at least one card
+				return l.filter((_, i) => i !== cardIdx);
+			}
+			return l.map((c, i) => i === cardIdx ? { fields: newFields } : c);
+		});
 	}
 </script>
 
 <svelte:head>
-	<title>Appare — Impostazioni</title>
+	<title>Anki-jin — Impostazioni</title>
 </svelte:head>
 
 <div class="page page-enter">
 	<PageHeader title="Impostazioni" />
+
+	<!-- Account / Login -->
+	{#if $currentUser}
+		<div class="account-row">
+			<div class="account-info">
+				<span class="account-label">Account</span>
+				<span class="account-email">{$currentUser.email ?? ''}</span>
+			</div>
+			<button class="signout-btn" onclick={handleSignOut}>Esci</button>
+		</div>
+	{:else}
+		<div class="login-cta">
+			<div class="login-cta-text">
+				<span class="login-cta-title">Salva i tuoi progressi</span>
+				<span class="login-cta-sub">Crea un account per sincronizzare i dati su tutti i tuoi dispositivi.</span>
+			</div>
+			<a href="/login" class="login-cta-btn">Accedi / Registrati</a>
+		</div>
+	{/if}
+
+	<!-- Divider -->
+	<div class="divider"></div>
+
+	<!-- Card Layout Section -->
+	<section class="section">
+		<h2 class="section-heading">Struttura flashcard</h2>
+		<p class="section-subtitle">Definisci le carte che appaiono durante lo studio. Ogni carta può mostrare uno o più campi.</p>
+
+		<!-- Random order toggle -->
+		<div class="order-toggle" onclick={() => randomCardOrder.set(!$randomCardOrder)} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && randomCardOrder.set(!$randomCardOrder)}>
+			<div class="order-toggle-left">
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="16 3 21 3 21 8" />
+					<line x1="4" y1="20" x2="21" y2="3" />
+					<polyline points="21 16 21 21 16 21" />
+					<line x1="15" y1="15" x2="21" y2="21" />
+				</svg>
+				<span class="order-toggle-label">Ordine casuale delle carte</span>
+			</div>
+			<div class="toggle-switch" class:on={$randomCardOrder}>
+				<div class="toggle-thumb"></div>
+			</div>
+		</div>
+
+		<!-- Card builder -->
+		<div class="card-builder">
+			{#each $cardLayout as card, ci}
+				<div class="builder-card">
+					<!-- Card header -->
+					<div class="builder-card-header">
+						<span class="builder-card-title">Carta {ci + 1}</span>
+						<div class="builder-card-actions">
+							<button class="arrow-btn" onclick={() => moveCardUp(ci)} disabled={ci === 0} aria-label="Sposta su">
+								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+									<polyline points="18 15 12 9 6 15" />
+								</svg>
+							</button>
+							<button class="arrow-btn" onclick={() => moveCardDown(ci)} disabled={ci === $cardLayout.length - 1} aria-label="Sposta giù">
+								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+									<polyline points="6 9 12 15 18 9" />
+								</svg>
+							</button>
+							{#if $cardLayout.length > 1}
+								<button class="remove-card-btn" onclick={() => removeCard(ci)} aria-label="Rimuovi carta">
+									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+										<line x1="18" y1="6" x2="6" y2="18" />
+										<line x1="6" y1="6" x2="18" y2="18" />
+									</svg>
+								</button>
+							{/if}
+						</div>
+					</div>
+
+					<!-- Fields on this card -->
+					{#each card.fields as field, fi}
+						<div class="builder-field-row">
+							<span class="builder-field-dot"></span>
+							<span class="builder-field-label">{FIELD_LABELS[field]}</span>
+							<button class="remove-field-btn" onclick={() => removeFieldFromCard(ci, fi)} aria-label="Rimuovi campo">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+									<line x1="18" y1="6" x2="6" y2="18" />
+									<line x1="6" y1="6" x2="18" y2="18" />
+								</svg>
+							</button>
+						</div>
+					{/each}
+
+					<!-- Add field chips -->
+					<div class="builder-add-field-row">
+						{#each ALL_FIELDS as f}
+							<button
+								class="field-chip"
+								class:disabled={card.fields.includes(f)}
+								onclick={() => { if (!card.fields.includes(f)) addFieldToCard(ci, f); }}
+								disabled={card.fields.includes(f)}
+							>
+								+ {FIELD_LABELS[f]}
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/each}
+
+			<!-- Add card button -->
+			<button class="add-card-btn" onclick={addCard}>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+					<line x1="12" y1="5" x2="12" y2="19" />
+					<line x1="5" y1="12" x2="19" y2="12" />
+				</svg>
+				Aggiungi carta
+			</button>
+		</div>
+	</section>
+
+	<!-- Divider -->
+	<div class="divider"></div>
+
+	<!-- Font Size Section -->
+	<section class="section">
+		<h2 class="section-heading">Dimensione testo</h2>
+		<p class="section-subtitle">Regola la dimensione di tutto il testo nell'app.</p>
+
+		<div class="preview-card">
+			<div class="preview-inner">
+				<span class="preview-label" style="font-size: {$appFontScale * 0.01 * 0.82}rem; color: var(--color-text-secondary);">Tutte le parole</span>
+				<span class="preview-title" style="font-size: {$appFontScale * 0.01 * 1.75}rem;">I miei progressi</span>
+				<span class="preview-jp font-jp" style="font-size: {$appFontScale * 0.01 * 3}rem; color: var(--color-primary);">大きい</span>
+			</div>
+		</div>
+
+		<div class="slider-row">
+			<span class="slider-label-sm">A</span>
+			<div class="slider-container">
+				<input
+					type="range"
+					min="80"
+					max="130"
+					step="1"
+					value={$appFontScale}
+					oninput={handleSliderInput}
+					class="font-slider"
+					style="--progress: {sliderProgress}%"
+				/>
+			</div>
+			<span class="slider-label-lg">A</span>
+		</div>
+
+		{#if $appFontScale !== 100}
+			<button class="reset-btn" onclick={() => appFontScale.set(100)}>
+				Ripristina dimensione predefinita
+			</button>
+		{/if}
+	</section>
+
+	<!-- Divider -->
+	<div class="divider"></div>
 
 	<!-- Study Goal Section -->
 	<section class="section">
@@ -61,10 +257,10 @@
 		<p class="section-subtitle">Quante parole vuoi imparare ogni giorno? Questo influenzerà i colori della tua heatmap.</p>
 
 		<div class="goal-input-container">
-			<input 
-				type="number" 
-				class="goal-input" 
-				value={$studyGoal} 
+			<input
+				type="number"
+				class="goal-input"
+				value={$studyGoal}
 				oninput={handleGoalInput}
 				min="1"
 				max="100"
@@ -99,94 +295,6 @@
 	<!-- Divider -->
 	<div class="divider"></div>
 
-	<!-- Font Size Section -->
-	<section class="section">
-		<h2 class="section-heading">Dimensione testo giapponese</h2>
-		<p class="section-subtitle">Regola la dimensione dei caratteri kanji e kana nelle flashcard.</p>
-
-		<div class="preview-card">
-			<span class="preview-text font-jp" style="font-size: {$japaneseFontSize}px; color: var(--color-primary);">
-				大きい
-			</span>
-		</div>
-
-		<div class="slider-row">
-			<span class="slider-label-sm">A</span>
-			<div class="slider-container">
-				<input
-					type="range"
-					min="24"
-					max="72"
-					step="1"
-					value={$japaneseFontSize}
-					oninput={handleSliderInput}
-					class="font-slider"
-					style="--progress: {sliderProgress}%"
-				/>
-			</div>
-			<span class="slider-label-lg">A</span>
-		</div>
-	</section>
-
-	<!-- Divider -->
-	<div class="divider"></div>
-
-	<!-- Card Order Section -->
-	<section class="section">
-		<h2 class="section-heading">Ordine delle flashcard</h2>
-		<p class="section-subtitle">Scegli in che ordine vuoi vedere i lati delle flashcard durante lo studio.</p>
-
-		<div class="order-toggle" onclick={() => randomCardOrder.set(!$randomCardOrder)} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && randomCardOrder.set(!$randomCardOrder)}>
-			<div class="order-toggle-left">
-				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<polyline points="16 3 21 3 21 8" />
-					<line x1="4" y1="20" x2="21" y2="3" />
-					<polyline points="21 16 21 21 16 21" />
-					<line x1="15" y1="15" x2="21" y2="21" />
-				</svg>
-				<span class="order-toggle-label">Ordine casuale</span>
-			</div>
-			<div class="toggle-switch" class:on={$randomCardOrder}>
-				<div class="toggle-thumb"></div>
-			</div>
-		</div>
-
-		{#if !$randomCardOrder}
-			<div class="order-list">
-				{#each $cardOrder as key, i}
-					<div class="order-row">
-						<div class="order-drag-handle">
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-								<line x1="8" y1="6" x2="21" y2="6" />
-								<line x1="8" y1="12" x2="21" y2="12" />
-								<line x1="8" y1="18" x2="21" y2="18" />
-								<line x1="3" y1="6" x2="3.01" y2="6" />
-								<line x1="3" y1="12" x2="3.01" y2="12" />
-								<line x1="3" y1="18" x2="3.01" y2="18" />
-							</svg>
-						</div>
-						<span class="order-label">{SIDE_LABELS[key]}</span>
-						<div class="order-arrows">
-							<button class="arrow-btn" onclick={() => moveUp(i)} disabled={i === 0} aria-label="Sposta su">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-									<polyline points="18 15 12 9 6 15" />
-								</svg>
-							</button>
-							<button class="arrow-btn" onclick={() => moveDown(i)} disabled={i === $cardOrder.length - 1} aria-label="Sposta giù">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-									<polyline points="6 9 12 15 18 9" />
-								</svg>
-							</button>
-						</div>
-					</div>
-				{/each}
-			</div>
-		{/if}
-	</section>
-
-	<!-- Divider -->
-	<div class="divider"></div>
-
 	<!-- Archive Count -->
 	<div class="archive-row">
 		<div class="archive-left">
@@ -199,27 +307,22 @@
 		<span class="archive-count">{$manualWordCount}</span>
 	</div>
 
-	<!-- Divider -->
-	<div class="divider" style="margin-top: 1.5rem;"></div>
-
-	<!-- Account -->
-	{#if $currentUser}
-		<div class="account-row">
-			<div class="account-info">
-				<span class="account-label">Account</span>
-				<span class="account-email">{$currentUser.email ?? ''}</span>
-			</div>
-			<button class="signout-btn" onclick={handleSignOut}>Esci</button>
-		</div>
-	{:else}
-		<div class="login-cta">
-			<div class="login-cta-text">
-				<span class="login-cta-title">Salva i tuoi progressi</span>
-				<span class="login-cta-sub">Crea un account per sincronizzare i dati su tutti i tuoi dispositivi.</span>
-			</div>
-			<a href="/login" class="login-cta-btn">Accedi / Registrati</a>
-		</div>
-	{/if}
+	<!-- Website link -->
+	<div class="site-link-row">
+		<a
+			href="https://appareassociazione.wixsite.com/giapponeseperugia"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="site-link"
+		>
+			<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<circle cx="12" cy="12" r="10" />
+				<line x1="2" y1="12" x2="22" y2="12" />
+				<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+			</svg>
+			appareassociazione.wixsite.com
+		</a>
+	</div>
 </div>
 
 <style>
@@ -269,7 +372,7 @@
 		border: none;
 		font-size: 1.75rem;
 		font-weight: 700;
-		color: var(--color-primary);
+		color: #1A1A1A;
 		text-align: center;
 		padding: 0.25rem;
 		outline: none;
@@ -328,17 +431,35 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 2rem 1rem;
+		padding: 1.5rem 1rem;
 		background-color: var(--color-surface);
 		border-radius: var(--radius-xl);
 		margin-bottom: 1rem;
 		min-height: 100px;
 	}
 
-	.preview-text {
-		font-weight: 700;
-		transition: font-size 0.15s ease;
+	.preview-inner {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.15rem;
 		user-select: none;
+	}
+
+	.preview-label {
+		font-weight: 600;
+		color: var(--color-text-secondary);
+		line-height: 1.2;
+	}
+
+	.preview-title {
+		font-weight: 700;
+		line-height: 1.2;
+	}
+
+	.preview-jp {
+		font-weight: 700;
+		line-height: 1.2;
 	}
 
 	/* ---- Slider ---- */
@@ -364,6 +485,19 @@
 
 	.slider-container {
 		flex: 1;
+	}
+
+	.reset-btn {
+		margin-top: 0.75rem;
+		background: none;
+		border: none;
+		padding: 0;
+		font-size: 0.82rem;
+		font-family: var(--font-sans);
+		font-weight: 600;
+		color: var(--color-primary);
+		cursor: pointer;
+		text-align: left;
 	}
 
 	.font-slider {
@@ -407,7 +541,7 @@
 		cursor: pointer;
 	}
 
-	/* ---- Card Order ---- */
+	/* ---- Card Layout / Toggle ---- */
 	.order-toggle {
 		display: flex;
 		align-items: center;
@@ -417,7 +551,7 @@
 		border-radius: var(--radius-lg);
 		border: 1px solid var(--color-border);
 		cursor: pointer;
-		margin-bottom: 0.75rem;
+		margin-bottom: 1rem;
 		user-select: none;
 	}
 
@@ -463,44 +597,39 @@
 		transform: translateX(18px);
 	}
 
-	.order-list {
+	/* ---- Card Builder ---- */
+	.card-builder {
 		display: flex;
 		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	.builder-card {
+		background: var(--color-surface);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
-		overflow: hidden;
+		padding: 0.75rem 1rem;
 	}
 
-	.order-row {
+	.builder-card-header {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
-		padding: 0.85rem 1rem;
-		background: var(--color-surface);
-		border-bottom: 1px solid var(--color-border);
+		justify-content: space-between;
+		margin-bottom: 0.5rem;
 	}
 
-	.order-row:last-child {
-		border-bottom: none;
+	.builder-card-title {
+		font-size: 0.8rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--color-text-secondary);
 	}
 
-	.order-drag-handle {
-		color: var(--color-text-tertiary);
-		flex-shrink: 0;
+	.builder-card-actions {
 		display: flex;
 		align-items: center;
-	}
-
-	.order-label {
-		flex: 1;
-		font-size: 0.95rem;
-		font-weight: 600;
-		color: var(--color-text);
-	}
-
-	.order-arrows {
-		display: flex;
-		gap: 0.25rem;
+		gap: 0.15rem;
 	}
 
 	.arrow-btn {
@@ -518,6 +647,102 @@
 	.arrow-btn:disabled {
 		opacity: 0.25;
 		cursor: default;
+	}
+
+	.remove-card-btn {
+		background: none;
+		border: none;
+		padding: 0.3rem;
+		cursor: pointer;
+		color: var(--color-text-tertiary);
+		border-radius: var(--radius-md);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-left: 0.25rem;
+	}
+
+	.builder-field-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.3rem 0;
+		border-bottom: 1px solid var(--color-border-light, var(--color-border));
+	}
+
+	.builder-field-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--color-primary);
+		flex-shrink: 0;
+	}
+
+	.builder-field-label {
+		flex: 1;
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: var(--color-text);
+	}
+
+	.remove-field-btn {
+		background: none;
+		border: none;
+		padding: 0.25rem;
+		cursor: pointer;
+		color: var(--color-text-tertiary);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: var(--radius-sm, 4px);
+	}
+
+	.builder-add-field-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		padding-top: 0.6rem;
+	}
+
+	.field-chip {
+		padding: 0.3rem 0.7rem;
+		border-radius: var(--radius-full);
+		border: 1.5px solid var(--color-border);
+		background: var(--color-bg);
+		color: var(--color-text);
+		font-size: 0.78rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		cursor: pointer;
+		transition: opacity 0.15s ease;
+	}
+
+	.field-chip.disabled {
+		opacity: 0.3;
+		cursor: default;
+	}
+
+	.add-card-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		width: 100%;
+		padding: 0.75rem;
+		border: 1.5px dashed var(--color-border);
+		border-radius: var(--radius-lg);
+		background: none;
+		color: var(--color-text-secondary);
+		font-size: 0.88rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		cursor: pointer;
+		transition: border-color 0.15s ease, color 0.15s ease;
+	}
+
+	.add-card-btn:hover {
+		border-color: #e0dce6;
+		color: var(--color-primary);
 	}
 
 	/* ---- Archive Row ---- */
@@ -622,5 +847,27 @@
 		text-decoration: none;
 		font-size: 0.9rem;
 		font-weight: 700;
+	}
+
+	/* ---- Website link ---- */
+	.site-link-row {
+		display: flex;
+		justify-content: center;
+		padding: 1.5rem 0 0.5rem;
+	}
+
+	.site-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.78rem;
+		font-weight: 500;
+		color: var(--color-text-tertiary);
+		text-decoration: none;
+		transition: color 0.15s ease;
+	}
+
+	.site-link:hover {
+		color: var(--color-primary);
 	}
 </style>

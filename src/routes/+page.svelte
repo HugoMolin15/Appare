@@ -6,16 +6,17 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Home</title>
+	<title>Anki-jin — Home</title>
 </svelte:head>
 
 <div class="page page-enter">
 	<!-- Header -->
 	<header class="header hide-desktop">
 		<div class="header-left">
+			<img src="/secondary_icon.png" alt="Appare logo" class="header-icon" />
 			<div class="header-text">
-				<span class="header-label">日本語</span>
 				<span class="header-title">Appare</span>
+				<span class="header-subtitle">Scuola di lingua Giapponese<br>di Tomoko Yamane</span>
 			</div>
 		</div>
 		<a href="/impostazioni" class="settings-btn" aria-label="Impostazioni">
@@ -37,7 +38,6 @@
 	</section>
 
 	<!-- Divider -->
-	<div class="divider hide-desktop"></div>
 
 	<!-- Menu List -->
 	<nav class="menu-list hide-desktop">
@@ -110,32 +110,40 @@
 	.header-left {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
+		gap: 0.6rem;
 	}
 
-	.logo {
+	.header-icon {
+		height: 48px;
+		width: auto;
 		flex-shrink: 0;
+		object-fit: contain;
 	}
 
 	.header-text {
 		display: flex;
 		flex-direction: column;
-	}
-
-	.header-label {
-		font-size: 0.75rem;
-		font-weight: 500;
-		color: var(--color-text-secondary);
-		letter-spacing: 0.02em;
-		font-family: var(--font-jp);
+		justify-content: center;
+		height: 48px;
 	}
 
 	.header-title {
-		font-size: 1.5rem;
+		font-size: 1.45rem;
 		font-weight: 800;
-		letter-spacing: -0.02em;
 		line-height: 1.1;
+		letter-spacing: -0.02em;
+		color: #E8192C;
 	}
+
+	.header-subtitle {
+		font-size: 0.62rem;
+		font-weight: 500;
+		color: var(--color-text-secondary);
+		line-height: 1.3;
+		letter-spacing: 0.01em;
+		margin-top: 0.1rem;
+	}
+
 
 	.settings-btn {
 		display: flex;
@@ -167,7 +175,7 @@
 		background-color: var(--color-primary);
 		color: white;
 		border: none;
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-full);
 		font-size: 1.05rem;
 		font-weight: 600;
 		font-family: var(--font-sans);
@@ -252,24 +260,13 @@
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.875rem 1.5rem;
-		background-color: var(--color-accent);
-		color: var(--color-text);
 		border: none;
 		border-radius: var(--radius-full);
 		font-size: 0.95rem;
 		font-weight: 700;
 		font-family: var(--font-sans);
 		cursor: pointer;
-		transition: background-color 0.15s ease, transform 0.1s ease;
 		white-space: nowrap;
 		text-decoration: none;
-	}
-
-	.fab:hover {
-		background-color: var(--color-accent-hover);
-	}
-
-	.fab:active {
-		transform: scale(0.96);
 	}
 </style>

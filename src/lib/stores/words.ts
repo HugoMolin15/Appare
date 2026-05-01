@@ -3,10 +3,11 @@ import { browser } from '$app/environment';
 import type { Word } from '$lib/types/word';
 import { currentUserId } from '$lib/stores/auth';
 import { pushWord, pushWords, deleteWord as dbDeleteWord } from '$lib/services/sync';
+import { UNCATEGORIZED_TAG } from '$lib/constants';
 
 const STORAGE_KEY = 'appare_words';
 const SEEDED_KEY = 'appare_seeded';
-const SEED_VERSION = '17';
+const SEED_VERSION = '20';
 
 function loadStoredWords(): Word[] {
 	if (!browser) return [];
@@ -132,6 +133,27 @@ export function removeWordsFromFolder(wordIds: string[]) {
 		pushWords(toSync, uid);
 	}
 }
+/** Strip a custom tag from every word that has it; words left with no tags get UNCATEGORIZED_TAG */
+export function removeTagFromAllWords(tag: string) {
+	const affectedIds = get(words)
+		.filter((w) => w.tags?.includes(tag))
+		.map((w) => w.id);
+	if (affectedIds.length === 0) return;
+	words.update((current) =>
+		current.map((w) => {
+			if (!w.tags?.includes(tag)) return w;
+			const tags = w.tags.filter((t) => t !== tag);
+			return { ...w, tags: tags.length > 0 ? tags : [UNCATEGORIZED_TAG] };
+		})
+	);
+	const uid = get(currentUserId);
+	if (uid) {
+		const idSet = new Set(affectedIds);
+		const toSync = get(words).filter((w) => idSet.has(w.id));
+		pushWords(toSync, uid);
+	}
+}
+
 /** Clear all words (used on logout) */
 export function clearWords() {
 	words.set([]);

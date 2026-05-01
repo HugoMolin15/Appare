@@ -79,7 +79,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.4rem;
+		gap: 0;
 	}
 
 	.day-num {
@@ -93,12 +93,13 @@
 		font-weight: 600;
 		color: var(--color-text-secondary);
 		text-transform: uppercase;
+		margin-bottom: 0.5rem;
 	}
 
 	.day-square {
 		width: 32px;
 		height: 32px;
-		border-radius: 6px;
+		border-radius: 50%;
 		transition: transform 0.2s ease;
 	}
 
@@ -112,11 +113,11 @@
 	}
 
 	/* Intensities using brand colors */
-	.intensity-0 { background-color: var(--color-surface-warm); border: 1px solid var(--color-border); }
-	.intensity-1 { background-color: rgba(139, 26, 26, 0.3) !important; border: none; }
-	.intensity-2 { background-color: rgba(139, 26, 26, 0.6) !important; border: none; }
-	.intensity-3 { background-color: rgba(139, 26, 26, 0.85) !important; border: none; }
-	.intensity-4 { background-color: rgba(139, 26, 26, 1) !important; border: none; }
+	.intensity-0 { background-color: var(--color-surface); border: 1px solid #e0dce6; }
+	.intensity-1 { background-color: rgba(239, 30, 41, 0.3) !important; border: none; }
+	.intensity-2 { background-color: rgba(239, 30, 41, 0.6) !important; border: none; }
+	.intensity-3 { background-color: rgba(239, 30, 41, 0.85) !important; border: none; }
+	.intensity-4 { background-color: rgba(239, 30, 41, 1) !important; border: none; }
 
 	/* Heatmap Container */
 	.heatmap-container {

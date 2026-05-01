@@ -1,60 +1,72 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import type { CategoryValue } from '$lib/types/word';
-	import { addWord } from '$lib/stores/words';
+	import { CATEGORIES, type CategoryValue } from '$lib/types/word';
+	import { addWord, words } from '$lib/stores/words';
+	import { MY_WORDS_FOLDER_ID, UNCATEGORIZED_TAG } from '$lib/constants';
+	import { folders } from '$lib/stores/folders';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import ClearableInput from '$lib/components/ClearableInput.svelte';
 	import CategoryPicker from '$lib/components/CategoryPicker.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 
-	const folderId = $page.url.searchParams.get('folderId');
+	const urlFolderId = $page.url.searchParams.get('folderId');
 
 	let italiano = $state('');
 	let hiragana = $state('');
-	let katakana = $state('');
 	let romaji = $state('');
 	let kanji = $state('');
-	let selectedCategory = $state<CategoryValue | null>('Verbo Godan');
+	let selectedTags = $state<string[]>(['Verbo Godan']);
 	let wordType = $state<'word' | 'phrase'>('word');
+	let destFolderId = $state(urlFolderId ?? MY_WORDS_FOLDER_ID);
 
-	let hasReading = $derived(
-		hiragana.trim().length > 0 ||
-		katakana.trim().length > 0 ||
-		romaji.trim().length > 0
+	let topFolders = $derived($folders.filter(f => !f.parentId));
+
+	const allPresetValues = new Set(Object.values(CATEGORIES).flat() as string[]);
+
+	// Duplicate detection
+	let dupItaliano = $derived(
+		italiano.trim().length > 0 &&
+		$words.some(w => w.italiano.toLowerCase() === italiano.trim().toLowerCase())
+	);
+	let dupHiragana = $derived(
+		hiragana.trim().length > 0 &&
+		$words.some(w => (w.hiragana || w.katakana || '').toLowerCase() === hiragana.trim().toLowerCase())
+	);
+	let dupKanji = $derived(
+		kanji.trim().length > 0 &&
+		$words.some(w => w.kanji?.trim().length > 0 && w.kanji.trim() === kanji.trim())
 	);
 
 	let isValid = $derived(
 		italiano.trim().length > 0 &&
-		(hasReading || kanji.trim().length > 0) &&
-		(wordType === 'phrase' || selectedCategory !== null)
+		hiragana.trim().length > 0 &&
+		(wordType === 'phrase' || selectedTags.length > 0)
 	);
 
 	function handleSave() {
 		if (!isValid) return;
-		if (wordType === 'word' && !selectedCategory) return;
+		const realTags = selectedTags.filter(t => t !== UNCATEGORIZED_TAG);
+		const finalTags = realTags.length > 0 ? realTags : selectedTags;
 
 		addWord({
 			italiano: italiano.trim(),
 			hiragana: hiragana.trim(),
-			katakana: katakana.trim(),
+			katakana: '',
 			romaji: romaji.trim(),
 			kanji: kanji.trim(),
-			category: selectedCategory ?? undefined,
+			category: (finalTags.find(t => allPresetValues.has(t)) as CategoryValue | undefined),
+			tags: finalTags.length > 0 ? finalTags : undefined,
 			wordType,
-			folderId: folderId || undefined
+			folderId: destFolderId || undefined
 		});
 
-		if (folderId) {
-			goto(`/cartelle/${folderId}`);
-		} else {
-			goto('/');
-		}
+		goto(destFolderId ? `/cartelle/${destFolderId}` : '/');
 	}
 </script>
 
 <svelte:head>
-	<title>Appare — Nuova parola</title>
+	<title>Anki-jin — Nuova parola</title>
 </svelte:head>
 
 <div class="page page-enter">
@@ -62,18 +74,25 @@
 
 	<div class="fields">
 		<div class="field">
-			<label for="input-italiano" class="field-label">Italiano</label>
+			<label for="input-italiano" class="field-label">Italiano <span class="req">*</span></label>
 			<ClearableInput bind:value={italiano} placeholder="es. grande" id="input-italiano" />
+			{#if dupItaliano}
+				<span class="dup-warn">
+					<Icon name="close" size={12} strokeWidth={3} />
+					Attenzione: nel database è già presente una parola con questo campo
+				</span>
+			{/if}
 		</div>
 
 		<div class="field">
-			<label for="input-hiragana" class="field-label">Hiragana</label>
-			<ClearableInput bind:value={hiragana} placeholder="es. おおきい" id="input-hiragana" japanese lang="ja" />
-		</div>
-
-		<div class="field">
-			<label for="input-katakana" class="field-label">Katakana</label>
-			<ClearableInput bind:value={katakana} placeholder="es. オオキイ" id="input-katakana" japanese lang="ja" />
+			<label for="input-hiragana" class="field-label">Hiragana/Katakana <span class="req">*</span></label>
+			<ClearableInput bind:value={hiragana} placeholder="es. おおきい / オオキイ" id="input-hiragana" japanese lang="ja" />
+			{#if dupHiragana}
+				<span class="dup-warn">
+					<Icon name="close" size={12} strokeWidth={3} />
+					Attenzione: nel database è già presente una parola con questo campo
+				</span>
+			{/if}
 		</div>
 
 		<div class="field">
@@ -84,6 +103,22 @@
 		<div class="field">
 			<label for="input-kanji" class="field-label">Kanji</label>
 			<ClearableInput bind:value={kanji} placeholder="es. 大きい" id="input-kanji" japanese lang="ja" />
+			{#if dupKanji}
+				<span class="dup-warn">
+					<Icon name="close" size={12} strokeWidth={3} />
+					Attenzione: nel database è già presente una parola con questo campo
+				</span>
+			{/if}
+		</div>
+
+		<div class="field">
+			<label for="dest-folder" class="field-label">Cartella di destinazione</label>
+			<select id="dest-folder" class="folder-select" bind:value={destFolderId}>
+				{#each topFolders as f}
+					<option value={f.id}>{f.name}</option>
+				{/each}
+				<option value="">Nessuna cartella</option>
+			</select>
 		</div>
 	</div>
 
@@ -94,7 +129,7 @@
 
 	{#if wordType === 'word'}
 		<div class="category-area">
-			<CategoryPicker bind:selected={selectedCategory} />
+			<CategoryPicker bind:selectedTags={selectedTags} />
 		</div>
 	{/if}
 
@@ -141,6 +176,40 @@
 		font-size: 0.82rem;
 		font-weight: 600;
 		color: var(--color-text);
+	}
+
+	.req {
+		color: var(--color-primary);
+		font-weight: 700;
+	}
+
+	.dup-warn {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: #b45309;
+		margin-top: 0.15rem;
+	}
+
+	.folder-select {
+		width: 100%;
+		padding: 0.75rem 1rem;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+		font-size: 0.95rem;
+		font-weight: 500;
+		font-family: var(--font-sans);
+		color: var(--color-text);
+		appearance: none;
+		-webkit-appearance: none;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-position: right 0.85rem center;
+		padding-right: 2.5rem;
+		cursor: pointer;
 	}
 
 	.type-picker {

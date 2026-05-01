@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { studyHistory } from '$lib/stores/history';
 	import { words } from '$lib/stores/words';
-	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, skipExitGuard } from '$lib/stores/studySession';
+	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection } from '$lib/stores/studySession';
 	import { dateColors, setDateColor } from '$lib/stores/dateColors';
 	import { FOLDER_COLORS } from '$lib/constants';
 	import { goto } from '$app/navigation';
@@ -9,8 +9,20 @@
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import ScoreFilter from '$lib/components/ScoreFilter.svelte';
+	import type { WordScore } from '$lib/types/word';
 	import type { Word } from '$lib/types/word';
-	import { fade, fly } from 'svelte/transition';
+	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
+	import { fly } from 'svelte/transition';
+	import { shuffle } from '$lib/utils/shuffle';
+	import { wordScores } from '$lib/stores/wordScores';
+
+	const SCORE_COLORS: Record<string, string> = {
+		none: 'var(--color-border)',
+		unknown: '#C5221F',
+		learning: '#D97706',
+		known: '#1D6FA4',
+	};
 
 	// Path state: [Year, Month, Week, Date]
 	let path = $state<string[]>([]);
@@ -94,21 +106,121 @@
 	}
 
 	let searchQuery = $state('');
+	let periodSearchQuery = $state('');
+	let scoreFilter = $state<'all' | WordScore>('all');
+
+	type WordSort = 'newest' | 'oldest' | 'it-az' | 'jp-az';
+	let wordSortMode = $state<WordSort>('newest');
+	const wordSortLabels: Record<WordSort, string> = { newest: 'Più recenti', oldest: 'Meno recenti', 'it-az': 'A-Z Italiano', 'jp-az': 'A-Z Giapponese' };
+	const wordSortCycle: WordSort[] = ['newest', 'oldest', 'it-az', 'jp-az'];
+	function cycleWordSort() { wordSortMode = wordSortCycle[(wordSortCycle.indexOf(wordSortMode) + 1) % wordSortCycle.length]; }
+
+	let periodSortMode = $state<'newest' | 'oldest'>('newest');
+	function cyclePeriodSort() { periodSortMode = periodSortMode === 'newest' ? 'oldest' : 'newest'; }
+
+	let daySelectMode = $state(false);
 
 	// When viewing a day, path.length === 4 and currentItems() returns string[] (word ids)
 	let isDayView = $derived(path.length === 4);
 
-	let dayWords = $derived(
-		isDayView
-			? (currentItems() as string[]).map(id => $words.find(w => w.id === id)).filter((w): w is Word => w !== undefined)
-			: [] as Word[]
-	);
+	let dayWords = $derived.by(() => {
+		if (!isDayView) return [] as Word[];
+		const base = (currentItems() as string[])
+			.map(id => $words.find(w => w.id === id))
+			.filter((w): w is Word => w !== undefined);
+		const arr = [...base];
+		if (wordSortMode === 'oldest') return arr.sort((a, b) => a.createdAt - b.createdAt);
+		if (wordSortMode === 'it-az') return arr.sort((a, b) => a.italiano.localeCompare(b.italiano, 'it'));
+		if (wordSortMode === 'jp-az') return arr.sort((a, b) => (a.hiragana || a.katakana).localeCompare(b.hiragana || b.katakana, 'ja'));
+		return arr;
+	});
 
-	let filteredWords = $derived(filterWords(dayWords, searchQuery));
+	let filteredWords = $derived.by(() => {
+		let result = filterWords(dayWords, searchQuery);
+		if (scoreFilter !== 'all') result = result.filter(w => ($wordScores[w.id] ?? 'none') === scoreFilter);
+		return result;
+	});
 
-	let selectedInFolder = $derived(
-		dayWords.filter(w => $selectedWordIds.has(w.id)).length
-	);
+	let filteredPeriodKeys = $derived.by(() => {
+		const keys = Object.keys(currentItems()).sort();
+		const sorted = periodSortMode === 'oldest' ? keys : [...keys].reverse();
+		if (!periodSearchQuery.trim()) return sorted;
+		const q = periodSearchQuery.trim().toLowerCase();
+		return sorted.filter(key => {
+			const label =
+				path.length === 1 ? monthNames[parseInt(key) - 1] :
+				path.length === 3 ? getDayName(key) :
+				key;
+			return label.toLowerCase().includes(q);
+		});
+	});
+
+	let currentLevelWordCount = $derived.by(() => {
+		const items = currentItems();
+		return new Set(
+			Object.values(items as Record<string, unknown>).flatMap(v => collectWordIdsFromNode(v))
+		).size;
+	});
+
+	let selectedInDayView = $derived(dayWords.filter(w => $selectedWordIds.has(w.id)).length);
+
+	// Folder select mode (at non-day levels)
+	let selectMode = $state(false);
+	let selectedKeys = $state(new Set<string>());
+
+	function toggleKeySelect(key: string) {
+		const next = new Set(selectedKeys);
+		if (next.has(key)) next.delete(key); else next.add(key);
+		selectedKeys = next;
+	}
+
+	function exitSelectMode() { selectMode = false; selectedKeys = new Set(); }
+
+	function collectWordIdsFromNode(node: unknown): string[] {
+		if (Array.isArray(node)) return node as string[];
+		if (node && typeof node === 'object') {
+			return Object.values(node).flatMap(collectWordIdsFromNode);
+		}
+		return [];
+	}
+
+	let selectedNodeWordCount = $derived.by(() => {
+		const items = currentItems();
+		return new Set(
+			Array.from(selectedKeys).flatMap(k => collectWordIdsFromNode(items[k]))
+		).size;
+	});
+
+	function studySelectedPeriods() {
+		const items = currentItems();
+		const allIds = Array.from(selectedKeys).flatMap(k => collectWordIdsFromNode(items[k]));
+		const unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
+		if (unique.length === 0) return;
+		setSelectedWords(shuffle(unique));
+		goto('/studia');
+	}
+
+	function studyAllPeriods() {
+		const items = currentItems();
+		const allIds = Object.values(items as Record<string, unknown>).flatMap(v => collectWordIdsFromNode(v));
+		const unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
+		if (unique.length === 0) return;
+		setSelectedWords(shuffle(unique));
+		goto('/studia');
+	}
+
+	// Reset select mode when navigating
+	$effect(() => {
+		path; // track path changes
+		selectMode = false;
+		selectedKeys = new Set();
+		daySelectMode = false;
+		wordSortMode = 'newest';
+		periodSortMode = 'newest';
+		periodSearchQuery = '';
+		scoreFilter = 'all';
+		clearSelection();
+	});
 
 	// Color editing for folder nodes
 	let editingColorKey = $state<string | null>(null);
@@ -138,13 +250,14 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Cronologia</title>
+	<title>Anki-jin — Cronologia</title>
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader 
-		title={getTitle()} 
-		onback={path.length > 0 ? navigateUp : () => window.history.back()} 
+	<PageHeader
+		title={getTitle()}
+		onback={path.length > 0 ? navigateUp : () => window.history.back()}
+		hideBackOnDesktop={path.length === 0}
 	/>
 
 	<div class="content">
@@ -158,11 +271,48 @@
 			</div>
 		{:else if path.length < 4}
 			<!-- Show Folders -->
+			<SearchInput bind:value={periodSearchQuery} placeholder="Cerca..." />
+			<div class="controls-bar">
+				<span class="count-label">{filteredPeriodKeys.length} {filteredPeriodKeys.length === 1 ? 'periodo' : 'periodi'}</span>
+				<button class="select-toggle" onclick={() => selectMode ? exitSelectMode() : selectMode = true}>
+					{selectMode ? 'Fine' : 'Seleziona'}
+				</button>
+			</div>
+
+			{#if selectMode && selectedKeys.size > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={studySelectedPeriods} disabled={selectedNodeWordCount === 0}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia {selectedNodeWordCount} {selectedNodeWordCount === 1 ? 'parola' : 'parole'}
+					</button>
+					<button class="action-pill muted" onclick={exitSelectMode}>Deseleziona</button>
+				</div>
+			{:else if currentLevelWordCount > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={studyAllPeriods}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia tutto ({currentLevelWordCount})
+					</button>
+				</div>
+			{/if}
+
+			<div class="sort-row">
+				<button class="sort-btn" onclick={cyclePeriodSort}>
+					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+					{periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}
+				</button>
+			</div>
+
 			<div class="folder-list">
-				{#each Object.keys(currentItems()).sort().reverse() as key}
+				{#each filteredPeriodKeys as key}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
-					<div class="folder-item" onclick={() => navigateTo(key)}>
+					<div class="folder-item" onclick={() => selectMode ? toggleKeySelect(key) : navigateTo(key)}>
+						{#if selectMode}
+							<div class="folder-checkbox" class:checked={selectedKeys.has(key)}>
+								<Icon name="check" strokeWidth={3} />
+							</div>
+						{/if}
 						<div class="folder-icon" style={$dateColors[colorKey(key)] ? `color: ${$dateColors[colorKey(key)]}` : ''}>
 							<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
 								<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
@@ -179,10 +329,12 @@
 								{/if}
 							</span>
 						</div>
-						<button class="color-dot-btn" onclick={(e) => openColorEdit(key, e)} aria-label="Colora">
-							<div class="color-dot" style={$dateColors[colorKey(key)] ? `background: ${$dateColors[colorKey(key)]}` : ''}></div>
-						</button>
-						<Icon name="chevron-right" class="folder-chevron" />
+						{#if !selectMode}
+							<button class="color-dot-btn" onclick={(e) => openColorEdit(key, e)} aria-label="Colora">
+								<div class="color-dot" style={$dateColors[colorKey(key)] ? `background: ${$dateColors[colorKey(key)]}` : ''}></div>
+							</button>
+							<Icon name="chevron-right" class="folder-chevron" />
+						{/if}
 					</div>
 				{/each}
 			</div>
@@ -190,50 +342,57 @@
 			<!-- Show Words for the selected day -->
 			<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
-			<div class="folder-actions" style="margin-bottom: 1.5rem;">
-				<button class="study-folder-btn" onclick={() => {
-					if (selectedInFolder > 0) {
-						const selected = dayWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id);
-						setSelectedWords(selected);
-					} else {
-						setSelectedWords(dayWords.map(w => w.id));
-					}
-					skipExitGuard.set(true);
-					goto('/studia');
-				}}>
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-						<polygon points="5 3 19 12 5 21 5 3" />
-					</svg>
-					{#if selectedInFolder > 0}
-						Studia {selectedInFolder} {selectedInFolder === 1 ? 'selezionata' : 'selezionate'}
-					{:else}
-						Studia cartella
-					{/if}
+			<div class="controls-bar">
+				<span class="count-label">{dayWords.length} {dayWords.length === 1 ? 'parola' : 'parole'}</span>
+				<button class="select-toggle" onclick={() => { daySelectMode = !daySelectMode; if (!daySelectMode) clearSelection(); }}>
+					{daySelectMode ? 'Fine' : 'Seleziona'}
 				</button>
 			</div>
 
-			<div class="header-row-flex">
-				<p class="word-count-label">{dayWords.length} parole in questa cartella</p>
-				{#if selectedInFolder > 0}
-					<button class="clear-btn" onclick={clearSelection}>Deseleziona</button>
-				{/if}
-			</div>
-			
+			{#if daySelectMode && selectedInDayView > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={() => { setSelectedWords(shuffle(dayWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id))); goto('/studia'); }}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia {selectedInDayView} {selectedInDayView === 1 ? 'parola' : 'parole'}
+					</button>
+					<button class="action-pill muted" onclick={clearSelection}>Deseleziona</button>
+				</div>
+			{:else if dayWords.length > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={() => { setSelectedWords(shuffle(dayWords.map(w => w.id))); goto('/studia'); }}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia tutto ({dayWords.length})
+					</button>
+				</div>
+			{/if}
+
+			<ScoreFilter
+				value={scoreFilter}
+				onChange={(v) => scoreFilter = v}
+				sortLabel={wordSortLabels[wordSortMode]}
+				onSortCycle={cycleWordSort}
+			/>
+
 			<div class="word-list">
 				{#each filteredWords as word (word.id)}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
-					<div class="word-row" onclick={() => toggleWordSelection(word.id)}>
-						<div class="word-checkbox" class:checked={$selectedWordIds.has(word.id)}>
-							<Icon name="check" strokeWidth={3} />
-						</div>
+					<div class="word-row" class:selectable={daySelectMode} onclick={daySelectMode ? () => toggleWordSelection(word.id) : undefined}>
+						{#if daySelectMode}
+							<div class="word-checkbox" class:checked={$selectedWordIds.has(word.id)}>
+								<Icon name="check" strokeWidth={3} />
+							</div>
+						{/if}
 						<div class="word-main">
 							<span class="word-it">{word.italiano}</span>
 							<span class="word-jp font-jp">
 								{word.hiragana || word.katakana || word.romaji || word.kanji}
 							</span>
 						</div>
-						<span class="word-cat" data-category={word.category}>{word.category}</span>
+						<div class="word-trailing">
+							{#if word.category}<span class="word-cat" data-category={word.category}>{word.category}</span>{/if}
+							<span class="word-score-dot" style="background:{SCORE_COLORS[$wordScores[word.id] ?? 'none']}"></span>
+						</div>
 					</div>
 				{/each}
 			</div>
@@ -242,9 +401,7 @@
 </div>
 
 {#if editingColorKey}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="sheet-backdrop" transition:fade={{ duration: 200 }} onclick={() => editingColorKey = null}></div>
+	<SheetBackdrop onClose={() => editingColorKey = null} />
 	<div class="color-sheet" transition:fly={{ y: 300, duration: 300 }}>
 		<div class="sheet-header">
 			<h2 class="sheet-title">Colore</h2>
@@ -298,6 +455,44 @@
 		text-align: center;
 	}
 
+	.sort-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		white-space: nowrap;
+		background: none;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-full);
+		padding: 0.3rem 0.85rem;
+		font-size: 0.78rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		color: var(--color-text-secondary);
+		cursor: pointer;
+	}
+
+	.folder-checkbox {
+		width: 24px;
+		height: 24px;
+		border-radius: 50%;
+		border: 2px solid var(--color-border);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: transparent;
+		flex-shrink: 0;
+		transition: all 0.15s ease;
+	}
+
+	.folder-checkbox svg { width: 14px; height: 14px; }
+
+	.folder-checkbox.checked {
+		background-color: #1A1A1A;
+		border-color: #1A1A1A;
+		color: white;
+	}
+
+
 	.folder-list {
 		display: flex;
 		flex-direction: column;
@@ -320,7 +515,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: var(--color-primary);
+		color: var(--color-text-secondary);
 		flex-shrink: 0;
 	}
 
@@ -362,14 +557,6 @@
 	}
 
 	/* ---- Color sheet ---- */
-	.sheet-backdrop {
-		position: fixed;
-		inset: 0;
-		background: rgba(0,0,0,0.4);
-		backdrop-filter: blur(2px);
-		z-index: 100;
-	}
-
 	.color-sheet {
 		position: fixed;
 		bottom: 0;
@@ -381,6 +568,18 @@
 		padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
 		z-index: 101;
 		box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+	}
+
+	@media (min-width: 768px) {
+		.color-sheet {
+			left: 50%;
+			right: auto;
+			bottom: 2rem;
+			width: 320px;
+			transform: translateX(-50%);
+			border-radius: var(--radius-xl);
+			padding-bottom: 1.75rem;
+		}
 	}
 
 	.sheet-header {
@@ -448,61 +647,77 @@
 		cursor: pointer;
 	}
 
-	.study-folder-btn {
-		width: 100%;
-		padding: 0.9rem;
-		background-color: var(--color-primary);
-		color: white;
-		border: none;
-		border-radius: var(--radius-lg);
-		font-size: 0.95rem;
-		font-weight: 700;
-		font-family: var(--font-sans);
-		cursor: pointer;
+	/* ---- Day view controls ---- */
+	.controls-bar {
 		display: flex;
 		align-items: center;
-		justify-content: center;
-		gap: 0.5rem;
-		transition: all 0.2s ease;
-	}
-
-	.study-folder-btn:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(139, 26, 26, 0.3);
-	}
-
-	.study-folder-btn:active {
-		transform: translateY(0);
-	}
-
-	.header-row-flex {
-		display: flex;
 		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 1rem;
+		margin-bottom: 0.65rem;
 	}
 
-	.clear-btn {
-		background: none;
-		border: none;
-		color: var(--color-primary);
-		font-size: 0.82rem;
-		font-weight: 600;
-		cursor: pointer;
-		padding: 0;
-	}
-
-	.clear-btn:hover {
-		text-decoration: underline;
-	}
-
-	/* Word list styles */
-	.word-count-label {
+	.count-label {
 		font-size: 0.82rem;
 		font-weight: 500;
 		color: var(--color-text-secondary);
-		margin: 0;
 	}
+
+	.select-toggle {
+		background: none;
+		border: none;
+		font-size: 0.9rem;
+		font-weight: 700;
+		font-family: var(--font-sans);
+		color: var(--color-primary);
+		cursor: pointer;
+		padding: 0.25rem 0;
+	}
+
+	.action-row {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		align-items: center;
+		margin-bottom: 0.65rem;
+	}
+
+	.study-btn {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.6rem 1rem;
+		background: var(--color-primary);
+		color: white;
+		border: none;
+		border-radius: var(--radius-full);
+		font-size: 0.88rem;
+		font-weight: 700;
+		font-family: var(--font-sans);
+		cursor: pointer;
+		white-space: nowrap;
+	}
+
+	.action-pill {
+		padding: 0.5rem 0.85rem;
+		border-radius: var(--radius-full);
+		border: 1px solid var(--color-border);
+		font-size: 0.82rem;
+		font-weight: 700;
+		font-family: var(--font-sans);
+		cursor: pointer;
+		background: var(--color-surface);
+		color: var(--color-text);
+	}
+
+	.action-pill.muted { color: var(--color-text-secondary); }
+
+	.sort-row {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		margin-bottom: 0.75rem;
+	}
+
+	/* Word list styles */
 
 	.word-list {
 		display: flex;
@@ -516,6 +731,10 @@
 		gap: 1rem;
 		padding: 0.85rem 0;
 		border-bottom: 1px solid var(--color-border-light);
+		cursor: default;
+	}
+
+	.word-row.selectable {
 		cursor: pointer;
 		user-select: none;
 	}
@@ -527,7 +746,7 @@
 	.word-checkbox {
 		width: 24px;
 		height: 24px;
-		border-radius: 6px;
+		border-radius: 50%;
 		border: 2px solid var(--color-border);
 		display: flex;
 		align-items: center;
@@ -543,8 +762,8 @@
 	}
 
 	.word-checkbox.checked {
-		background-color: var(--color-primary);
-		border-color: var(--color-primary);
+		background-color: #1A1A1A;
+		border-color: #1A1A1A;
 		color: white;
 	}
 
@@ -565,6 +784,20 @@
 	.word-jp {
 		font-size: 0.85rem;
 		color: var(--color-text-secondary);
+	}
+
+	.word-trailing {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-shrink: 0;
+	}
+
+	.word-score-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		flex-shrink: 0;
 	}
 
 	.word-cat {

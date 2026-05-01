@@ -72,7 +72,7 @@
 
 	.field-input:focus {
 		background-color: var(--color-surface);
-		box-shadow: inset 0 0 0 1.5px var(--color-primary);
+		box-shadow: inset 0 0 0 1.5px #e0dce6;
 	}
 
 	.clear-btn {

@@ -1,34 +1,30 @@
 <script lang="ts">
 	import { get } from 'svelte/store';
-	import { goto, onNavigate } from '$app/navigation';
+	import { goto, beforeNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { words } from '$lib/stores/words';
-	import { selectedWordIds, clearSelection, skipExitGuard } from '$lib/stores/studySession';
-	import { allStudiedWordIds, recordStudy } from '$lib/stores/history';
+	import { selectedWordIds, clearSelection } from '$lib/stores/studySession';
+	import { recordStudy } from '$lib/stores/history';
+	import { setWordScore } from '$lib/stores/wordScores';
+	import type { WordScore } from '$lib/types/word';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Flashcard from '$lib/components/Flashcard.svelte';
-	import Icon from '$lib/components/Icon.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { shuffle } from '$lib/utils/shuffle';
 
 	const allWordsData = get(words);
 	const selectedIds = get(selectedWordIds);
-	const studiedIds = get(allStudiedWordIds);
-	const noGuard = get(skipExitGuard);
-	skipExitGuard.set(false);
-
 	let studySet = $state<typeof allWordsData>([]);
-	
+
 	if (selectedIds.size > 0) {
-		// User selected specific words via checkboxes
-		studySet = allWordsData.filter(w => selectedIds.has(w.id));
-		// Clear selection so next time it doesn't persist forever
+		// Preserve insertion order of the Set (callers may shuffle before setSelectedWords)
+		studySet = [...selectedIds]
+			.map(id => allWordsData.find(w => w.id === id))
+			.filter((w): w is (typeof allWordsData)[number] => w !== undefined);
 		clearSelection();
 	} else {
-		// Global study mode (from Home): Pick unstudied words
-		const unstudiedWords = allWordsData.filter(w => !studiedIds.has(w.id));
-		// Let's pick up to 10 random unstudied words per session
-		studySet = shuffle(unstudiedWords).slice(0, 10);
+		// Global study mode (from Home): draw up to 10 random words from the full library
+		studySet = shuffle(allWordsData).slice(0, 10);
 	}
 
 	let currentIndex = $state(0);
@@ -39,8 +35,16 @@
 	let progress = $derived(`${currentIndex + 1} / ${studySet.length}`);
 	let progressPercent = $derived(((currentIndex + 1) / studySet.length) * 100);
 
-	function next() {
-		recordStudy([studySet[currentIndex].id]);
+	// Note field — clears each time the word changes
+	let noteText = $state('');
+	$effect(() => {
+		void currentWord?.id;
+		noteText = '';
+	});
+
+	function assess(score: WordScore) {
+		setWordScore(currentWord.id, score);
+		recordStudy([currentWord.id]);
 		if (currentIndex < studySet.length - 1) {
 			studiedCount++;
 			currentIndex++;
@@ -65,13 +69,13 @@
 	let bypassGuard = false;
 
 	// Intercept internal navigation to warn user
-	onNavigate((navigation) => {
-		if (bypassGuard || noGuard) return;
+	beforeNavigate((navigation) => {
+		if (bypassGuard) return;
 
 		if (!finished && studySet.length > 0 && studiedCount < studySet.length) {
 			showExitModal = true;
 			pendingUrl = navigation.to?.url.pathname || '/';
-			(navigation as any).cancel();
+			navigation.cancel();
 		}
 	});
 
@@ -92,7 +96,6 @@
 
 	// Intercept browser refresh/close
 	function handleBeforeUnload(e: BeforeUnloadEvent) {
-		if (noGuard) return;
 		if (!finished && studySet.length > 0 && studiedCount < studySet.length) {
 			e.preventDefault();
 			e.returnValue = '';
@@ -101,8 +104,6 @@
 
 	// Trap browser back button and iOS swipe-back gesture
 	onMount(() => {
-		if (noGuard) return;
-
 		// Push a dummy state so back button/swipe triggers popstate instead of navigating
 		history.pushState(null, '', window.location.href);
 
@@ -122,10 +123,10 @@
 <svelte:window onbeforeunload={handleBeforeUnload} />
 
 <svelte:head>
-	<title>Appare — Studia</title>
+	<title>Anki-jin — Studia</title>
 </svelte:head>
 
-<!-- Custom Modal -->
+<!-- Exit Modal -->
 {#if showExitModal}
 	<div class="modal-overlay">
 		<div class="modal-content">
@@ -185,20 +186,37 @@
 			<Flashcard word={currentWord} />
 		</div>
 
-		<!-- Nav buttons -->
-		<div class="next-area">
-			<div class="nav-row">
-				<button type="button" class="nav-btn nav-prev" onclick={prev} disabled={currentIndex === 0} aria-label="Parola precedente">
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-						<polyline points="15 18 9 12 15 6" />
-					</svg>
-					Precedente
+		<!-- Note textarea -->
+		<div class="note-area">
+			<textarea
+				class="note-input"
+				bind:value={noteText}
+				placeholder="Scrivi qui la tua risposta…"
+				rows="2"
+			></textarea>
+		</div>
+
+		<!-- Assessment buttons -->
+		<div class="assess-area">
+			<div class="assess-row">
+				<button type="button" class="assess-btn assess-unknown" onclick={() => assess('unknown')}>
+					Difficile
 				</button>
-				<button type="button" class="nav-btn nav-next" onclick={next}>
-					{currentIndex < studySet.length - 1 ? 'Prossima' : 'Finisci'}
-					<Icon name="chevron-right" size={18} strokeWidth={2.5} />
+				<button type="button" class="assess-btn assess-learning" onclick={() => assess('learning')}>
+					Buono
+				</button>
+				<button type="button" class="assess-btn assess-known" onclick={() => assess('known')}>
+					Facile
 				</button>
 			</div>
+			<button
+				type="button"
+				class="prev-link"
+				onclick={prev}
+				disabled={currentIndex === 0}
+			>
+				← Precedente
+			</button>
 		</div>
 	{/if}
 </div>
@@ -246,7 +264,7 @@
 		transition: width 0.3s ease;
 	}
 
-/* ---- Card area ---- */
+	/* ---- Card area ---- */
 	.card-area {
 		flex: 1;
 		min-height: 0;
@@ -254,48 +272,88 @@
 		flex-direction: column;
 		align-items: stretch;
 		justify-content: center;
-		padding: 1rem 0;
+		padding: 0.75rem 0 0;
 	}
 
-	/* ---- Nav buttons ---- */
-	.next-area {
-		padding-top: 1rem;
+	/* ---- Note textarea ---- */
+	.note-area {
+		padding: 0.75rem 0 0;
 	}
 
-	.nav-row {
-		display: flex;
-		gap: 0.65rem;
-	}
-
-	.nav-btn {
-		padding: 0.9rem;
-		border: none;
-		border-radius: var(--radius-lg);
-		font-size: 1rem;
-		font-weight: 600;
+	.note-input {
+		width: 100%;
+		box-sizing: border-box;
+		padding: 0.75rem 1rem;
+		border: 1.5px solid var(--color-border);
+		border-radius: 8px;
+		background: var(--color-surface);
+		color: var(--color-text);
 		font-family: var(--font-sans);
-		cursor: pointer;
+		font-size: 0.95rem;
+		line-height: 1.5;
+		resize: none;
+		outline: none;
+		transition: border-color 0.15s ease;
+	}
+
+	.note-input:focus {
+		border-color: #e0dce6;
+	}
+
+	.note-input::placeholder {
+		color: var(--color-text-tertiary);
+	}
+
+	/* ---- Assessment buttons ---- */
+	.assess-area {
+		padding-top: 0.65rem;
 		display: flex;
-		align-items: center;
-		justify-content: center;
+		flex-direction: column;
 		gap: 0.5rem;
 	}
 
-	.nav-prev {
-		flex: 1;
-		background-color: var(--color-primary);
-		color: white;
+	.assess-row {
+		display: flex;
+		gap: 0.5rem;
 	}
 
-	.nav-prev:disabled {
+	.assess-btn {
+		flex: 1;
+		padding: 0.85rem 0.5rem;
+		border: none;
+		border-radius: var(--radius-lg);
+		font-size: 0.9rem;
+		font-weight: 700;
+		font-family: var(--font-sans);
+		cursor: pointer;
+		color: white;
+		transition: opacity 0.15s ease;
+	}
+
+	.assess-btn:active {
+		opacity: 0.8;
+	}
+
+	.assess-unknown  { background: #C5221F; }
+	.assess-learning { background: #D97706; }
+	.assess-known    { background: #1D6FA4; }
+
+	.prev-link {
+		background: none;
+		border: none;
+		padding: 0.25rem 0;
+		font-size: 0.8rem;
+		font-weight: 500;
+		font-family: var(--font-sans);
+		color: var(--color-text-tertiary);
+		cursor: pointer;
+		text-align: center;
+		width: 100%;
+	}
+
+	.prev-link:disabled {
 		opacity: 0.3;
 		cursor: default;
-	}
-
-	.nav-next {
-		flex: 1;
-		background-color: var(--color-primary);
-		color: white;
 	}
 
 	/* ---- Finished state ---- */
@@ -331,7 +389,7 @@
 
 	.action-btn {
 		padding: 0.75rem 1rem;
-		border-radius: var(--radius-lg);
+		border-radius: 8px;
 		font-size: 0.9rem;
 		font-weight: 600;
 		font-family: var(--font-sans);

@@ -10,6 +10,18 @@ export const CATEGORIES = {
 export type CategoryValue =
 	(typeof CATEGORIES)[keyof typeof CATEGORIES][number];
 
+// ---- Flashcard layout ----
+export type CardField = 'italiano' | 'hiragana' | 'katakana' | 'romaji' | 'kanji';
+export interface CardDefinition { fields: CardField[]; }
+export type CardLayout = CardDefinition[];
+
+export const DEFAULT_CARD_FIELDS: CardField[] = ['italiano', 'hiragana', 'katakana', 'romaji', 'kanji'];
+
+export const DEFAULT_CARD_LAYOUT: CardLayout = DEFAULT_CARD_FIELDS.map((f) => ({ fields: [f] }));
+
+// ---- Word self-assessment score ----
+export type WordScore = 'none' | 'unknown' | 'learning' | 'known';
+
 /** A single vocabulary word */
 export interface Word {
 	id: string;
@@ -18,7 +30,8 @@ export interface Word {
 	katakana: string;
 	romaji: string;
 	kanji: string;
-	category?: CategoryValue;
+	category?: CategoryValue;  // legacy single category — kept for seed words
+	tags?: string[];           // multi-label support (includes category values + custom)
 	wordType?: 'word' | 'phrase';
 	folderId?: string;   // Optional folder assignment
 	createdAt: number;   // Unix ms timestamp

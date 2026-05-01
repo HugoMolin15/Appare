@@ -7,7 +7,7 @@
 	import { FOLDER_COLORS } from '$lib/constants';
 
 	let name = $state('');
-	let selectedColor = $state('#8B1A1A');
+	let selectedColor = $state('');
 
 	const colors = FOLDER_COLORS;
 
@@ -21,7 +21,7 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Nuova cartella</title>
+	<title>Anki-jin — Nuova cartella</title>
 </svelte:head>
 
 <div class="page page-enter">
@@ -36,10 +36,19 @@
 		<div class="field">
 			<label class="field-label">Colore cartella</label>
 			<div class="color-grid">
+				<button
+					type="button"
+					class="color-option color-none"
+					class:selected={selectedColor === ''}
+					onclick={() => selectedColor = ''}
+					aria-label="Nessun colore"
+				>
+					<Icon name="close" size={16} strokeWidth={2.5} />
+				</button>
 				{#each colors as color}
-					<button 
-						type="button" 
-						class="color-option" 
+					<button
+						type="button"
+						class="color-option"
 						style="background-color: {color}"
 						class:selected={selectedColor === color}
 						onclick={() => selectedColor = color}
@@ -123,6 +132,16 @@
 	.color-option.selected {
 		border-color: var(--color-border);
 		transform: scale(1.05);
+	}
+
+	.color-none {
+		background: var(--color-surface);
+		border-color: var(--color-border);
+		color: var(--color-text-secondary);
+	}
+
+	.color-none.selected {
+		border-color: var(--color-text-primary);
 	}
 
 	.save-area {

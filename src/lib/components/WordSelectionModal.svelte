@@ -176,7 +176,7 @@
 	.checkbox {
 		width: 22px;
 		height: 22px;
-		border-radius: 6px;
+		border-radius: 50%;
 		border: 2px solid var(--color-border);
 		display: flex;
 		align-items: center;
@@ -186,8 +186,8 @@
 	}
 
 	.checkbox.checked {
-		background-color: var(--color-primary);
-		border-color: var(--color-primary);
+		background-color: #1A1A1A;
+		border-color: #1A1A1A;
 	}
 
 	.word-info {

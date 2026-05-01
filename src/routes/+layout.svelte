@@ -7,6 +7,12 @@
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { ensureSeeded } from '$lib/stores/words';
+	import { appFontScale } from '$lib/stores/settings';
+
+	$effect(() => {
+		if (!browser) return;
+		document.documentElement.style.fontSize = $appFontScale + '%';
+	});
 
 	let { children } = $props();
 	let path = $derived($page.url.pathname);
@@ -39,8 +45,11 @@
 <div class="app-shell safe-top safe-bottom">
 	<aside class="sidebar" class:hidden={isLoginPage}>
 		<div class="sidebar-logo">
-			<span class="sidebar-jp">日本語</span>
-			<span class="sidebar-title">Appare</span>
+			<img src="/secondary_icon.png" alt="Appare logo" class="sidebar-icon" />
+			<div class="sidebar-text">
+				<span class="sidebar-title">Appare</span>
+				<span class="sidebar-subtitle">Scuola di lingua Giapponese<br>di Tomoko Yamane</span>
+			</div>
 		</div>
 
 		<nav class="sidebar-nav">
@@ -119,26 +128,44 @@
 
 	.sidebar-logo {
 		display: flex;
-		flex-direction: column;
+		flex-direction: row;
+		align-items: center;
+		gap: 0.6rem;
 		padding: 0 0.5rem;
 		margin-bottom: 2rem;
 	}
 
-	.sidebar-jp {
-		font-size: 0.72rem;
-		font-weight: 500;
-		color: var(--color-text-secondary);
-		letter-spacing: 0.02em;
-		font-family: var(--font-jp);
+	.sidebar-icon {
+		height: 44px;
+		width: auto;
+		flex-shrink: 0;
+		object-fit: contain;
+	}
+
+	.sidebar-text {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		height: 44px;
 	}
 
 	.sidebar-title {
-		font-size: 1.5rem;
+		font-size: 1.3rem;
 		font-weight: 800;
 		letter-spacing: -0.02em;
 		line-height: 1.1;
-		color: var(--color-text);
+		color: #E8192C;
 	}
+
+	.sidebar-subtitle {
+		font-size: 0.58rem;
+		font-weight: 500;
+		color: var(--color-text-secondary);
+		line-height: 1.3;
+		letter-spacing: 0.01em;
+		margin-top: 0.1rem;
+	}
+
 
 	.sidebar-nav {
 		display: flex;

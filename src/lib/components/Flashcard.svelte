@@ -1,16 +1,20 @@
 <!--
-  Flashcard — A tappable card that cycles through sides (2 or 3).
-  Each side shows a label (e.g. "Italiano") and the word text.
+  Flashcard — A tappable card that cycles through user-defined cards.
+  Each card can show one or more fields stacked vertically.
 -->
 <script lang="ts">
 	import type { Word } from '$lib/types/word';
-	import { japaneseFontSize, cardOrder, randomCardOrder } from '$lib/stores/settings';
+	import { cardLayout, randomCardOrder } from '$lib/stores/settings';
 	import { shuffle } from '$lib/utils/shuffle';
 
-	interface CardSide {
+	interface FieldSide {
 		label: string;
 		text: string;
 		japanese: boolean;
+	}
+
+	interface CardSide {
+		fields: FieldSide[];
 	}
 
 	interface Props {
@@ -27,69 +31,81 @@
 		kanji:    { label: 'Kanji',    japanese: true },
 	};
 
-	// Build sides based on stored order (or shuffle), filtering out empty fields
-	let sides = $derived.by(() => {
-		const wordValues: Record<string, string> = {
+	// Build cards: each entry in cardLayout becomes one card side.
+	// Fields within a card are filtered to non-empty values.
+	// Cards where ALL fields are empty are skipped.
+	let sides = $derived.by((): CardSide[] => {
+		const vals: Record<string, string> = {
 			italiano: word.italiano,
 			hiragana: word.hiragana,
 			katakana: word.katakana,
 			romaji:   word.romaji,
 			kanji:    word.kanji,
 		};
-		const order = $randomCardOrder ? shuffle($cardOrder) : $cardOrder;
-		return order
-			.filter(key => wordValues[key])
-			.map(key => ({
-				label: SIDE_DEFS[key].label,
-				text: wordValues[key],
-				japanese: SIDE_DEFS[key].japanese,
-			}));
+		const layout = $randomCardOrder ? shuffle([...$cardLayout]) : $cardLayout;
+		return layout
+			.map(card => ({
+				fields: card.fields
+					.filter(k => vals[k])
+					.map(k => ({
+						label: SIDE_DEFS[k].label,
+						text: vals[k],
+						japanese: SIDE_DEFS[k].japanese,
+					}))
+			}))
+			.filter(card => card.fields.length > 0);
 	});
 
 	let currentSide = $state(0);
 	let animating = $state(false);
-	let direction = $state<'in' | 'out'>('in');
 
 	// Reset side when word changes
 	$effect(() => {
-		// Access word.id to trigger effect
 		void word.id;
 		currentSide = 0;
 		animating = false;
-		direction = 'in';
 	});
 
 	function flip() {
-		if (animating) return;
+		if (animating || sides.length <= 1) return;
 		animating = true;
-
-		// Quick fade out
-		animating = true;
-		
 		setTimeout(() => {
 			currentSide = (currentSide + 1) % sides.length;
-			
-			// Quick fade in
-			setTimeout(() => {
-				animating = false;
-			}, 50);
+			setTimeout(() => { animating = false; }, 50);
 		}, 50);
 	}
 
-	let activeSide = $derived(sides[currentSide]);
-	let sideIndicator = $derived(`${currentSide + 1} / ${sides.length}`);
+	let activeSide = $derived(sides[currentSide] ?? { fields: [] });
+	let sideIndicator = $derived(sides.length > 1 ? `${currentSide + 1} / ${sides.length}` : '');
+	// Scale down text when multiple fields share a card
+	let textSize = $derived(activeSide.fields.length > 1 ? '1.85rem' : '3rem');
 </script>
 
 <button type="button" class="card" class:fade-out={animating} onclick={flip}>
-	<span class="card-indicator">{sideIndicator}</span>
+	{#if sideIndicator}
+		<span class="card-indicator">{sideIndicator}</span>
+	{/if}
+
 	<div class="card-top">
-		<span class="card-label">{activeSide.label}</span>
 		<span class="card-category" data-category={word.category}>{word.category}</span>
 	</div>
+
 	<div class="card-center">
-		<span class="card-text" class:font-jp={activeSide.japanese} style={activeSide.japanese ? `font-size: ${$japaneseFontSize}px` : ''}>{activeSide.text}</span>
+		<div class="card-fields">
+			{#each activeSide.fields as field}
+				<div class="card-field">
+					<span class="card-label">{field.label}</span>
+					<span class="card-text" class:font-jp={field.japanese} style="font-size: {textSize}">
+						{field.text}
+					</span>
+				</div>
+			{/each}
+		</div>
 	</div>
-	<span class="card-hint">Tocca per continuare</span>
+
+	{#if sides.length > 1}
+		<span class="card-hint">Tocca per continuare</span>
+	{/if}
 </button>
 
 <style>
@@ -97,12 +113,12 @@
 		width: 100%;
 		flex: 1;
 		min-height: 0;
-		max-height: 520px;
+		max-height: 460px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		padding: 1.75rem 1.5rem;
-		background: var(--color-surface);
+		padding: 1.5rem 1.5rem 1.25rem;
+		background: transparent;
 		border: none;
 		border-radius: var(--radius-xl);
 		cursor: pointer;
@@ -133,14 +149,6 @@
 		padding-top: 0.25rem;
 	}
 
-	.card-label {
-		font-size: 0.72rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--color-text-tertiary);
-	}
-
 	.card-category {
 		font-size: 0.65rem;
 		font-weight: 700;
@@ -157,15 +165,48 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		width: 100%;
+		overflow: hidden;
+	}
+
+	/* Stack multiple fields vertically with a divider */
+	.card-fields {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.75rem;
+		width: 100%;
+	}
+
+	.card-field {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
+		width: 100%;
+	}
+
+	/* Divider between consecutive fields */
+	.card-field + .card-field {
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--color-border);
+	}
+
+	.card-label {
+		font-size: 0.72rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--color-text-tertiary);
 	}
 
 	.card-text {
-		font-size: 2rem;
 		font-weight: 700;
 		color: var(--color-text);
 		text-align: center;
 		line-height: 1.3;
 		word-break: break-word;
+		transition: font-size 0.15s ease;
 	}
 
 	.card-text.font-jp {
@@ -175,5 +216,6 @@
 	.card-hint {
 		font-size: 0.7rem;
 		color: var(--color-text-tertiary);
+		margin-top: 0.25rem;
 	}
 </style>

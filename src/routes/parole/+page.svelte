@@ -1,19 +1,63 @@
+<script module lang="ts">
+	import type { WordScore } from '$lib/types/word';
+	type WordSort = 'newest' | 'oldest' | 'it-az' | 'jp-az';
+
+	// Persists across navigation within the same SPA session
+	let saved = {
+		searchQuery: '',
+		scoreFilter: 'all' as 'all' | WordScore,
+		sourceFilter: 'all' as 'all' | 'app' | 'mine',
+		typeFilter: 'all' as 'all' | 'word' | 'phrase',
+		selectedGroups: [] as string[],
+		sortMode: 'newest' as WordSort,
+	};
+</script>
+
 <script lang="ts">
 	import { words } from '$lib/stores/words';
 	import { CATEGORIES } from '$lib/types/word';
+	import { wordScores } from '$lib/stores/wordScores';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import WordRow from '$lib/components/WordRow.svelte';
+	import ScoreFilter from '$lib/components/ScoreFilter.svelte';
+	import FilterPills from '$lib/components/FilterPills.svelte';
+	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import { fade, fly } from 'svelte/transition';
+	import { fly } from 'svelte/transition';
 
-	let searchQuery = $state('');
-	let sourceFilter = $state<'all' | 'app' | 'mine'>('all');
-	let typeFilter = $state<'all' | 'word' | 'phrase'>('all');
-	let selectedGroups = $state(new Set<string>());
+	let searchQuery = $state(saved.searchQuery);
+	let scoreFilter = $state(saved.scoreFilter);
+	let sourceFilter = $state(saved.sourceFilter);
+	let typeFilter = $state(saved.typeFilter);
+	let selectedGroups = $state(new Set<string>(saved.selectedGroups));
 	let showFilterSheet = $state(false);
+	let sortMode = $state(saved.sortMode);
+
+	$effect(() => {
+		saved.searchQuery = searchQuery;
+		saved.scoreFilter = scoreFilter;
+		saved.sourceFilter = sourceFilter;
+		saved.typeFilter = typeFilter;
+		saved.selectedGroups = [...selectedGroups];
+		saved.sortMode = sortMode;
+	});
 
 	const categoryGroups = Object.entries(CATEGORIES) as [string, readonly string[]][];
+
+	const SORT_OPTIONS: WordSort[] = ['newest', 'oldest', 'it-az', 'jp-az'] as const;
+	const SORT_LABELS: Record<WordSort, string> = {
+		newest: 'Più recenti',
+		oldest: 'Meno recenti',
+		'it-az': 'A-Z Italiano',
+		'jp-az': 'A-Z Giapponese',
+	};
+
+	function cycleSortMode() {
+		const idx = SORT_OPTIONS.indexOf(sortMode);
+		sortMode = SORT_OPTIONS[(idx + 1) % SORT_OPTIONS.length];
+	}
 
 	function toggleGroup(group: string) {
 		const next = new Set(selectedGroups);
@@ -41,8 +85,18 @@
 		return pills;
 	});
 
+	function itAzCompare(a: string, b: string): number {
+		const aNum = /^\d/.test(a);
+		const bNum = /^\d/.test(b);
+		if (aNum !== bNum) return aNum ? 1 : -1;
+		return a.localeCompare(b, 'it');
+	}
+
 	let filteredWords = $derived.by(() => {
-		let result = filterWords($words, searchQuery);
+		let result = [...filterWords($words, searchQuery)].filter(w => w.italiano?.trim());
+		if (scoreFilter !== 'all') {
+			result = result.filter(w => ($wordScores[w.id] ?? 'none') === scoreFilter);
+		}
 		if (sourceFilter === 'app') result = result.filter(w => w.id.startsWith('seed-'));
 		else if (sourceFilter === 'mine') result = result.filter(w => !w.id.startsWith('seed-'));
 		if (typeFilter === 'word') result = result.filter(w => (w.wordType ?? 'word') === 'word');
@@ -51,11 +105,17 @@
 			const allowed = new Set(
 				categoryGroups
 					.filter(([g]) => selectedGroups.has(g))
-					.flatMap(([, vals]) => vals)
+					.flatMap(([, vals]) => vals as string[])
 			);
-			result = result.filter(w => w.category !== undefined && allowed.has(w.category));
+			result = result.filter(w => {
+				const wordTags = w.tags ?? (w.category ? [w.category] : []);
+				return wordTags.some(t => allowed.has(t));
+			});
 		}
-		return result;
+		if (sortMode === 'oldest') return result.sort((a, b) => a.createdAt - b.createdAt);
+		if (sortMode === 'it-az') return result.sort((a, b) => itAzCompare(a.italiano, b.italiano));
+		if (sortMode === 'jp-az') return result.sort((a, b) => (a.hiragana || a.katakana || '').localeCompare(b.hiragana || b.katakana || '', 'ja'));
+		return result.sort((a, b) => b.createdAt - a.createdAt);
 	});
 
 	$effect(() => {
@@ -66,11 +126,11 @@
 </script>
 
 <svelte:head>
-	<title>Appare — Tutte le parole</title>
+	<title>Anki-jin — Tutte le parole</title>
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader title="Tutte le parole" backHref="/">
+	<PageHeader title="Tutte le parole" backHref="/" hideBackOnDesktop>
 		{#snippet actions()}
 			<button
 				class="filter-btn"
@@ -92,40 +152,26 @@
 
 	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
-	{#if activePills.length > 0}
-		<div class="pills-row">
-			{#each activePills as pill}
-				<span class="pill">
-					{pill.label}
-					<button class="pill-remove" onclick={pill.remove} aria-label="Rimuovi filtro {pill.label}">
-						<Icon name="close" size={12} strokeWidth={3} />
-					</button>
-				</span>
-			{/each}
-		</div>
-	{/if}
+	<ScoreFilter
+		value={scoreFilter}
+		onChange={(v) => scoreFilter = v}
+		sortLabel={SORT_LABELS[sortMode]}
+		onSortCycle={cycleSortMode}
+	/>
 
-	<p class="word-count-label">{filteredWords.length} parole</p>
+	<FilterPills pills={activePills} />
+
+	<p class="word-count-label">{filteredWords.length} {typeFilter === 'phrase' ? 'frasi' : filteredWords.length === 1 ? 'parola' : 'parole'}</p>
 
 	<div class="word-list">
 		{#each filteredWords as word (word.id)}
-			<a href="/parole/{word.id}" class="word-row">
-				<div class="word-main">
-					<span class="word-it">{word.italiano}</span>
-					<span class="word-jp font-jp">
-						{word.hiragana || word.katakana || word.romaji || word.kanji}
-					</span>
-				</div>
-				<span class="word-cat" data-category={word.category}>{word.category}</span>
-			</a>
+			<WordRow {word} href="/parole/{word.id}" />
 		{/each}
 	</div>
 </div>
 
 {#if showFilterSheet}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="sheet-backdrop" transition:fade={{ duration: 200 }} onclick={() => showFilterSheet = false}></div>
+	<SheetBackdrop onClose={() => showFilterSheet = false} />
 	<div class="filter-sheet" transition:fly={{ y: 400, duration: 300 }}>
 		<div class="sheet-header">
 			<h2 class="sheet-title">Filtri</h2>
@@ -170,6 +216,24 @@
 			</div>
 
 			<div class="filter-section">
+				<span class="section-label">Ordina</span>
+				<div class="option-list">
+					{#each [['newest', 'Più recenti'], ['oldest', 'Meno recenti'], ['it-az', 'A-Z Italiano'], ['jp-az', 'A-Z Giapponese']] as [val, label]}
+						<button
+							class="option-row"
+							class:selected={sortMode === val}
+							onclick={() => sortMode = val as WordSort}
+						>
+							<span>{label}</span>
+							{#if sortMode === val}
+								<Icon name="check" size={18} strokeWidth={3} />
+							{/if}
+						</button>
+					{/each}
+				</div>
+			</div>
+
+			<div class="filter-section">
 				<span class="section-label">Categoria</span>
 				<div class="option-list">
 					{#each categoryGroups as [group]}
@@ -196,6 +260,7 @@
 		min-height: 100dvh;
 		display: flex;
 		flex-direction: column;
+		position: relative;
 	}
 
 	/* ---- Filter button ---- */
@@ -218,7 +283,7 @@
 	}
 
 	.filter-btn.active {
-		color: var(--color-primary);
+		color: #1A1A1A;
 	}
 
 	.filter-badge {
@@ -228,55 +293,13 @@
 		width: 16px;
 		height: 16px;
 		border-radius: 50%;
-		background: var(--color-primary);
+		background: #1A1A1A;
 		color: white;
 		font-size: 0.6rem;
 		font-weight: 700;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-	}
-
-	/* ---- Active pills row ---- */
-	.pills-row {
-		display: flex;
-		gap: 0.4rem;
-		overflow-x: auto;
-		scrollbar-width: none;
-		-ms-overflow-style: none;
-		margin-bottom: 0.75rem;
-		padding-bottom: 0.1rem;
-	}
-
-	.pills-row::-webkit-scrollbar { display: none; }
-
-	.pill {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.35rem;
-		padding: 0.35rem 0.5rem 0.35rem 0.75rem;
-		background-color: var(--color-primary);
-		color: white;
-		border-radius: var(--radius-full);
-		font-size: 0.8rem;
-		font-weight: 600;
-		white-space: nowrap;
-		flex-shrink: 0;
-	}
-
-	.pill-remove {
-		background: rgba(255,255,255,0.25);
-		border: none;
-		border-radius: 50%;
-		width: 18px;
-		height: 18px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		color: white;
-		padding: 0;
-		flex-shrink: 0;
 	}
 
 	/* ---- Word list ---- */
@@ -292,57 +315,7 @@
 		flex-direction: column;
 	}
 
-	.word-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-		padding: 1rem 0;
-		border-bottom: 1px solid var(--color-border);
-		text-decoration: none;
-		color: inherit;
-	}
-
-	.word-row:last-child { border-bottom: none; }
-
-	.word-main {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	.word-it {
-		font-size: 0.95rem;
-		font-weight: 600;
-		color: var(--color-text-primary);
-	}
-
-	.word-jp {
-		font-size: 0.85rem;
-		color: var(--color-text-secondary);
-	}
-
-	.word-cat {
-		font-size: 0.65rem;
-		font-weight: 700;
-		padding: 0.35rem 0.6rem;
-		border-radius: var(--radius-md);
-		background: var(--color-surface);
-		color: var(--color-text-secondary);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		white-space: nowrap;
-	}
-
 	/* ---- Filter sheet ---- */
-	.sheet-backdrop {
-		position: fixed;
-		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
-		backdrop-filter: blur(2px);
-		z-index: 100;
-	}
-
 	.filter-sheet {
 		position: fixed;
 		bottom: 0;
@@ -434,11 +407,11 @@
 	.option-row:last-child { border-bottom: none; }
 
 	.option-row.selected {
-		color: var(--color-primary);
+		color: #1A1A1A;
 		font-weight: 700;
 	}
 
 	.option-row.selected svg {
-		stroke: var(--color-primary);
+		stroke: #1A1A1A;
 	}
 </style>

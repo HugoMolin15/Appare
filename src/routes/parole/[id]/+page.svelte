@@ -1,64 +1,125 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import type { CategoryValue } from '$lib/types/word';
+	import { CATEGORIES, type CategoryValue } from '$lib/types/word';
 	import { words, updateWord, removeWord } from '$lib/stores/words';
+	import { folders } from '$lib/stores/folders';
+	import { UNCATEGORIZED_TAG } from '$lib/constants';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import ClearableInput from '$lib/components/ClearableInput.svelte';
 	import CategoryPicker from '$lib/components/CategoryPicker.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
+	import { fly } from 'svelte/transition';
 
 	let wordId = $derived($page.params.id);
 	let word = $derived($words.find((w) => w.id === wordId));
+	let backHref = $derived($page.url.searchParams.get('from') ?? '/parole');
+	let createdAtFormatted = $derived(
+		word ? new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(word.createdAt)) : ''
+	);
 
 	let italiano = $state('');
 	let hiragana = $state('');
-	let katakana = $state('');
 	let romaji = $state('');
 	let kanji = $state('');
-	let selectedCategory = $state<CategoryValue | null>(null);
+	let selectedTags = $state<string[]>([]);
 	let wordType = $state<'word' | 'phrase'>('word');
+	let destFolderId = $state<string | undefined>(undefined);
 	let initialized = $state(false);
 
 	$effect(() => {
 		if (word && !initialized) {
 			italiano = word.italiano;
-			hiragana = word.hiragana;
-			katakana = word.katakana;
+			hiragana = word.hiragana || word.katakana;
 			romaji = word.romaji;
 			kanji = word.kanji;
-			selectedCategory = word.category ?? null;
+			selectedTags = word.tags ?? (word.category ? [word.category] : []);
 			wordType = word.wordType ?? 'word';
+			destFolderId = word.folderId;
 			initialized = true;
 		}
 	});
 
-	let hasReading = $derived(
-		hiragana.trim().length > 0 ||
-		katakana.trim().length > 0 ||
-		romaji.trim().length > 0
+	// Build breadcrumb path for the current folder
+	let folderPath = $derived.by(() => {
+		if (!destFolderId) return null;
+		const fs = $folders;
+		const path: string[] = [];
+		let current = fs.find(f => f.id === destFolderId);
+		while (current) {
+			path.unshift(current.name);
+			current = current.parentId ? fs.find(f => f.id === current!.parentId) : undefined;
+		}
+		return path.length > 0 ? path : null;
+	});
+
+	// Move-to-folder sheet
+	let showMoveSheet = $state(false);
+	let moveBreadcrumb = $state<string[]>([]);
+	let moveCurrentParent = $derived(moveBreadcrumb.length > 0 ? moveBreadcrumb[moveBreadcrumb.length - 1] : null);
+	let moveFoldersAtLevel = $derived(
+		$folders.filter(f => moveCurrentParent === null ? !f.parentId : f.parentId === moveCurrentParent)
+	);
+
+	function folderHasChildren(id: string) {
+		return $folders.some(f => f.parentId === id);
+	}
+	function moveSheetDrillInto(id: string) { moveBreadcrumb = [...moveBreadcrumb, id]; }
+	function moveSheetBack() { moveBreadcrumb = moveBreadcrumb.slice(0, -1); }
+	function openMoveSheet() { moveBreadcrumb = []; showMoveSheet = true; }
+
+	function selectDestFolder(id: string) {
+		destFolderId = id;
+		showMoveSheet = false;
+		moveBreadcrumb = [];
+	}
+
+	$effect(() => {
+		if (showMoveSheet) document.body.style.overflow = 'hidden';
+		else document.body.style.overflow = '';
+		return () => { document.body.style.overflow = ''; };
+	});
+
+	const allPresetValues = new Set(Object.values(CATEGORIES).flat() as string[]);
+
+	// Duplicate detection (exclude self)
+	let dupItaliano = $derived(
+		italiano.trim().length > 0 &&
+		$words.some(w => w.id !== wordId && w.italiano.toLowerCase() === italiano.trim().toLowerCase())
+	);
+	let dupHiragana = $derived(
+		hiragana.trim().length > 0 &&
+		$words.some(w => w.id !== wordId && (w.hiragana || w.katakana || '').toLowerCase() === hiragana.trim().toLowerCase())
+	);
+	let dupKanji = $derived(
+		kanji.trim().length > 0 &&
+		$words.some(w => w.id !== wordId && w.kanji?.trim().length > 0 && w.kanji.trim() === kanji.trim())
 	);
 
 	let isValid = $derived(
 		italiano.trim().length > 0 &&
-		(hasReading || kanji.trim().length > 0) &&
-		(wordType === 'phrase' || selectedCategory !== null)
+		hiragana.trim().length > 0 &&
+		(wordType === 'phrase' || selectedTags.length > 0)
 	);
 
 	function handleSave() {
 		if (!isValid || !wordId) return;
-		if (wordType === 'word' && !selectedCategory) return;
+		// Drop the fallback tag if the user has assigned real tags
+		const realTags = selectedTags.filter(t => t !== UNCATEGORIZED_TAG);
+		const finalTags = realTags.length > 0 ? realTags : selectedTags;
 		updateWord(wordId, {
 			italiano: italiano.trim(),
 			hiragana: hiragana.trim(),
-			katakana: katakana.trim(),
+			katakana: '',
 			romaji: romaji.trim(),
 			kanji: kanji.trim(),
-			category: selectedCategory ?? undefined,
+			category: (finalTags.find(t => allPresetValues.has(t)) as CategoryValue | undefined),
+			tags: finalTags.length > 0 ? finalTags : undefined,
 			wordType,
-			folderId: word?.folderId
+			folderId: destFolderId
 		});
-		goto('/parole');
+		goto(backHref);
 	}
 
 	let showDeleteModal = $state(false);
@@ -70,12 +131,12 @@
 	function confirmDelete() {
 		if (!wordId) return;
 		removeWord(wordId);
-		goto('/parole');
+		goto(backHref);
 	}
 </script>
 
 <svelte:head>
-	<title>Appare — Modifica parola</title>
+	<title>Anki-jin — Modifica parola</title>
 </svelte:head>
 
 {#if showDeleteModal}
@@ -98,7 +159,7 @@
 			<p>Questa parola non esiste.</p>
 		</div>
 	{:else}
-		<PageHeader title="Modifica parola" backHref="/parole">
+		<PageHeader title="Modifica parola" backHref={backHref}>
 			{#snippet actions()}
 				<button class="delete-btn" onclick={handleDelete} aria-label="Elimina parola">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -111,18 +172,25 @@
 
 		<div class="fields">
 			<div class="field">
-				<label for="input-italiano" class="field-label">Italiano</label>
+				<label for="input-italiano" class="field-label">Italiano <span class="req">*</span></label>
 				<ClearableInput bind:value={italiano} placeholder="es. grande" id="input-italiano" />
+				{#if dupItaliano}
+					<span class="dup-warn">
+						<Icon name="close" size={12} strokeWidth={3} />
+						Attenzione: nel database è già presente una parola con questo campo
+					</span>
+				{/if}
 			</div>
 
 			<div class="field">
-				<label for="input-hiragana" class="field-label">Hiragana</label>
-				<ClearableInput bind:value={hiragana} placeholder="es. おおきい" id="input-hiragana" japanese lang="ja" />
-			</div>
-
-			<div class="field">
-				<label for="input-katakana" class="field-label">Katakana</label>
-				<ClearableInput bind:value={katakana} placeholder="es. オオキイ" id="input-katakana" japanese lang="ja" />
+				<label for="input-hiragana" class="field-label">Hiragana/Katakana <span class="req">*</span></label>
+				<ClearableInput bind:value={hiragana} placeholder="es. おおきい / オオキイ" id="input-hiragana" japanese lang="ja" />
+				{#if dupHiragana}
+					<span class="dup-warn">
+						<Icon name="close" size={12} strokeWidth={3} />
+						Attenzione: nel database è già presente una parola con questo campo
+					</span>
+				{/if}
 			</div>
 
 			<div class="field">
@@ -133,6 +201,29 @@
 			<div class="field">
 				<label for="input-kanji" class="field-label">Kanji</label>
 				<ClearableInput bind:value={kanji} placeholder="es. 大きい" id="input-kanji" japanese lang="ja" />
+				{#if dupKanji}
+					<span class="dup-warn">
+						<Icon name="close" size={12} strokeWidth={3} />
+						Attenzione: nel database è già presente una parola con questo campo
+					</span>
+				{/if}
+			</div>
+
+			<div class="field">
+				<span class="field-label">Data creazione</span>
+				<div class="date-field">{createdAtFormatted}</div>
+			</div>
+
+			<div class="field">
+				<span class="field-label">Cartella</span>
+				<div class="folder-path-field">
+					{#if folderPath}
+						<span class="folder-path">{folderPath.join(' / ')}</span>
+					{:else}
+						<span class="folder-path-none">Nessuna cartella</span>
+					{/if}
+					<button type="button" class="move-folder-btn" onclick={openMoveSheet}>Sposta</button>
+				</div>
 			</div>
 		</div>
 
@@ -143,7 +234,7 @@
 
 		{#if wordType === 'word'}
 			<div class="category-area">
-				<CategoryPicker bind:selected={selectedCategory} />
+				<CategoryPicker bind:selectedTags={selectedTags} />
 			</div>
 		{/if}
 
@@ -163,6 +254,61 @@
 		</div>
 	{/if}
 </div>
+
+{#if showMoveSheet}
+	<SheetBackdrop onClose={() => showMoveSheet = false} />
+	<div class="move-sheet" transition:fly={{ y: 300, duration: 300 }}>
+		<div class="sheet-header">
+			{#if moveBreadcrumb.length > 0}
+				<button class="sheet-back" onclick={moveSheetBack}>
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+				</button>
+			{/if}
+			<h2 class="sheet-title">
+				{moveBreadcrumb.length > 0
+					? ($folders.find(f => f.id === moveCurrentParent)?.name ?? 'Cartella')
+					: 'Sposta in cartella'}
+			</h2>
+			<button class="sheet-close" onclick={() => showMoveSheet = false}>Annulla</button>
+		</div>
+
+		<div class="move-folder-list">
+			<!-- Root: "Nessuna cartella" option / Drilled in: "Metti qui" option -->
+			{#if moveBreadcrumb.length > 0}
+				<div class="move-folder-entry">
+					<button class="move-folder-select metti-qui" onclick={() => selectDestFolder(moveCurrentParent!)}>
+						Sposta qui
+					</button>
+				</div>
+			{:else}
+				<div class="move-folder-entry">
+					<button class="move-folder-select metti-qui" onclick={() => { destFolderId = undefined; showMoveSheet = false; }}>
+						Nessuna cartella
+					</button>
+				</div>
+			{/if}
+
+			{#each moveFoldersAtLevel as f}
+				<div class="move-folder-entry">
+					<!-- Tap name → select this folder as destination -->
+					<button class="move-folder-select" onclick={() => selectDestFolder(f.id)}>
+						<span class="move-folder-name">{f.name}</span>
+					</button>
+					<!-- Tap chevron → drill into subfolders -->
+					{#if folderHasChildren(f.id)}
+						<button class="move-folder-drill" onclick={() => moveSheetDrillInto(f.id)} aria-label="Apri {f.name}">
+							<Icon name="chevron-right" size={18} />
+						</button>
+					{/if}
+				</div>
+			{/each}
+
+			{#if moveFoldersAtLevel.length === 0 && moveBreadcrumb.length > 0}
+				<p class="move-empty">Nessuna sottocartella.</p>
+			{/if}
+		</div>
+	</div>
+{/if}
 
 <style>
 	.page {
@@ -217,6 +363,30 @@
 		font-size: 0.82rem;
 		font-weight: 600;
 		color: var(--color-text);
+	}
+
+	.req {
+		color: var(--color-primary);
+		font-weight: 700;
+	}
+
+	.dup-warn {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: #b45309;
+		margin-top: 0.15rem;
+	}
+
+	.date-field {
+		padding: 0.75rem 1rem;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+		font-size: 0.95rem;
+		color: var(--color-text-secondary);
 	}
 
 	.type-picker {
@@ -348,5 +518,168 @@
 	.btn-danger {
 		background: #C5221F;
 		color: white;
+	}
+
+	/* ---- Folder path field ---- */
+	.folder-path-field {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		padding: 0.75rem 1rem;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+	}
+
+	.folder-path {
+		font-size: 0.9rem;
+		color: var(--color-text);
+		font-weight: 500;
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.folder-path-none {
+		font-size: 0.9rem;
+		color: var(--color-text-tertiary);
+		flex: 1;
+	}
+
+	.move-folder-btn {
+		background: none;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-full);
+		padding: 0.3rem 0.75rem;
+		font-size: 0.78rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		color: var(--color-text-secondary);
+		cursor: pointer;
+		white-space: nowrap;
+		flex-shrink: 0;
+	}
+
+	/* ---- Move sheet ---- */
+	.move-sheet {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		max-height: 75dvh;
+		background: var(--color-bg);
+		border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+		padding: 1.75rem;
+		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+		z-index: 101;
+		box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
+		display: flex;
+		flex-direction: column;
+	}
+
+	.sheet-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 1rem;
+		flex-shrink: 0;
+	}
+
+	.sheet-title {
+		font-size: 1.1rem;
+		font-weight: 700;
+		margin: 0;
+		flex: 1;
+	}
+
+	.sheet-close {
+		background: none;
+		border: none;
+		color: var(--color-text-secondary);
+		font-size: 0.9rem;
+		font-weight: 600;
+		font-family: inherit;
+		cursor: pointer;
+	}
+
+	.sheet-back {
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		color: var(--color-text-secondary);
+		display: flex;
+		align-items: center;
+		margin-right: 0.5rem;
+	}
+
+	.move-folder-list {
+		display: flex;
+		flex-direction: column;
+		overflow-y: auto;
+		flex: 1;
+	}
+
+	/* ---- Move sheet — Finder style ---- */
+	.move-folder-entry {
+		display: flex;
+		align-items: stretch;
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	.move-folder-entry:last-child {
+		border-bottom: none;
+	}
+
+	/* Tap name to SELECT this folder */
+	.move-folder-select {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		padding: 1rem 0;
+		background: none;
+		border: none;
+		font-family: inherit;
+		cursor: pointer;
+		text-align: left;
+		color: var(--color-text);
+		min-width: 0;
+	}
+
+	.move-folder-select.metti-qui {
+		font-size: 0.95rem;
+		font-weight: 700;
+		color: var(--color-primary);
+	}
+
+	/* Tap chevron to DRILL INTO subfolders */
+	.move-folder-drill {
+		padding: 1rem 0 1rem 1rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--color-text-tertiary);
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+	}
+
+	.move-folder-name {
+		flex: 1;
+		font-size: 0.95rem;
+		font-weight: 600;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.move-empty {
+		font-size: 0.9rem;
+		color: var(--color-text-secondary);
+		padding: 1.5rem 0;
+		text-align: center;
 	}
 </style>

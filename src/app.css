@@ -22,19 +22,19 @@
 
 @theme {
   /* Colors */
-  --color-primary: #8B1A1A;
-  --color-primary-light: #A52422;
-  --color-primary-dark: #6B1010;
+  --color-primary: #ef1e29;
+  --color-primary-light: #f54d55;
+  --color-primary-dark: #c8111b;
   --color-accent: #F5C518;
   --color-accent-hover: #E0B200;
-  --color-surface: #FAF6F2;
-  --color-surface-warm: #F5EDE4;
+  --color-surface: #f5f3f7;
+  --color-surface-warm: #f5f3f7;
   --color-bg: #FFFFFF;
   --color-text: #1A1A1A;
   --color-text-secondary: #6B6B6B;
   --color-text-tertiary: #9A9A9A;
-  --color-border: #E8E2DA;
-  --color-border-light: #F0EBE5;
+  --color-border: #e0dce6;
+  --color-border-light: #ece9f0;
   --color-info-bg: #F8F5F1;
   --color-info-border: #E8E2DA;
 
@@ -119,6 +119,37 @@ a, button, input, textarea, select, [role="button"], label {
    Scoped Svelte styles often override `transition`, so we rely on
    instant transform to avoid conflicts.
    ======================================== */
+
+button, a.cta-button, a.back-btn, a.login-cta-btn {
+  border-radius: 8px !important;
+}
+
+/* Pills stay fully rounded */
+.score-chip, .pill, .sort-chip, .sort-btn, .action-pill, .sheet-close, .back-btn, .filter-btn, .chip, .add-tag-btn, .chip-delete, .fab {
+  border-radius: 9999px !important;
+}
+
+/* Sort/score pills — force single-line layout regardless of Tailwind SVG reset */
+.sort-btn, .score-chip, .sort-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+}
+
+/* Filter list rows — no radius, they're list items */
+.option-row {
+  border-radius: 0 !important;
+}
+
+/* Gradient for primary-colored action buttons */
+.cta-button,
+a.cta-button,
+.fab,
+.submit-btn,
+.save-btn:not(:disabled) {
+  background: linear-gradient(to bottom, #f74d57 0%, #ef1e29 50%, #d8161f 100%) !important;
+  color: white !important;
+}
 
 button:not(:disabled):active,
 a:active,
@@ -216,23 +247,6 @@ body {
   animation: fade-in 0.15s ease-out both;
 }
 
-/* Disable landscape on small devices */
-@media (orientation: landscape) and (max-height: 500px) {
-  body::before {
-    content: 'Ruota il dispositivo';
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    background: var(--color-bg);
-    color: var(--color-text);
-    font-family: var(--font-sans);
-    font-size: 1.2rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
 
 /* Custom scrollbar (thin, subtle) */
 ::-webkit-scrollbar {
@@ -317,8 +331,8 @@ body {
 }
 
 /* Heatmap Intensities */
-.intensity-0 { background-color: var(--color-surface-warm); border-color: var(--color-border); }
-.intensity-1 { background-color: rgba(139, 26, 26, 0.3); border-color: transparent; color: white; }
-.intensity-2 { background-color: rgba(139, 26, 26, 0.6); border-color: transparent; color: white; }
-.intensity-3 { background-color: rgba(139, 26, 26, 0.85); border-color: transparent; color: white; }
-.intensity-4 { background-color: rgba(139, 26, 26, 1); border-color: transparent; color: white; }
+.intensity-0 { background-color: var(--color-surface); border-color: #e0dce6; }
+.intensity-1 { background-color: rgba(239, 30, 41, 0.3); border-color: transparent; color: white; }
+.intensity-2 { background-color: rgba(239, 30, 41, 0.6); border-color: transparent; color: white; }
+.intensity-3 { background-color: rgba(239, 30, 41, 0.85); border-color: transparent; color: white; }
+.intensity-4 { background-color: rgba(239, 30, 41, 1); border-color: transparent; color: white; }
