@@ -361,6 +361,10 @@
 	}
 
 	.sort-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		white-space: nowrap;
 		background: none;
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-full);
