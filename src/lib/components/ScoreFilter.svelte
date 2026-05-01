@@ -2,18 +2,15 @@
 	import type { WordScore } from '$lib/types/word';
 
 	type ScoreFilterValue = 'all' | WordScore;
-	type TypeFilterValue = 'all' | 'word' | 'phrase';
 
 	interface Props {
 		value: ScoreFilterValue;
 		onChange: (value: ScoreFilterValue) => void;
-		typeValue?: TypeFilterValue;
-		onTypeChange?: (value: TypeFilterValue) => void;
+		sortLabel?: string;
+		onSortCycle?: () => void;
 	}
 
-	let { value, onChange, typeValue = 'all', onTypeChange }: Props = $props();
-
-	const TYPE_OPTIONS: [TypeFilterValue, string][] = [['word', 'Parole'], ['phrase', 'Frasi']];
+	let { value, onChange, sortLabel, onSortCycle }: Props = $props();
 
 	const OPTIONS: ScoreFilterValue[] = ['all', 'none', 'unknown', 'learning', 'known'];
 
@@ -34,16 +31,8 @@
 </script>
 
 <div class="score-filter-row">
-	{#if onTypeChange}
-		{#each TYPE_OPTIONS as [tv, tlabel]}
-			<button
-				class="score-chip"
-				class:active={typeValue === tv}
-				onclick={() => onTypeChange(tv)}
-			>
-				{tlabel}
-			</button>
-		{/each}
+	{#if onSortCycle && sortLabel}
+		<button class="score-chip sort-chip" onclick={onSortCycle}>↕ {sortLabel}</button>
 		<span class="chip-divider"></span>
 	{/if}
 	{#each OPTIONS as s}

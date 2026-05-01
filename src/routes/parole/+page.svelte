@@ -24,6 +24,19 @@
 
 	const categoryGroups = Object.entries(CATEGORIES) as [string, readonly string[]][];
 
+	const SORT_OPTIONS: WordSort[] = ['newest', 'oldest', 'it-az', 'jp-az'];
+	const SORT_LABELS: Record<WordSort, string> = {
+		newest: 'Più recenti',
+		oldest: 'Meno recenti',
+		'it-az': 'A-Z Italiano',
+		'jp-az': 'A-Z Giapponese',
+	};
+
+	function cycleSortMode() {
+		const idx = SORT_OPTIONS.indexOf(sortMode);
+		sortMode = SORT_OPTIONS[(idx + 1) % SORT_OPTIONS.length];
+	}
+
 	function toggleGroup(group: string) {
 		const next = new Set(selectedGroups);
 		if (next.has(group)) next.delete(group);
@@ -113,8 +126,8 @@
 	<ScoreFilter
 		value={scoreFilter}
 		onChange={(v) => scoreFilter = v}
-		typeValue={typeFilter}
-		onTypeChange={(v) => typeFilter = v}
+		sortLabel={SORT_LABELS[sortMode]}
+		onSortCycle={cycleSortMode}
 	/>
 
 	<FilterPills pills={activePills} />
