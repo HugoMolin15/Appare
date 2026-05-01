@@ -63,8 +63,15 @@
 		return pills;
 	});
 
+	function itAzCompare(a: string, b: string): number {
+		const aNum = /^\d/.test(a);
+		const bNum = /^\d/.test(b);
+		if (aNum !== bNum) return aNum ? 1 : -1;
+		return a.localeCompare(b, 'it');
+	}
+
 	let filteredWords = $derived.by(() => {
-		let result = filterWords($words, searchQuery);
+		let result = [...filterWords($words, searchQuery)];
 		if (scoreFilter !== 'all') {
 			result = result.filter(w => ($wordScores[w.id] ?? 'none') === scoreFilter);
 		}
@@ -84,7 +91,7 @@
 			});
 		}
 		if (sortMode === 'oldest') return result.sort((a, b) => a.createdAt - b.createdAt);
-		if (sortMode === 'it-az') return result.sort((a, b) => a.italiano.localeCompare(b.italiano, 'it'));
+		if (sortMode === 'it-az') return result.sort((a, b) => itAzCompare(a.italiano, b.italiano));
 		if (sortMode === 'jp-az') return result.sort((a, b) => (a.hiragana || a.katakana || '').localeCompare(b.hiragana || b.katakana || '', 'ja'));
 		return result.sort((a, b) => b.createdAt - a.createdAt);
 	});

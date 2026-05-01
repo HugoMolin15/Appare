@@ -33,7 +33,6 @@
 <div class="score-filter-row">
 	{#if onSortCycle && sortLabel}
 		<button class="score-chip sort-chip" onclick={onSortCycle}>↕ {sortLabel}</button>
-		<span class="chip-divider"></span>
 	{/if}
 	{#each OPTIONS as s}
 		<button
@@ -94,12 +93,4 @@
 		flex-shrink: 0;
 	}
 
-	.chip-divider {
-		width: 1px;
-		height: 1.2rem;
-		background: var(--color-border);
-		flex-shrink: 0;
-		align-self: center;
-		margin: 0 0.1rem;
-	}
 </style>
