@@ -125,7 +125,7 @@ button, a.cta-button, a.back-btn, a.login-cta-btn {
 }
 
 /* Pills stay fully rounded */
-.score-chip, .pill, .sort-chip, .sort-btn, .action-pill, .sheet-close, .back-btn, .filter-btn, .chip, .add-tag-btn, .chip-delete {
+.score-chip, .pill, .sort-chip, .sort-btn, .action-pill, .sheet-close, .back-btn, .filter-btn, .chip, .add-tag-btn, .chip-delete, .fab {
   border-radius: 9999px !important;
 }
 
