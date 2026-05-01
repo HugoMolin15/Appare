@@ -125,29 +125,18 @@ button, a.cta-button, a.back-btn, a.login-cta-btn {
 }
 
 /* Pills stay fully rounded */
-.score-chip, .pill, .sort-chip {
+.score-chip, .pill, .sort-chip, .sort-btn, .action-pill, .sheet-close, .back-btn, .filter-btn {
   border-radius: 9999px !important;
 }
 
-/* 3D gradient for primary-colored action buttons */
+/* Gradient for primary-colored action buttons */
 .cta-button,
 a.cta-button,
 .fab,
 .submit-btn,
 .save-btn:not(:disabled) {
   background: linear-gradient(to bottom, #f74d57 0%, #ef1e29 50%, #d8161f 100%) !important;
-  box-shadow: 0 4px 0 0 #a80d15, 0 6px 14px rgba(239, 30, 41, 0.25) !important;
   color: white !important;
-}
-
-.cta-button:active,
-a.cta-button:active,
-.fab:active,
-.submit-btn:active,
-.save-btn:not(:disabled):active {
-  transform: translateY(3px) scale(1) !important;
-  box-shadow: 0 1px 0 0 #a80d15, 0 2px 6px rgba(239, 30, 41, 0.15) !important;
-  opacity: 1 !important;
 }
 
 button:not(:disabled):active,
