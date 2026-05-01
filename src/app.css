@@ -129,6 +129,13 @@ button, a.cta-button, a.back-btn, a.login-cta-btn {
   border-radius: 9999px !important;
 }
 
+/* Sort/score pills — force single-line layout regardless of Tailwind SVG reset */
+.sort-btn, .score-chip, .sort-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+}
+
 /* Filter list rows — no radius, they're list items */
 .option-row {
   border-radius: 0 !important;
