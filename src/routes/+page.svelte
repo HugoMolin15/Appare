@@ -38,7 +38,6 @@
 	</section>
 
 	<!-- Divider -->
-	<div class="divider hide-desktop"></div>
 
 	<!-- Menu List -->
 	<nav class="menu-list hide-desktop">
