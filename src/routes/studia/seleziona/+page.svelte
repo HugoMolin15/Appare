@@ -30,11 +30,13 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader title="Cosa vuoi studiare?" backHref="/" />
+	<PageHeader title="Cosa vuoi studiare?" backHref="/">
+		{#snippet actions()}
+			<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." collapsible />
+		{/snippet}
+	</PageHeader>
 
 	<p class="subtitle">Hai ancora {unstudiedWords.length} parole da imparare. Seleziona quelle che vuoi studiare oggi.</p>
-
-	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
 	<div class="word-list">
 		{#if filteredWords.length === 0}
@@ -78,6 +80,7 @@
 		min-height: 100dvh;
 		display: flex;
 		flex-direction: column;
+		position: relative;
 		padding-bottom: 120px; /* Space for bottom bar */
 	}
 
@@ -96,7 +99,7 @@
 	.word-checkbox {
 		width: 24px;
 		height: 24px;
-		border-radius: 6px;
+		border-radius: 50%;
 		border: 2px solid var(--color-border);
 		display: flex;
 		align-items: center;
@@ -107,8 +110,8 @@
 	}
 
 	.word-checkbox.checked {
-		background-color: var(--color-primary);
-		border-color: var(--color-primary);
+		background-color: #1A1A1A;
+		border-color: #1A1A1A;
 		color: white;
 	}
 

@@ -68,22 +68,21 @@
 		gap: 0.3rem;
 		padding: 0.35rem 0.75rem;
 		border-radius: var(--radius-full);
-		border: 1.5px solid var(--color-border);
-		background: var(--color-bg);
-		color: var(--color-text-secondary);
+		border: none;
+		background: #f5f3f7;
+		color: #1A1A1A;
 		font-size: 0.78rem;
 		font-weight: 600;
 		font-family: var(--font-sans);
 		cursor: pointer;
 		white-space: nowrap;
 		flex-shrink: 0;
-		transition: border-color 0.15s ease, color 0.15s ease;
+		transition: background 0.15s ease, color 0.15s ease;
 	}
 
 	.score-chip.active {
-		border-color: var(--chip-color, var(--color-primary));
-		color: var(--chip-color, var(--color-primary));
-		background: color-mix(in srgb, var(--chip-color, var(--color-primary)) 10%, transparent);
+		background: #1A1A1A;
+		color: white;
 	}
 
 	.score-chip-dot {

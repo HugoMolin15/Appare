@@ -27,14 +27,14 @@
   --color-primary-dark: #6B1010;
   --color-accent: #F5C518;
   --color-accent-hover: #E0B200;
-  --color-surface: #FAF6F2;
-  --color-surface-warm: #F5EDE4;
+  --color-surface: #f5f3f7;
+  --color-surface-warm: #f5f3f7;
   --color-bg: #FFFFFF;
   --color-text: #1A1A1A;
   --color-text-secondary: #6B6B6B;
   --color-text-tertiary: #9A9A9A;
-  --color-border: #E8E2DA;
-  --color-border-light: #F0EBE5;
+  --color-border: #e0dce6;
+  --color-border-light: #ece9f0;
   --color-info-bg: #F8F5F1;
   --color-info-border: #E8E2DA;
 
@@ -300,7 +300,7 @@ body {
 }
 
 /* Heatmap Intensities */
-.intensity-0 { background-color: var(--color-surface-warm); border-color: var(--color-border); }
+.intensity-0 { background-color: var(--color-surface); border-color: #e0dce6; }
 .intensity-1 { background-color: rgba(139, 26, 26, 0.3); border-color: transparent; color: white; }
 .intensity-2 { background-color: rgba(139, 26, 26, 0.6); border-color: transparent; color: white; }
 .intensity-3 { background-color: rgba(139, 26, 26, 0.85); border-color: transparent; color: white; }

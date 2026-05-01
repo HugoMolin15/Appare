@@ -132,6 +132,7 @@
 <div class="page page-enter">
 	<PageHeader title="Tutte le parole" backHref="/" hideBackOnDesktop>
 		{#snippet actions()}
+			<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." collapsible />
 			<button
 				class="filter-btn"
 				class:active={activePills.length > 0}
@@ -149,8 +150,6 @@
 			</button>
 		{/snippet}
 	</PageHeader>
-
-	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
 	<ScoreFilter
 		value={scoreFilter}
@@ -260,6 +259,7 @@
 		min-height: 100dvh;
 		display: flex;
 		flex-direction: column;
+		position: relative;
 	}
 
 	/* ---- Filter button ---- */
@@ -282,7 +282,7 @@
 	}
 
 	.filter-btn.active {
-		color: var(--color-primary);
+		color: #1A1A1A;
 	}
 
 	.filter-badge {
@@ -292,7 +292,7 @@
 		width: 16px;
 		height: 16px;
 		border-radius: 50%;
-		background: var(--color-primary);
+		background: #1A1A1A;
 		color: white;
 		font-size: 0.6rem;
 		font-weight: 700;
@@ -406,11 +406,11 @@
 	.option-row:last-child { border-bottom: none; }
 
 	.option-row.selected {
-		color: var(--color-primary);
+		color: #1A1A1A;
 		font-weight: 700;
 	}
 
 	.option-row.selected svg {
-		stroke: var(--color-primary);
+		stroke: #1A1A1A;
 	}
 </style>

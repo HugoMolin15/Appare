@@ -84,7 +84,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: flex-end;
-		width: 40px;
+		gap: 0.25rem;
+		min-width: 40px;
 	}
 
 	.header-spacer {

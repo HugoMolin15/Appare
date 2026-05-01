@@ -119,7 +119,11 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader title="Cartelle" hideBackOnDesktop />
+	<PageHeader title="Cartelle" hideBackOnDesktop>
+		{#snippet actions()}
+			<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle..." collapsible />
+		{/snippet}
+	</PageHeader>
 
 	{#if allFolderCount === 0}
 		<EmptyState
@@ -128,8 +132,6 @@
 			subtitle="Le cartelle raggruppano le parole per argomento."
 		/>
 	{:else}
-		<!-- ① Search — always at top -->
-		<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle..." />
 
 		<!-- ② Controls bar -->
 		<div class="controls-bar">
@@ -281,6 +283,7 @@
 		min-height: 100dvh;
 		display: flex;
 		flex-direction: column;
+		position: relative;
 	}
 
 	/* ---- Controls bar ---- */
@@ -415,7 +418,7 @@
 	.folder-checkbox {
 		width: 24px;
 		height: 24px;
-		border-radius: 6px;
+		border-radius: 50%;
 		border: 2px solid var(--color-border);
 		display: flex;
 		align-items: center;
@@ -428,8 +431,8 @@
 	.folder-checkbox :global(svg) { width: 14px; height: 14px; }
 
 	.folder-checkbox.checked {
-		background-color: var(--color-primary);
-		border-color: var(--color-primary);
+		background-color: #1A1A1A;
+		border-color: #1A1A1A;
 		color: white;
 	}
 

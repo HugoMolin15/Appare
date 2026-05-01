@@ -470,7 +470,7 @@
 
 	.folder-checkbox.checked {
 		background-color: var(--color-primary);
-		border-color: var(--color-primary);
+		border-color: #e0dce6;
 		color: white;
 	}
 
@@ -745,7 +745,7 @@
 
 	.word-checkbox.checked {
 		background-color: var(--color-primary);
-		border-color: var(--color-primary);
+		border-color: #e0dce6;
 		color: white;
 	}
 

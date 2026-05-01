@@ -669,7 +669,7 @@
 	.item-checkbox {
 		width: 24px;
 		height: 24px;
-		border-radius: 6px;
+		border-radius: 50%;
 		border: 2px solid var(--color-border);
 		display: flex;
 		align-items: center;
@@ -682,8 +682,8 @@
 	.item-checkbox :global(svg) { width: 14px; height: 14px; }
 
 	.item-checkbox.checked {
-		background-color: var(--color-primary);
-		border-color: var(--color-primary);
+		background-color: #1A1A1A;
+		border-color: #1A1A1A;
 		color: white;
 	}
 
@@ -829,7 +829,7 @@
 		background: var(--color-surface); border: 1px solid var(--color-border);
 		font-family: inherit; font-size: 1rem; color: var(--color-text); outline: none; box-sizing: border-box;
 	}
-	.sheet-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1); }
+	.sheet-input:focus { border-color: #e0dce6; box-shadow: none; }
 
 	.color-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; }
 

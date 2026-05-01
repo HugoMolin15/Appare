@@ -44,7 +44,7 @@
 		align-items: center;
 		gap: 0.35rem;
 		padding: 0.35rem 0.5rem 0.35rem 0.75rem;
-		background-color: var(--color-primary);
+		background-color: #1A1A1A;
 		color: white;
 		border-radius: var(--radius-full);
 		font-size: 0.8rem;

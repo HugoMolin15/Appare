@@ -32,7 +32,6 @@
 		trailing
 	}: Props = $props();
 
-	const jp = $derived(word.hiragana || word.katakana || word.romaji || word.kanji);
 	const scoreColor = $derived(SCORE_COLORS[$wordScores[word.id] ?? 'none']);
 </script>
 
@@ -41,7 +40,6 @@
 		{#if leading}{@render leading()}{/if}
 		<div class="word-main">
 			<span class="word-it">{word.italiano}</span>
-			<span class="word-jp font-jp">{jp}</span>
 		</div>
 		<div class="word-trailing">
 			{#if word.tags && word.tags.length > 0}
@@ -70,7 +68,6 @@
 		{#if leading}{@render leading()}{/if}
 		<div class="word-main">
 			<span class="word-it">{word.italiano}</span>
-			<span class="word-jp font-jp">{jp}</span>
 		</div>
 		<div class="word-trailing">
 			{#if word.tags && word.tags.length > 0}
@@ -108,7 +105,6 @@
 	.word-main {
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
 		flex-grow: 1;
 		min-width: 0;
 	}
@@ -117,11 +113,6 @@
 		font-size: 0.95rem;
 		font-weight: 600;
 		color: var(--color-text-primary);
-	}
-
-	.word-jp {
-		font-size: 0.85rem;
-		color: var(--color-text-secondary);
 	}
 
 	.word-trailing {

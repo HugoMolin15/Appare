@@ -372,7 +372,7 @@
 		border: none;
 		font-size: 1.75rem;
 		font-weight: 700;
-		color: var(--color-primary);
+		color: #1A1A1A;
 		text-align: center;
 		padding: 0.25rem;
 		outline: none;
@@ -741,7 +741,7 @@
 	}
 
 	.add-card-btn:hover {
-		border-color: var(--color-primary);
+		border-color: #e0dce6;
 		color: var(--color-primary);
 	}
 

@@ -297,7 +297,7 @@
 	}
 
 	.note-input:focus {
-		border-color: var(--color-primary);
+		border-color: #e0dce6;
 	}
 
 	.note-input::placeholder {
