@@ -389,7 +389,7 @@
 
 	.action-btn {
 		padding: 0.75rem 1rem;
-		border-radius: var(--radius-lg);
+		border-radius: 8px;
 		font-size: 0.9rem;
 		font-weight: 600;
 		font-family: var(--font-sans);

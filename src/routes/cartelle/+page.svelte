@@ -160,7 +160,10 @@
 		{#if !selectMode}
 			<div class="sort-row">
 				{#if !reorderMode}
-					<button class="sort-btn" onclick={cycleFolderSort}>↕ {folderSortLabels[folderSortMode]}</button>
+					<button class="sort-btn" onclick={cycleFolderSort}>
+					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+					{folderSortLabels[folderSortMode]}
+				</button>
 				{/if}
 				{#if folderList.length > 1}
 					{#if reorderMode}

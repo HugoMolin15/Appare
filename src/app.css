@@ -129,6 +129,11 @@ button, a.cta-button, a.back-btn, a.login-cta-btn {
   border-radius: 9999px !important;
 }
 
+/* Filter list rows — no radius, they're list items */
+.option-row {
+  border-radius: 0 !important;
+}
+
 /* Gradient for primary-colored action buttons */
 .cta-button,
 a.cta-button,

@@ -297,7 +297,10 @@
 			{/if}
 
 			<div class="sort-row">
-				<button class="sort-btn" onclick={cyclePeriodSort}>↕ {periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}</button>
+				<button class="sort-btn" onclick={cyclePeriodSort}>
+					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+					{periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}
+				</button>
 			</div>
 
 			<div class="folder-list">
