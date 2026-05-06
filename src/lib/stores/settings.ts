@@ -19,7 +19,10 @@ export const studyGoal = persisted<number>('appare_study_goal', 10, { onChange: 
 /** Order of flashcard sides (array of field keys) */
 export const cardOrder = persisted<CardField[]>('appare_card_order', [...DEFAULT_CARD_FIELDS], { onChange: syncToCloud });
 
-/** Whether to randomize flashcard side order each time */
+/** Whether to randomize word order each time (which word comes next) */
+export const randomWordOrder = persisted<boolean>('appare_random_word_order', false, { onChange: syncToCloud });
+
+/** Whether to randomize flashcard card order each time (which card/side shows first) */
 export const randomCardOrder = persisted<boolean>('appare_random_card_order', false, { onChange: syncToCloud });
 
 /** User-defined card layout: ordered list of cards, each with one or more fields */
@@ -30,6 +33,7 @@ export function clearSettings() {
 	appFontScale.set(100);
 	studyGoal.set(10);
 	cardOrder.set([...DEFAULT_CARD_FIELDS]);
+	randomWordOrder.set(false);
 	randomCardOrder.set(false);
 	cardLayout.set(DEFAULT_CARD_LAYOUT);
 
@@ -38,6 +42,7 @@ export function clearSettings() {
 		localStorage.removeItem('appare_jp_font_size');
 		localStorage.removeItem('appare_study_goal');
 		localStorage.removeItem('appare_card_order');
+		localStorage.removeItem('appare_random_word_order');
 		localStorage.removeItem('appare_random_card_order');
 		localStorage.removeItem('appare_daily_words');
 		localStorage.removeItem('appare_card_layout');

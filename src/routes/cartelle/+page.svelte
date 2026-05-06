@@ -6,7 +6,9 @@
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
 	import { setSelectedWords } from '$lib/stores/studySession';
 	import { shuffle } from '$lib/utils/shuffle';
+	import { randomWordOrder } from '$lib/stores/settings';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import FolderModal from '$lib/components/FolderModal.svelte';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
@@ -94,8 +96,9 @@
 	});
 
 	function studyAll() {
-		const ids = shuffle(get(words).map(w => w.id));
+		let ids = get(words).map(w => w.id);
 		if (ids.length === 0) return;
+		if (get(randomWordOrder)) ids = shuffle(ids);
 		setSelectedWords(ids);
 		goto('/studia');
 	}
@@ -107,8 +110,9 @@
 			const subs = fs.filter(f => f.parentId === folderId).map(f => f.id);
 			return [...direct, ...subs.flatMap(collect)];
 		}
-		const ids = shuffle([...new Set(Array.from(selectedFolderIds).flatMap(collect))]);
+		let ids = [...new Set(Array.from(selectedFolderIds).flatMap(collect))];
 		if (ids.length === 0) return;
+		if (get(randomWordOrder)) ids = shuffle(ids);
 		setSelectedWords(ids);
 		goto('/studia');
 	}
@@ -151,7 +155,7 @@
 				</div>
 			{/if}
 
-			<!-- ④ Sort / reorder row -->
+			<!-- ④ Sort / reorder + random pills row -->
 			{#if !selectMode}
 				<div class="sort-row">
 					{#if !reorderMode}
@@ -170,6 +174,7 @@
 							<button class="sort-btn" onclick={enterReorderMode}>Riordina</button>
 						{/if}
 					{/if}
+					<StudyRandomPills />
 				</div>
 			{/if}
 		{/if}

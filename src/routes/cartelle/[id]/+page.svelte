@@ -7,7 +7,9 @@
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
 	import { words, removeWord, moveWordsToFolder } from '$lib/stores/words';
 	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection } from '$lib/stores/studySession';
+	import { randomWordOrder } from '$lib/stores/settings';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import FolderModal from '$lib/components/FolderModal.svelte';
 	import WordSelectionModal from '$lib/components/WordSelectionModal.svelte';
 	import ConfirmationModal from '$lib/components/ConfirmationModal.svelte';
@@ -210,7 +212,8 @@
 	// ---- Study ----
 	function studyAll() {
 		if (allDescendantWordIds.length === 0) return;
-		setSelectedWords(shuffle(allDescendantWordIds));
+		const ids = get(randomWordOrder) ? shuffle(allDescendantWordIds) : allDescendantWordIds;
+		setSelectedWords(ids);
 		goto('/studia');
 	}
 
@@ -223,8 +226,9 @@
 		}
 		const fromFolders = [...selectedSubfolderIds].flatMap(collect);
 		const fromWords = folderWords.filter(w => sel.has(w.id)).map(w => w.id);
-		const ids = shuffle([...new Set([...fromFolders, ...fromWords])]);
+		let ids = [...new Set([...fromFolders, ...fromWords])];
 		if (ids.length === 0) return;
+		if (get(randomWordOrder)) ids = shuffle(ids);
 		setSelectedWords(ids);
 		goto('/studia');
 	}
@@ -314,7 +318,7 @@
 				</div>
 			{/if}
 
-			<!-- ④ Sort/reorder controls -->
+			<!-- ④ Sort/reorder + random pills -->
 			<div class="sort-row">
 				{#if subfolders.length > 1 && !selectMode && !reorderSubfoldersMode}
 					<button class="sort-btn" onclick={enterSubfolderReorder}>Riordina</button>
@@ -331,6 +335,7 @@
 						{wordSortLabels[wordSortMode]}
 					</button>
 				{/if}
+				<StudyRandomPills />
 			</div>
 		{/if}
 	</div>

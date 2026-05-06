@@ -1,8 +1,12 @@
 <script lang="ts">
 	import { words } from '$lib/stores/words';
 	import { wordScores } from '$lib/stores/wordScores';
-	import { selectedWordIds, toggleWordSelection, selectedCount } from '$lib/stores/studySession';
+	import { selectedWordIds, toggleWordSelection, selectedCount, setSelectedWords } from '$lib/stores/studySession';
 	import { goto } from '$app/navigation';
+	import { get } from 'svelte/store';
+	import { shuffle } from '$lib/utils/shuffle';
+	import { randomWordOrder } from '$lib/stores/settings';
+	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import { CATEGORIES } from '$lib/types/word';
 	import type { WordScore } from '$lib/types/word';
 	import PageHeader from '$lib/components/PageHeader.svelte';
@@ -95,7 +99,11 @@
 	});
 
 	function startStudy() {
-		if ($selectedCount > 0) goto('/studia');
+		if ($selectedCount === 0) return;
+		let ids = [...get(selectedWordIds)];
+		if (get(randomWordOrder)) ids = shuffle(ids);
+		setSelectedWords(ids);
+		goto('/studia');
 	}
 </script>
 
@@ -126,12 +134,15 @@
 
 	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
-	<ScoreFilter
-		value={scoreFilter}
-		onChange={(v) => scoreFilter = v}
-		sortLabel={SORT_LABELS[sortMode]}
-		onSortCycle={cycleSortMode}
-	/>
+	<div class="filter-sort-row">
+		<ScoreFilter
+			value={scoreFilter}
+			onChange={(v) => scoreFilter = v}
+			sortLabel={SORT_LABELS[sortMode]}
+			onSortCycle={cycleSortMode}
+		/>
+		<StudyRandomPills />
+	</div>
 
 	<FilterPills pills={activePills} />
 
@@ -222,6 +233,14 @@
 		flex-direction: column;
 		position: relative;
 		padding-bottom: 120px;
+	}
+
+	.filter-sort-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		flex-wrap: wrap;
 	}
 
 	.word-count-label {

@@ -15,6 +15,9 @@
 	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { fly } from 'svelte/transition';
 	import { shuffle } from '$lib/utils/shuffle';
+	import { get } from 'svelte/store';
+	import { randomWordOrder } from '$lib/stores/settings';
+	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import { wordScores } from '$lib/stores/wordScores';
 
 	const SCORE_COLORS: Record<string, string> = {
@@ -194,18 +197,20 @@
 	function studySelectedPeriods() {
 		const items = currentItems();
 		const allIds = Array.from(selectedKeys).flatMap(k => collectWordIdsFromNode(items[k]));
-		const unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
+		let unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
 		if (unique.length === 0) return;
-		setSelectedWords(shuffle(unique));
+		if (get(randomWordOrder)) unique = shuffle(unique);
+		setSelectedWords(unique);
 		goto('/studia');
 	}
 
 	function studyAllPeriods() {
 		const items = currentItems();
 		const allIds = Object.values(items as Record<string, unknown>).flatMap(v => collectWordIdsFromNode(v));
-		const unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
+		let unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
 		if (unique.length === 0) return;
-		setSelectedWords(shuffle(unique));
+		if (get(randomWordOrder)) unique = shuffle(unique);
+		setSelectedWords(unique);
 		goto('/studia');
 	}
 
@@ -294,6 +299,7 @@
 						<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
 						{periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}
 					</button>
+					<StudyRandomPills />
 				</div>
 			{:else}
 				<!-- Day word view controls -->
@@ -308,7 +314,11 @@
 
 				{#if daySelectMode && selectedInDayView > 0}
 					<div class="action-row">
-						<button class="study-btn" onclick={() => { setSelectedWords(shuffle(dayWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id))); goto('/studia'); }}>
+						<button class="study-btn" onclick={() => {
+							let ids = dayWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id);
+							if (get(randomWordOrder)) ids = shuffle(ids);
+							setSelectedWords(ids); goto('/studia');
+						}}>
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
 							Studia {selectedInDayView} {selectedInDayView === 1 ? 'parola' : 'parole'}
 						</button>
@@ -316,19 +326,26 @@
 					</div>
 				{:else if dayWords.length > 0}
 					<div class="action-row">
-						<button class="study-btn" onclick={() => { setSelectedWords(shuffle(dayWords.map(w => w.id))); goto('/studia'); }}>
+						<button class="study-btn" onclick={() => {
+							let ids = dayWords.map(w => w.id);
+							if (get(randomWordOrder)) ids = shuffle(ids);
+							setSelectedWords(ids); goto('/studia');
+						}}>
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
 							Studia tutto ({dayWords.length})
 						</button>
 					</div>
 				{/if}
 
-				<ScoreFilter
-					value={scoreFilter}
-					onChange={(v) => scoreFilter = v}
-					sortLabel={wordSortLabels[wordSortMode]}
-					onSortCycle={cycleWordSort}
-				/>
+				<div class="sort-row">
+					<ScoreFilter
+						value={scoreFilter}
+						onChange={(v) => scoreFilter = v}
+						sortLabel={wordSortLabels[wordSortMode]}
+						onSortCycle={cycleWordSort}
+					/>
+					<StudyRandomPills />
+				</div>
 			{/if}
 		{/if}
 	</div>

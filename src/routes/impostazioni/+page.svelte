@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { studyGoal, appFontScale, cardLayout, randomCardOrder } from '$lib/stores/settings';
+	import { studyGoal, appFontScale, cardLayout, randomCardOrder, randomWordOrder } from '$lib/stores/settings';
 	import type { CardField } from '$lib/types/word';
 	import { manualWordCount } from '$lib/stores/words';
 	import { currentUser, signOut } from '$lib/stores/auth';
@@ -158,7 +158,23 @@
 		<h2 class="section-heading">Struttura flashcard</h2>
 		<p class="section-subtitle">Definisci le carte che appaiono durante lo studio. Ogni carta può mostrare uno o più campi.</p>
 
-		<!-- Random order toggle -->
+		<!-- Random word order toggle -->
+		<div class="order-toggle" onclick={() => randomWordOrder.set(!$randomWordOrder)} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && randomWordOrder.set(!$randomWordOrder)}>
+			<div class="order-toggle-left">
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="16 3 21 3 21 8" />
+					<line x1="4" y1="20" x2="21" y2="3" />
+					<polyline points="21 16 21 21 16 21" />
+					<line x1="15" y1="15" x2="21" y2="21" />
+				</svg>
+				<span class="order-toggle-label">Ordine casuale delle parole</span>
+			</div>
+			<div class="toggle-switch" class:on={$randomWordOrder}>
+				<div class="toggle-thumb"></div>
+			</div>
+		</div>
+
+		<!-- Random card order toggle -->
 		<div class="order-toggle" onclick={() => randomCardOrder.set(!$randomCardOrder)} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && randomCardOrder.set(!$randomCardOrder)}>
 			<div class="order-toggle-left">
 				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
