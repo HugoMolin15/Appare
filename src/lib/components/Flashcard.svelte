@@ -4,10 +4,11 @@
 -->
 <script lang="ts">
 	import type { Word } from '$lib/types/word';
-	import { cardLayout, randomWordOrder } from '$lib/stores/settings';
+	import { cardLayout, randomWordOrder, fontSizeItaliano, fontSizeHiragana, fontSizeRomaji, fontSizeKanji } from '$lib/stores/settings';
 	import { shuffle } from '$lib/utils/shuffle';
 
 	interface FieldSide {
+		key: string;
 		label: string;
 		text: string;
 		japanese: boolean;
@@ -48,6 +49,7 @@
 				fields: card.fields
 					.filter(k => vals[k])
 					.map(k => ({
+						key: k,
 						label: SIDE_DEFS[k].label,
 						text: vals[k],
 						japanese: SIDE_DEFS[k].japanese,
@@ -78,11 +80,14 @@
 	let activeSide = $derived(sides[currentSide] ?? { fields: [] });
 	let sideIndicator = $derived(sides.length > 1 ? `${currentSide + 1} / ${sides.length}` : '');
 	let isPhrase = $derived(word.wordType === 'phrase');
-	let textSize = $derived(
-		isPhrase
-			? (activeSide.fields.length > 1 ? '1rem' : '1.2rem')
-			: (activeSide.fields.length > 1 ? '1.85rem' : '3rem')
-	);
+
+	let fieldSizes = $derived<Record<string, string>>({
+		italiano: `${$fontSizeItaliano}rem`,
+		hiragana: `${$fontSizeHiragana}rem`,
+		katakana: `${$fontSizeHiragana}rem`,
+		romaji:   `${$fontSizeRomaji}rem`,
+		kanji:    `${$fontSizeKanji}rem`,
+	});
 </script>
 
 <button type="button" class="card" class:fade-out={animating} onclick={flip}>
@@ -99,7 +104,7 @@
 			{#each activeSide.fields as field}
 				<div class="card-field">
 					<span class="card-label">{field.label}</span>
-					<span class="card-text" class:font-jp={field.japanese} class:phrase-text={isPhrase} style="font-size: {textSize}">
+					<span class="card-text" class:font-jp={field.japanese} class:phrase-text={isPhrase} style="font-size: {fieldSizes[field.key] ?? '2.5rem'}">
 						{field.text}
 					</span>
 				</div>
@@ -223,7 +228,6 @@
 	}
 
 	.card-text.phrase-text {
-		text-align: left;
 		font-weight: 600;
 	}
 

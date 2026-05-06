@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { studyGoal, appFontScale, cardLayout, randomCardOrder, randomWordOrder } from '$lib/stores/settings';
+	import { studyGoal, appFontScale, cardLayout, randomCardOrder, randomWordOrder, fontSizeItaliano, fontSizeHiragana, fontSizeRomaji, fontSizeKanji } from '$lib/stores/settings';
 	import type { CardField } from '$lib/types/word';
 	import { manualWordCount } from '$lib/stores/words';
 	import { currentUser, signOut } from '$lib/stores/auth';
@@ -17,6 +17,20 @@
 		const target = e.target as HTMLInputElement;
 		appFontScale.set(Number(target.value));
 	}
+
+	// Per-field flashcard font sliders (0.5–5 rem range)
+	const FS_MIN = 0.5, FS_MAX = 5;
+	function fsProgress(v: number) { return Math.round(((v - FS_MIN) / (FS_MAX - FS_MIN)) * 100); }
+	let fsProgressIt  = $derived(fsProgress($fontSizeItaliano));
+	let fsProgressHi  = $derived(fsProgress($fontSizeHiragana));
+	let fsProgressRo  = $derived(fsProgress($fontSizeRomaji));
+	let fsProgressKa  = $derived(fsProgress($fontSizeKanji));
+
+	function handleFsInput(store: { set: (v: number) => void }, e: Event) {
+		store.set(Number((e.target as HTMLInputElement).value));
+	}
+
+	const FS_DEFAULTS = { italiano: 3.0, hiragana: 3.0, romaji: 2.5, kanji: 3.0 };
 
 	function handleGoalInput(e: Event) {
 		const target = e.target as HTMLInputElement;
@@ -334,6 +348,101 @@
 	<!-- Divider -->
 	<div class="divider"></div>
 
+	<!-- Per-field flashcard font sizes -->
+	<section class="section">
+		<h2 class="section-heading">Dimensione testo carte</h2>
+		<p class="section-subtitle">Regola la dimensione del testo per ogni campo nelle flashcard.</p>
+
+		<div class="fs-field-list">
+			<!-- Italiano -->
+			<div class="fs-field-row">
+				<span class="fs-field-label">Italiano</span>
+				<div class="fs-slider-wrap">
+					<span class="slider-label-sm">A</span>
+					<div class="slider-container">
+						<input type="range" min={FS_MIN} max={FS_MAX} step="0.1"
+							value={$fontSizeItaliano}
+							oninput={(e) => handleFsInput(fontSizeItaliano, e)}
+							class="font-slider"
+							style="--progress: {fsProgressIt}%"
+						/>
+					</div>
+					<span class="slider-label-lg">A</span>
+					<span class="fs-value">{$fontSizeItaliano.toFixed(1)}</span>
+				</div>
+				{#if $fontSizeItaliano !== FS_DEFAULTS.italiano}
+					<button class="reset-btn" onclick={() => fontSizeItaliano.set(FS_DEFAULTS.italiano)}>Ripristina</button>
+				{/if}
+			</div>
+
+			<!-- Hiragana / Katakana -->
+			<div class="fs-field-row">
+				<span class="fs-field-label">Hiragana / Katakana</span>
+				<div class="fs-slider-wrap">
+					<span class="slider-label-sm font-jp">あ</span>
+					<div class="slider-container">
+						<input type="range" min={FS_MIN} max={FS_MAX} step="0.1"
+							value={$fontSizeHiragana}
+							oninput={(e) => handleFsInput(fontSizeHiragana, e)}
+							class="font-slider"
+							style="--progress: {fsProgressHi}%"
+						/>
+					</div>
+					<span class="slider-label-lg font-jp">あ</span>
+					<span class="fs-value">{$fontSizeHiragana.toFixed(1)}</span>
+				</div>
+				{#if $fontSizeHiragana !== FS_DEFAULTS.hiragana}
+					<button class="reset-btn" onclick={() => fontSizeHiragana.set(FS_DEFAULTS.hiragana)}>Ripristina</button>
+				{/if}
+			</div>
+
+			<!-- Romaji -->
+			<div class="fs-field-row">
+				<span class="fs-field-label">Romaji</span>
+				<div class="fs-slider-wrap">
+					<span class="slider-label-sm">A</span>
+					<div class="slider-container">
+						<input type="range" min={FS_MIN} max={FS_MAX} step="0.1"
+							value={$fontSizeRomaji}
+							oninput={(e) => handleFsInput(fontSizeRomaji, e)}
+							class="font-slider"
+							style="--progress: {fsProgressRo}%"
+						/>
+					</div>
+					<span class="slider-label-lg">A</span>
+					<span class="fs-value">{$fontSizeRomaji.toFixed(1)}</span>
+				</div>
+				{#if $fontSizeRomaji !== FS_DEFAULTS.romaji}
+					<button class="reset-btn" onclick={() => fontSizeRomaji.set(FS_DEFAULTS.romaji)}>Ripristina</button>
+				{/if}
+			</div>
+
+			<!-- Kanji -->
+			<div class="fs-field-row">
+				<span class="fs-field-label">Kanji</span>
+				<div class="fs-slider-wrap">
+					<span class="slider-label-sm font-jp">字</span>
+					<div class="slider-container">
+						<input type="range" min={FS_MIN} max={FS_MAX} step="0.1"
+							value={$fontSizeKanji}
+							oninput={(e) => handleFsInput(fontSizeKanji, e)}
+							class="font-slider"
+							style="--progress: {fsProgressKa}%"
+						/>
+					</div>
+					<span class="slider-label-lg font-jp">字</span>
+					<span class="fs-value">{$fontSizeKanji.toFixed(1)}</span>
+				</div>
+				{#if $fontSizeKanji !== FS_DEFAULTS.kanji}
+					<button class="reset-btn" onclick={() => fontSizeKanji.set(FS_DEFAULTS.kanji)}>Ripristina</button>
+				{/if}
+			</div>
+		</div>
+	</section>
+
+	<!-- Divider -->
+	<div class="divider"></div>
+
 	<!-- Study Goal Section -->
 	<section class="section">
 		<h2 class="section-heading">Obiettivo di studio</h2>
@@ -622,6 +731,39 @@
 		background: var(--color-primary);
 		border: 3px solid white;
 		cursor: pointer;
+	}
+
+	/* ---- Per-field font size sliders ---- */
+	.fs-field-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+	}
+
+	.fs-field-row {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+
+	.fs-field-label {
+		font-size: 0.82rem;
+		font-weight: 700;
+		color: var(--color-text-secondary);
+	}
+
+	.fs-slider-wrap {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.fs-value {
+		font-size: 0.78rem;
+		font-weight: 600;
+		color: var(--color-text-tertiary);
+		min-width: 2.5rem;
+		text-align: right;
 	}
 
 	/* ---- Card Layout / Toggle ---- */
