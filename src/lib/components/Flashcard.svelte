@@ -172,7 +172,7 @@
 	.card-center {
 		flex: 1;
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		justify-content: center;
 		width: 100%;
 		min-height: 0;
@@ -187,6 +187,7 @@
 		align-items: center;
 		gap: 0.75rem;
 		width: 100%;
+		margin-block: auto;
 	}
 
 	.card-field {
