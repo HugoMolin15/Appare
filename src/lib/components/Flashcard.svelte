@@ -73,8 +73,8 @@
 		animating = true;
 		setTimeout(() => {
 			currentSide = (currentSide + 1) % sides.length;
-			setTimeout(() => { animating = false; }, 50);
-		}, 50);
+			setTimeout(() => { animating = false; }, 180);
+		}, 180);
 	}
 
 	let activeSide = $derived(sides[currentSide] ?? { fields: [] });
@@ -132,13 +132,14 @@
 		border-radius: var(--radius-xl);
 		cursor: pointer;
 		position: relative;
-		transition: opacity 0.1s ease;
+		transition: opacity 0.18s ease, transform 0.18s ease;
 		font-family: var(--font-sans);
 		box-sizing: border-box;
 	}
 
 	.card.fade-out {
 		opacity: 0;
+		transform: scale(0.96);
 	}
 
 	.card-indicator {
