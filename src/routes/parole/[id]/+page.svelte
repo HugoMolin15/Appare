@@ -540,9 +540,8 @@
 		font-weight: 500;
 		flex: 1;
 		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+		white-space: normal;
+		word-break: break-word;
 	}
 
 	.folder-path-link {
