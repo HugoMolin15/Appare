@@ -34,6 +34,11 @@
 		known: '#66BB6A',
 	};
 
+	const monthNames = [
+		'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+		'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
+	];
+
 	// Path state: [Year, Month, Week, Date] — persisted at module level across navigation
 	const _jumpDate = consumeCronologiaJumpDate();
 	if (_jumpDate) {
@@ -44,11 +49,6 @@
 	}
 	let path = $state<string[]>(savedPath);
 	$effect(() => { savedPath = [...path]; });
-
-	const monthNames = [
-		'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-		'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
-	];
 
 	function getWeekKey(dateStr: string) {
 		const d = new Date(dateStr);
