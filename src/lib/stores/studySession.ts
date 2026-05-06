@@ -27,3 +27,11 @@ export function clearSelection() {
 // Helper to check if any words are selected
 export const hasSelectedWords = derived(selectedWordIds, $ids => $ids.size > 0);
 export const selectedCount = derived(selectedWordIds, $ids => $ids.size);
+
+// Return context: set when starting a study session from a folder so the
+// finished screen can offer a "back to folder" button.
+interface StudyReturnContext {
+	folderId: string;
+	wordIds: string[];
+}
+export const studyReturnContext = writable<StudyReturnContext | null>(null);

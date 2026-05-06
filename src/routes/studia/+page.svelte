@@ -3,7 +3,7 @@
 	import { goto, beforeNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { words } from '$lib/stores/words';
-	import { selectedWordIds, clearSelection } from '$lib/stores/studySession';
+	import { selectedWordIds, clearSelection, studyReturnContext, setSelectedWords } from '$lib/stores/studySession';
 	import { recordStudy } from '$lib/stores/history';
 	import { setWordScore } from '$lib/stores/wordScores';
 	import type { WordScore } from '$lib/types/word';
@@ -64,6 +64,14 @@
 		currentIndex = 0;
 		studiedCount = 0;
 		finished = false;
+	}
+
+	function returnToFolder() {
+		const ctx = get(studyReturnContext);
+		if (!ctx) return;
+		setSelectedWords(ctx.wordIds);
+		bypassGuard = true;
+		goto(`/cartelle/${ctx.folderId}`);
 	}
 
 	let showExitModal = $state(false);
@@ -168,7 +176,13 @@
 					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
 					Ricomincia
 				</button>
-				<a href="/" class="action-btn action-home">
+				{#if $studyReturnContext}
+					<button type="button" class="action-btn action-folder" onclick={returnToFolder}>
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+						Torna alla cartella
+					</button>
+				{/if}
+				<a href="/" class="action-btn action-home" onclick={() => { bypassGuard = true; }}>
 					Torna alla home
 				</a>
 			</div>
@@ -408,6 +422,12 @@
 	.action-restart {
 		background: var(--color-primary);
 		color: white;
+	}
+
+	.action-folder {
+		background: var(--color-surface);
+		color: var(--color-text);
+		border: 1.5px solid var(--color-border);
 	}
 
 	.action-home {

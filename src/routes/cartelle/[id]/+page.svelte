@@ -6,7 +6,7 @@
 	import { folders, removeFolder, updateFolder } from '$lib/stores/folders';
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
 	import { words, removeWord, moveWordsToFolder } from '$lib/stores/words';
-	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection } from '$lib/stores/studySession';
+	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, studyReturnContext } from '$lib/stores/studySession';
 	import { randomCardOrder, listDisplayLang } from '$lib/stores/settings';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
@@ -30,12 +30,19 @@
 
 	afterNavigate(async () => {
 		const target = $page.url.searchParams.get('highlight');
-		if (!target) return;
-		highlightWordId = target;
-		await tick();
-		const el = document.getElementById(`word-${target}`);
-		if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-		setTimeout(() => { highlightWordId = null; }, 2000);
+		if (target) {
+			highlightWordId = target;
+			await tick();
+			const el = document.getElementById(`word-${target}`);
+			if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			setTimeout(() => { highlightWordId = null; }, 2000);
+		}
+
+		const ctx = get(studyReturnContext);
+		if (ctx && ctx.folderId === folderId) {
+			studyReturnContext.set(null);
+			selectMode = true;
+		}
 	});
 	let showFolderModal = $state(false);
 	let showAddWordsModal = $state(false);
@@ -213,6 +220,7 @@
 	function studyAll() {
 		if (allDescendantWordIds.length === 0) return;
 		const ids = get(randomCardOrder) ? shuffle(allDescendantWordIds) : allDescendantWordIds;
+		studyReturnContext.set({ folderId, wordIds: ids });
 		setSelectedWords(ids);
 		goto('/studia');
 	}
@@ -229,6 +237,7 @@
 		let ids = [...new Set([...fromFolders, ...fromWords])];
 		if (ids.length === 0) return;
 		if (get(randomCardOrder)) ids = shuffle(ids);
+		studyReturnContext.set({ folderId, wordIds: ids });
 		setSelectedWords(ids);
 		goto('/studia');
 	}
