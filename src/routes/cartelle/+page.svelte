@@ -6,7 +6,7 @@
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
 	import { setSelectedWords } from '$lib/stores/studySession';
 	import { shuffle } from '$lib/utils/shuffle';
-	import { randomWordOrder } from '$lib/stores/settings';
+	import { randomCardOrder } from '$lib/stores/settings';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import FolderModal from '$lib/components/FolderModal.svelte';
@@ -98,7 +98,7 @@
 	function studyAll() {
 		let ids = get(words).map(w => w.id);
 		if (ids.length === 0) return;
-		if (get(randomWordOrder)) ids = shuffle(ids);
+		if (get(randomCardOrder)) ids = shuffle(ids);
 		setSelectedWords(ids);
 		goto('/studia');
 	}
@@ -112,7 +112,7 @@
 		}
 		let ids = [...new Set(Array.from(selectedFolderIds).flatMap(collect))];
 		if (ids.length === 0) return;
-		if (get(randomWordOrder)) ids = shuffle(ids);
+		if (get(randomCardOrder)) ids = shuffle(ids);
 		setSelectedWords(ids);
 		goto('/studia');
 	}

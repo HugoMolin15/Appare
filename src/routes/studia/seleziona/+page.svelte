@@ -5,7 +5,7 @@
 	import { goto } from '$app/navigation';
 	import { get } from 'svelte/store';
 	import { shuffle } from '$lib/utils/shuffle';
-	import { randomWordOrder } from '$lib/stores/settings';
+	import { randomCardOrder } from '$lib/stores/settings';
 	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import { CATEGORIES } from '$lib/types/word';
 	import type { WordScore } from '$lib/types/word';
@@ -101,7 +101,7 @@
 	function startStudy() {
 		if ($selectedCount === 0) return;
 		let ids = [...get(selectedWordIds)];
-		if (get(randomWordOrder)) ids = shuffle(ids);
+		if (get(randomCardOrder)) ids = shuffle(ids);
 		setSelectedWords(ids);
 		goto('/studia');
 	}

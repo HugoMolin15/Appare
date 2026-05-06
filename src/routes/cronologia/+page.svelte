@@ -16,7 +16,7 @@
 	import { fly } from 'svelte/transition';
 	import { shuffle } from '$lib/utils/shuffle';
 	import { get } from 'svelte/store';
-	import { randomWordOrder } from '$lib/stores/settings';
+	import { randomCardOrder } from '$lib/stores/settings';
 	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import { wordScores } from '$lib/stores/wordScores';
 
@@ -199,7 +199,7 @@
 		const allIds = Array.from(selectedKeys).flatMap(k => collectWordIdsFromNode(items[k]));
 		let unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
 		if (unique.length === 0) return;
-		if (get(randomWordOrder)) unique = shuffle(unique);
+		if (get(randomCardOrder)) unique = shuffle(unique);
 		setSelectedWords(unique);
 		goto('/studia');
 	}
@@ -209,7 +209,7 @@
 		const allIds = Object.values(items as Record<string, unknown>).flatMap(v => collectWordIdsFromNode(v));
 		let unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
 		if (unique.length === 0) return;
-		if (get(randomWordOrder)) unique = shuffle(unique);
+		if (get(randomCardOrder)) unique = shuffle(unique);
 		setSelectedWords(unique);
 		goto('/studia');
 	}
@@ -316,7 +316,7 @@
 					<div class="action-row">
 						<button class="study-btn" onclick={() => {
 							let ids = dayWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id);
-							if (get(randomWordOrder)) ids = shuffle(ids);
+							if (get(randomCardOrder)) ids = shuffle(ids);
 							setSelectedWords(ids); goto('/studia');
 						}}>
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -328,7 +328,7 @@
 					<div class="action-row">
 						<button class="study-btn" onclick={() => {
 							let ids = dayWords.map(w => w.id);
-							if (get(randomWordOrder)) ids = shuffle(ids);
+							if (get(randomCardOrder)) ids = shuffle(ids);
 							setSelectedWords(ids); goto('/studia');
 						}}>
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>

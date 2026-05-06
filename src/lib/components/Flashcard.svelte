@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
 	import type { Word } from '$lib/types/word';
-	import { cardLayout, randomCardOrder } from '$lib/stores/settings';
+	import { cardLayout, randomWordOrder } from '$lib/stores/settings';
 	import { shuffle } from '$lib/utils/shuffle';
 
 	interface FieldSide {
@@ -42,7 +42,7 @@
 			romaji:   word.romaji,
 			kanji:    word.kanji,
 		};
-		const layout = $randomCardOrder ? shuffle([...$cardLayout]) : $cardLayout;
+		const layout = $randomWordOrder ? shuffle([...$cardLayout]) : $cardLayout;
 		return layout
 			.map(card => ({
 				fields: card.fields

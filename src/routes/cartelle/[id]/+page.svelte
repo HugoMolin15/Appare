@@ -7,7 +7,7 @@
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
 	import { words, removeWord, moveWordsToFolder } from '$lib/stores/words';
 	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection } from '$lib/stores/studySession';
-	import { randomWordOrder } from '$lib/stores/settings';
+	import { randomCardOrder } from '$lib/stores/settings';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import FolderModal from '$lib/components/FolderModal.svelte';
@@ -212,7 +212,7 @@
 	// ---- Study ----
 	function studyAll() {
 		if (allDescendantWordIds.length === 0) return;
-		const ids = get(randomWordOrder) ? shuffle(allDescendantWordIds) : allDescendantWordIds;
+		const ids = get(randomCardOrder) ? shuffle(allDescendantWordIds) : allDescendantWordIds;
 		setSelectedWords(ids);
 		goto('/studia');
 	}
@@ -228,7 +228,7 @@
 		const fromWords = folderWords.filter(w => sel.has(w.id)).map(w => w.id);
 		let ids = [...new Set([...fromFolders, ...fromWords])];
 		if (ids.length === 0) return;
-		if (get(randomWordOrder)) ids = shuffle(ids);
+		if (get(randomCardOrder)) ids = shuffle(ids);
 		setSelectedWords(ids);
 		goto('/studia');
 	}
