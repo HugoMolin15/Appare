@@ -1,7 +1,5 @@
 <script module lang="ts">
 	let savedPath: string[] = [];
-	let savedSelectMode = false;
-	let savedSelectedKeys: string[] = [];
 </script>
 
 <script lang="ts">
@@ -11,7 +9,7 @@
 	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, studyReturnContext } from '$lib/stores/studySession';
 	import { dateColors, setDateColor } from '$lib/stores/dateColors';
 	import { FOLDER_COLORS } from '$lib/constants';
-	import { goto, beforeNavigate } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
@@ -195,11 +193,15 @@
 
 	let selectedInDayView = $derived(dayWords.filter(w => $selectedWordIds.has(w.id)).length);
 
-	// Folder select mode (at non-day levels) — persisted at module level across navigation
-	let selectMode = $state(savedSelectMode);
-	let selectedKeys = $state(new Set<string>(savedSelectedKeys));
-	$effect(() => { savedSelectMode = selectMode; });
-	$effect(() => { savedSelectedKeys = [...selectedKeys]; });
+	// Folder/period select mode (at non-day levels)
+	// Restore selection from study-return context if it matches this page.
+	const _ctx = get(studyReturnContext);
+	const _restoreSelection = _ctx?.href === '/cronologia' && Array.isArray(_ctx.selectedKeys) && _ctx.selectedKeys.length > 0;
+
+	let selectMode = $state(_restoreSelection);
+	let selectedKeys = $state(new Set<string>(_restoreSelection ? _ctx!.selectedKeys! : []));
+
+	if (_restoreSelection) studyReturnContext.set(null);
 
 	function toggleKeySelect(key: string) {
 		const next = new Set(selectedKeys);
@@ -208,15 +210,6 @@
 	}
 
 	function exitSelectMode() { selectMode = false; selectedKeys = new Set(); }
-
-	// Explicitly save selection state before going to study so module-level vars
-	// are always current (belt-and-suspenders with the $effects above).
-	beforeNavigate(({ to }) => {
-		if (to?.url.pathname === '/studia') {
-			savedSelectMode = selectMode;
-			savedSelectedKeys = [...selectedKeys];
-		}
-	});
 
 	function collectWordIdsFromNode(node: unknown): string[] {
 		if (Array.isArray(node)) return node as string[];
@@ -239,7 +232,12 @@
 		let unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
 		if (unique.length === 0) return;
 		if (get(randomCardOrder)) unique = shuffle(unique);
-		studyReturnContext.set({ href: '/cronologia', label: 'Torna alla cronologia', wordIds: unique });
+		studyReturnContext.set({
+			href: '/cronologia',
+			label: 'Torna alla cronologia',
+			wordIds: unique,
+			selectedKeys: [...selectedKeys]
+		});
 		setSelectedWords(unique);
 		goto('/studia');
 	}
