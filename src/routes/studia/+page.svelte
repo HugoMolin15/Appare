@@ -5,8 +5,7 @@
 	import { words } from '$lib/stores/words';
 	import { selectedWordIds, clearSelection, studyReturnContext, setSelectedWords } from '$lib/stores/studySession';
 	import { recordStudy } from '$lib/stores/history';
-	import { setWordScore } from '$lib/stores/wordScores';
-	import type { WordScore } from '$lib/types/word';
+	import { recordAttempt } from '$lib/stores/wordAttempts';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Flashcard from '$lib/components/Flashcard.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -43,8 +42,8 @@
 		noteText = '';
 	});
 
-	function assess(score: WordScore) {
-		setWordScore(currentWord.id, score);
+	function assess(wasCorrect: boolean) {
+		recordAttempt(currentWord.id, wasCorrect);
 		recordStudy([currentWord.id]);
 		if (currentIndex < studySet.length - 1) {
 			studiedCount++;
@@ -215,14 +214,11 @@
 		<!-- Assessment buttons -->
 		<div class="assess-area">
 			<div class="assess-row">
-				<button type="button" class="assess-btn assess-unknown" onclick={() => assess('unknown')}>
-					Difficile
+				<button type="button" class="assess-btn assess-incorrect" onclick={() => assess(false)}>
+					Sbagliato
 				</button>
-				<button type="button" class="assess-btn assess-learning" onclick={() => assess('learning')}>
-					Buono
-				</button>
-				<button type="button" class="assess-btn assess-known" onclick={() => assess('known')}>
-					Facile
+				<button type="button" class="assess-btn assess-correct" onclick={() => assess(true)}>
+					Corretto
 				</button>
 			</div>
 			<button
@@ -350,9 +346,8 @@
 		opacity: 0.8;
 	}
 
-	.assess-unknown  { background: #EF5350; }
-	.assess-learning { background: #42A5F5; }
-	.assess-known    { background: #66BB6A; }
+	.assess-incorrect { background: #EF5350; }
+	.assess-correct   { background: #66BB6A; }
 
 	.prev-link {
 		background: none;

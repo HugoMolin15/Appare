@@ -379,6 +379,7 @@ import { clearHistory, cancelPendingPushes as cancelHistoryPushes } from '$lib/s
 import { clearDateColors, cancelPendingPushes as cancelDateColorPushes } from '$lib/stores/dateColors';
 import { clearSettings } from '$lib/stores/settings';
 import { clearWordScores } from '$lib/stores/wordScores';
+import { clearWordAttempts } from '$lib/stores/wordAttempts';
 import { clearAllFolderOrder } from '$lib/stores/folderOrder';
 import { browser } from '$app/environment';
 
@@ -398,6 +399,7 @@ export function clearAllStores() {
 	clearDateColors();
 	clearSettings();
 	clearWordScores();
+	clearWordAttempts();
 	clearAllFolderOrder();
 	if (browser) {
 		localStorage.removeItem(LOCAL_SYNCED_KEY);
