@@ -350,9 +350,9 @@
 		opacity: 0.8;
 	}
 
-	.assess-unknown  { background: #C5221F; }
-	.assess-learning { background: #D97706; }
-	.assess-known    { background: #1D6FA4; }
+	.assess-unknown  { background: #E07575; }
+	.assess-learning { background: #6BA3D6; }
+	.assess-known    { background: #5FB87A; }
 
 	.prev-link {
 		background: none;

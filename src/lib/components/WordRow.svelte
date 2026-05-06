@@ -6,9 +6,9 @@
 
 	const SCORE_COLORS: Record<string, string> = {
 		none: 'var(--color-border)',
-		unknown: '#C5221F',
-		learning: '#D97706',
-		known: '#1D6FA4',
+		unknown: '#E07575',
+		learning: '#6BA3D6',
+		known: '#5FB87A',
 	};
 
 	interface Props {
@@ -134,8 +134,8 @@
 	}
 
 	.word-score-dot {
-		width: 8px;
-		height: 8px;
+		width: 11px;
+		height: 11px;
 		border-radius: 50%;
 		flex-shrink: 0;
 	}
