@@ -1,13 +1,17 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { studyHistory } from '$lib/stores/history';
 	import { studyGoal } from '$lib/stores/settings';
 	import { getLocalValue } from '$lib/utils/date';
+	import { setCronologiaJumpDate } from '$lib/stores/cronologiaNav';
 
-	// Date formatters
-	const dayNames = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+	// Plug in image paths here once assets are ready (index = intensity 0-4)
+	const INTENSITY_IMAGES: (string | null)[] = [null, null, null, null, null];
 
-	// Helper to calculate intensity (0-4)
-	function calculateIntensity(count: number, goal: number) {
+	// Italian short day names indexed by JS getDay() (0=Sun … 6=Sat)
+	const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+
+	function calculateIntensity(count: number, goal: number): 0 | 1 | 2 | 3 | 4 {
 		if (count === 0) return 0;
 		if (count >= goal) return 4;
 		if (count >= goal * 0.75) return 3;
@@ -15,49 +19,52 @@
 		return 1;
 	}
 
-	// Generate current week (Monday to Sunday)
-	let currentWeek = $derived.by(() => {
+	// Last 7 days: index 0 = 6 days ago (left), index 6 = today (right)
+	let days = $derived.by(() => {
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
-		
-		// Find Monday of the current week
-		const dayOfWeek = today.getDay();
-		const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-		
-		const monday = new Date(today);
-		monday.setDate(today.getDate() + diffToMonday);
-		
-		const week = [];
-		for (let i = 0; i < 7; i++) {
-			const d = new Date(monday);
-			d.setDate(monday.getDate() + i);
-			
+
+		return Array.from({ length: 7 }, (_, i) => {
+			const d = new Date(today);
+			d.setDate(today.getDate() - (6 - i));
+
 			const dateStr = getLocalValue(d);
-			const count = $studyHistory[dateStr]?.length || 0;
+			const count = $studyHistory[dateStr]?.length ?? 0;
 			const intensity = calculateIntensity(count, $studyGoal);
 
-			week.push({
+			return {
 				date: dateStr,
-				dayName: dayNames[i],
+				dayName: DAY_NAMES[d.getDay()],
 				dayNum: d.getDate(),
 				count,
 				intensity,
-				isToday: d.getTime() === today.getTime()
-			});
-		}
-		return week;
+				isToday: i === 6
+			};
+		});
 	});
+
+	function openDay(dateStr: string) {
+		setCronologiaJumpDate(dateStr);
+		goto('/cronologia');
+	}
 </script>
 
 <div class="tracker-container">
-	<!-- Current Week View (Horizontal Stack) -->
-	<div class="current-week-horizontal">
-		{#each currentWeek as day}
-			<div class="day-column" class:today={day.isToday}>
+	<div class="week-row">
+		{#each days as day}
+			<button class="day-col" class:today={day.isToday} onclick={() => openDay(day.date)}>
 				<span class="day-num">{day.dayNum}</span>
 				<span class="day-name">{day.dayName}</span>
-				<div class="day-square intensity-{day.intensity}" title={`${day.count} parole il ${day.date}`}></div>
-			</div>
+				{#if INTENSITY_IMAGES[day.intensity]}
+					<img
+						src={INTENSITY_IMAGES[day.intensity]}
+						alt=""
+						class="day-img"
+					/>
+				{:else}
+					<div class="day-circle intensity-{day.intensity}"></div>
+				{/if}
+			</button>
 		{/each}
 	</div>
 </div>
@@ -67,19 +74,28 @@
 		width: 100%;
 	}
 
-	/* Current Week Horizontal */
-	.current-week-horizontal {
+	.week-row {
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-end;
 		padding: 0.5rem 0;
 	}
 
-	.day-column {
+	.day-col {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: 0;
+		background: none;
+		border: none;
+		padding: 0.25rem;
+		cursor: pointer;
+		border-radius: var(--radius-md);
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	.day-col:active {
+		opacity: 0.6;
 	}
 
 	.day-num {
@@ -96,83 +112,32 @@
 		margin-bottom: 0.5rem;
 	}
 
-	.day-square {
+	.day-col.today .day-num,
+	.day-col.today .day-name {
+		color: var(--color-primary);
+	}
+
+	.day-col.today .day-circle {
+		transform: scale(1.1);
+	}
+
+	.day-circle {
 		width: 32px;
 		height: 32px;
 		border-radius: 50%;
 		transition: transform 0.2s ease;
 	}
 
-	.day-column.today .day-num, 
-	.day-column.today .day-name {
-		color: var(--color-primary);
+	.day-img {
+		width: 32px;
+		height: 32px;
+		object-fit: cover;
+		border-radius: 50%;
 	}
 
-	.day-column.today .day-square {
-		transform: scale(1.1);
-	}
-
-	/* Intensities using brand colors */
 	.intensity-0 { background-color: var(--color-surface); border: 1px solid #e0dce6; }
-	.intensity-1 { background-color: rgba(239, 30, 41, 0.3) !important; border: none; }
-	.intensity-2 { background-color: rgba(239, 30, 41, 0.6) !important; border: none; }
-	.intensity-3 { background-color: rgba(239, 30, 41, 0.85) !important; border: none; }
-	.intensity-4 { background-color: rgba(239, 30, 41, 1) !important; border: none; }
-
-	/* Heatmap Container */
-	.heatmap-container {
-		width: 100%;
-		padding: 1.5rem 0;
-		overflow-x: auto;
-		-ms-overflow-style: none;
-		scrollbar-width: none;
-	}
-	
-	.heatmap-container::-webkit-scrollbar {
-		display: none;
-	}
-
-	.heatmap-grid {
-		display: flex;
-		gap: 4px;
-		min-width: min-content;
-		margin-bottom: 1rem;
-	}
-
-	.heatmap-col {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-
-	.heatmap-cell {
-		width: 12px;
-		height: 12px;
-		border-radius: 2px;
-		background-color: var(--color-background);
-		border: 1px solid var(--color-border);
-		transition: background-color 0.2s ease, transform 0.1s ease;
-	}
-
-	.heatmap-grid .heatmap-cell:hover:not(.future) {
-		transform: scale(1.2);
-		z-index: 10;
-		border-color: rgba(255, 255, 255, 0.2);
-	}
-
-	.future {
-		background-color: transparent;
-		border-color: transparent;
-	}
-
-	.heatmap-legend {
-		display: flex;
-		align-items: center;
-		justify-content: flex-start;
-		gap: 0.35rem;
-		font-size: 0.7rem;
-		color: var(--color-text-secondary);
-	}
-
-	/* Intensities removed from here as they are now global in app.css */
+	.intensity-1 { background-color: rgba(239, 30, 41, 0.3); border: none; }
+	.intensity-2 { background-color: rgba(239, 30, 41, 0.6); border: none; }
+	.intensity-3 { background-color: rgba(239, 30, 41, 0.85); border: none; }
+	.intensity-4 { background-color: rgba(239, 30, 41, 1); border: none; }
 </style>

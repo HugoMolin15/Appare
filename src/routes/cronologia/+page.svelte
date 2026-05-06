@@ -5,6 +5,7 @@
 </script>
 
 <script lang="ts">
+	import { consumeCronologiaJumpDate } from '$lib/stores/cronologiaNav';
 	import { studyHistory } from '$lib/stores/history';
 	import { words } from '$lib/stores/words';
 	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, studyReturnContext } from '$lib/stores/studySession';
@@ -34,6 +35,13 @@
 	};
 
 	// Path state: [Year, Month, Week, Date] — persisted at module level across navigation
+	const _jumpDate = consumeCronologiaJumpDate();
+	if (_jumpDate) {
+		const year = _jumpDate.substring(0, 4);
+		const month = _jumpDate.substring(5, 7);
+		const week = getWeekKey(_jumpDate);
+		savedPath = [year, month, week, _jumpDate];
+	}
 	let path = $state<string[]>(savedPath);
 	$effect(() => { savedPath = [...path]; });
 
