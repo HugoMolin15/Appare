@@ -77,8 +77,12 @@
 
 	let activeSide = $derived(sides[currentSide] ?? { fields: [] });
 	let sideIndicator = $derived(sides.length > 1 ? `${currentSide + 1} / ${sides.length}` : '');
-	// Scale down text when multiple fields share a card
-	let textSize = $derived(activeSide.fields.length > 1 ? '1.85rem' : '3rem');
+	let isPhrase = $derived(word.wordType === 'phrase');
+	let textSize = $derived(
+		isPhrase
+			? (activeSide.fields.length > 1 ? '1rem' : '1.2rem')
+			: (activeSide.fields.length > 1 ? '1.85rem' : '3rem')
+	);
 </script>
 
 <button type="button" class="card" class:fade-out={animating} onclick={flip}>
@@ -95,7 +99,7 @@
 			{#each activeSide.fields as field}
 				<div class="card-field">
 					<span class="card-label">{field.label}</span>
-					<span class="card-text" class:font-jp={field.japanese} style="font-size: {textSize}">
+					<span class="card-text" class:font-jp={field.japanese} class:phrase-text={isPhrase} style="font-size: {textSize}">
 						{field.text}
 					</span>
 				</div>
@@ -166,7 +170,9 @@
 		align-items: center;
 		justify-content: center;
 		width: 100%;
-		overflow: hidden;
+		min-height: 0;
+		overflow-y: auto;
+		overflow-x: hidden;
 	}
 
 	/* Stack multiple fields vertically with a divider */
@@ -204,13 +210,21 @@
 		font-weight: 700;
 		color: var(--color-text);
 		text-align: center;
-		line-height: 1.3;
+		line-height: 1.5;
+		white-space: pre-wrap;
 		word-break: break-word;
 		transition: font-size 0.15s ease;
+		width: 100%;
+		overflow-x: auto;
 	}
 
 	.card-text.font-jp {
 		font-family: var(--font-jp);
+	}
+
+	.card-text.phrase-text {
+		text-align: left;
+		font-weight: 600;
 	}
 
 	.card-hint {

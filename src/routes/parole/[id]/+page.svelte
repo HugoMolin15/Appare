@@ -173,7 +173,19 @@
 		<div class="fields">
 			<div class="field">
 				<label for="input-italiano" class="field-label">Italiano <span class="req">*</span></label>
-				<ClearableInput bind:value={italiano} placeholder="es. grande" id="input-italiano" />
+				{#if wordType === 'phrase'}
+					<textarea
+						id="input-italiano"
+						class="phrase-textarea"
+						bind:value={italiano}
+						placeholder="Scrivi la frase, usa Invio per andare a capo…"
+						rows="4"
+						autocomplete="off"
+						autocapitalize="off"
+					></textarea>
+				{:else}
+					<ClearableInput bind:value={italiano} placeholder="es. grande" id="input-italiano" />
+				{/if}
 				{#if dupItaliano}
 					<span class="dup-warn">
 						<Icon name="close" size={12} strokeWidth={3} />
@@ -370,6 +382,31 @@
 	.req {
 		color: var(--color-primary);
 		font-weight: 700;
+	}
+
+	.phrase-textarea {
+		width: 100%;
+		padding: 0.8rem 0.9rem;
+		border: none;
+		border-radius: var(--radius-md);
+		background: var(--color-surface);
+		color: var(--color-text);
+		font-size: 1rem;
+		font-family: var(--font-sans);
+		outline: none;
+		resize: vertical;
+		box-sizing: border-box;
+		line-height: 1.5;
+		transition: background-color 0.15s ease, box-shadow 0.2s ease;
+	}
+
+	.phrase-textarea::placeholder {
+		color: var(--color-text-tertiary);
+		font-weight: 400;
+	}
+
+	.phrase-textarea:focus {
+		box-shadow: inset 0 0 0 1.5px #e0dce6;
 	}
 
 	.dup-warn {
