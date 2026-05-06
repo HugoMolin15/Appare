@@ -101,6 +101,25 @@
 		return a.localeCompare(b, 'it');
 	}
 
+	const MONTH_NAMES = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+		'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+
+	function isSameDay(a: Date, b: Date) {
+		return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+	}
+
+	function getDateLabel(ts: number): string {
+		if (!ts) return 'Data non disponibile';
+		const d = new Date(ts);
+		const today = new Date();
+		const yesterday = new Date(today);
+		yesterday.setDate(today.getDate() - 1);
+		if (isSameDay(d, today)) return 'Oggi';
+		if (isSameDay(d, yesterday)) return 'Ieri';
+		const base = `${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
+		return d.getFullYear() !== today.getFullYear() ? `${base} ${d.getFullYear()}` : base;
+	}
+
 	let filteredWords = $derived.by(() => {
 		let result = [...filterWords($words, searchQuery)].filter(w => w.italiano?.trim());
 		if (scoreFilter !== 'all') {
@@ -125,6 +144,25 @@
 		if (sortMode === 'it-az') return result.sort((a, b) => itAzCompare(a.italiano, b.italiano));
 		if (sortMode === 'jp-az') return result.sort((a, b) => (a.hiragana || a.katakana || '').localeCompare(b.hiragana || b.katakana || '', 'ja'));
 		return result.sort((a, b) => b.createdAt - a.createdAt);
+	});
+
+	type WordListItem = { type: 'divider'; label: string } | { type: 'word'; word: typeof filteredWords[number] };
+
+	let wordListItems = $derived.by((): WordListItem[] => {
+		if (sortMode !== 'newest' && sortMode !== 'oldest') {
+			return filteredWords.map(w => ({ type: 'word', word: w }));
+		}
+		const items: WordListItem[] = [];
+		let lastLabel = '';
+		for (const word of filteredWords) {
+			const label = getDateLabel(word.createdAt);
+			if (label !== lastLabel) {
+				items.push({ type: 'divider', label });
+				lastLabel = label;
+			}
+			items.push({ type: 'word', word });
+		}
+		return items;
 	});
 
 	$effect(() => {
@@ -175,8 +213,12 @@
 	</div>
 
 	<div class="word-list">
-		{#each filteredWords as word (word.id)}
-			<WordRow {word} href="/parole/{word.id}" displayLang={$listDisplayLang} />
+		{#each wordListItems as item (item.type === 'word' ? item.word.id : 'div_' + item.label)}
+			{#if item.type === 'divider'}
+				<div class="date-divider">{item.label}</div>
+			{:else}
+				<WordRow word={item.word} href="/parole/{item.word.id}" displayLang={$listDisplayLang} />
+			{/if}
 		{/each}
 	</div>
 </div>
@@ -327,6 +369,20 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+	}
+
+	/* ---- Date divider ---- */
+	.date-divider {
+		font-size: 0.75rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--color-text-tertiary);
+		padding: 1rem 0 0.4rem;
+	}
+
+	.date-divider:first-child {
+		padding-top: 0;
 	}
 
 	/* ---- Word list ---- */
