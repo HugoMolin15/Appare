@@ -11,6 +11,7 @@
 	import Flashcard from '$lib/components/Flashcard.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { shuffle } from '$lib/utils/shuffle';
+	import { randomCardOrder } from '$lib/stores/settings';
 
 	const allWordsData = get(words);
 	const selectedIds = get(selectedWordIds);
@@ -59,6 +60,7 @@
 	}
 
 	function restart() {
+		if (get(randomCardOrder)) studySet = shuffle([...studySet]);
 		currentIndex = 0;
 		studiedCount = 0;
 		finished = false;
