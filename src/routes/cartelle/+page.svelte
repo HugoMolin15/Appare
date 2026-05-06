@@ -1,6 +1,13 @@
+<script module lang="ts">
+	// Persisted across SvelteKit navigations (singleton per session)
+	let _savedSelectMode = false;
+	let _savedFolderIds: string[] = [];
+	let _returningFromStudy = false;
+</script>
+
 <script lang="ts">
 	import { get } from 'svelte/store';
-	import { goto } from '$app/navigation';
+	import { goto, beforeNavigate } from '$app/navigation';
 	import { folders } from '$lib/stores/folders';
 	import { words } from '$lib/stores/words';
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
@@ -15,15 +22,11 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
-	// Restore folder selection if returning from a study session
-	const _returnCtx = get(studyReturnContext);
-	const _isStudyReturn = _returnCtx?.href === '/cartelle' && Array.isArray(_returnCtx?.folderIds);
-	if (_isStudyReturn) studyReturnContext.set(null);
-
-	let showModal = $state(false);
-	let reorderMode = $state(false);
-	let selectMode = $state(_isStudyReturn);
-	let selectedFolderIds = $state(new Set<string>(_isStudyReturn ? (_returnCtx!.folderIds!) : []));
+	// Restore selection when returning from study; clear flag so subsequent
+	// visits start fresh unless another study session was launched.
+	let selectMode = $state(_returningFromStudy ? _savedSelectMode : false);
+	let selectedFolderIds = $state(new Set<string>(_returningFromStudy ? _savedFolderIds : []));
+	_returningFromStudy = false;
 	let searchQuery = $state('');
 
 	type FolderSort = 'newest' | 'oldest' | 'name-az';
@@ -119,12 +122,21 @@
 		let ids = [...new Set(Array.from(selectedFolderIds).flatMap(collect))];
 		if (ids.length === 0) return;
 		if (get(randomCardOrder)) ids = shuffle(ids);
-		studyReturnContext.set({ href: '/cartelle', label: 'Torna alle cartelle', wordIds: ids, folderIds: [...selectedFolderIds] });
+		studyReturnContext.set({ href: '/cartelle', label: 'Torna alle cartelle', wordIds: ids });
 		setSelectedWords(ids);
 		goto('/studia');
 	}
 
-
+	// Save folder selection before navigating to study so we can restore it on return.
+	beforeNavigate(({ to }) => {
+		if (to?.url.pathname === '/studia') {
+			_savedSelectMode = selectMode;
+			_savedFolderIds = [...selectedFolderIds];
+			_returningFromStudy = true;
+		} else {
+			_returningFromStudy = false;
+		}
+	});
 </script>
 
 <svelte:head>

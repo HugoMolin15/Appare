@@ -10,7 +10,7 @@
 	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, studyReturnContext } from '$lib/stores/studySession';
 	import { dateColors, setDateColor } from '$lib/stores/dateColors';
 	import { FOLDER_COLORS } from '$lib/constants';
-	import { goto } from '$app/navigation';
+	import { goto, beforeNavigate } from '$app/navigation';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
@@ -200,6 +200,15 @@
 	}
 
 	function exitSelectMode() { selectMode = false; selectedKeys = new Set(); }
+
+	// Explicitly save selection state before going to study so module-level vars
+	// are always current (belt-and-suspenders with the $effects above).
+	beforeNavigate(({ to }) => {
+		if (to?.url.pathname === '/studia') {
+			savedSelectMode = selectMode;
+			savedSelectedKeys = [...selectedKeys];
+		}
+	});
 
 	function collectWordIdsFromNode(node: unknown): string[] {
 		if (Array.isArray(node)) return node as string[];
