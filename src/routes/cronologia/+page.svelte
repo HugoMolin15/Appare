@@ -26,9 +26,9 @@
 
 	const SCORE_COLORS: Record<string, string> = {
 		none: 'var(--color-border)',
-		unknown: '#E07575',
-		learning: '#6BA3D6',
-		known: '#5FB87A',
+		unknown: '#EF5350',
+		learning: '#42A5F5',
+		known: '#66BB6A',
 	};
 
 	// Path state: [Year, Month, Week, Date] — persisted at module level across navigation
