@@ -17,6 +17,7 @@
 	import { words } from '$lib/stores/words';
 	import { CATEGORIES } from '$lib/types/word';
 	import { wordScores } from '$lib/stores/wordScores';
+	import { listDisplayLang, type ListDisplayLang } from '$lib/stores/settings';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import WordRow from '$lib/components/WordRow.svelte';
 	import ScoreFilter from '$lib/components/ScoreFilter.svelte';
@@ -74,6 +75,13 @@
 		selectedGroups = next;
 	}
 
+	const LANG_LABELS: Record<ListDisplayLang, string> = {
+		italiano: 'Italiano',
+		hiragana: 'Hiragana / Katakana',
+		romaji: 'Romaji',
+		kanji: 'Kanji',
+	};
+
 	// All active filter pills: { label, remove() }
 	let activePills = $derived.by(() => {
 		const pills: { label: string; remove: () => void }[] = [];
@@ -82,6 +90,7 @@
 		if (typeFilter === 'word') pills.push({ label: 'Parole', remove: removeType });
 		if (typeFilter === 'phrase') pills.push({ label: 'Frasi', remove: removeType });
 		for (const g of selectedGroups) pills.push({ label: g, remove: () => removeGroup(g) });
+		if ($listDisplayLang !== 'italiano') pills.push({ label: LANG_LABELS[$listDisplayLang], remove: () => listDisplayLang.set('italiano') });
 		return pills;
 	});
 
@@ -167,7 +176,7 @@
 
 	<div class="word-list">
 		{#each filteredWords as word (word.id)}
-			<WordRow {word} href="/parole/{word.id}" />
+			<WordRow {word} href="/parole/{word.id}" displayLang={$listDisplayLang} />
 		{/each}
 	</div>
 </div>
@@ -181,6 +190,22 @@
 		</div>
 
 		<div class="sheet-body">
+			<div class="filter-section">
+				<span class="section-label">Lingua visualizzata</span>
+				<div class="option-list">
+					{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
+						<button
+							class="option-row"
+							class:selected={$listDisplayLang === val}
+							onclick={() => listDisplayLang.set(val as ListDisplayLang)}
+						>
+							<span>{label}</span>
+							{#if $listDisplayLang === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+						</button>
+					{/each}
+				</div>
+			</div>
+
 			<div class="filter-section">
 				<span class="section-label">Origine</span>
 				<div class="option-list">

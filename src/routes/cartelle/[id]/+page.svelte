@@ -7,7 +7,7 @@
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
 	import { words, removeWord, moveWordsToFolder } from '$lib/stores/words';
 	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection } from '$lib/stores/studySession';
-	import { randomCardOrder } from '$lib/stores/settings';
+	import { randomCardOrder, listDisplayLang } from '$lib/stores/settings';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import FolderModal from '$lib/components/FolderModal.svelte';
@@ -416,6 +416,7 @@
 							role="checkbox"
 							ariaChecked={$selectedWordIds.has(word.id)}
 							onclick={() => toggleWordSelection(word.id)}
+						displayLang={$listDisplayLang}
 						>
 							{#snippet leading()}
 								<div class="item-checkbox" class:checked={$selectedWordIds.has(word.id)}>
@@ -425,7 +426,7 @@
 						</WordRow>
 					{:else}
 						<div id="word-{word.id}" class:word-highlight={highlightWordId === word.id}>
-							<WordRow {word} href="/parole/{word.id}?from=/cartelle/{folderId}" />
+							<WordRow {word} href="/parole/{word.id}?from=/cartelle/{folderId}" displayLang={$listDisplayLang} />
 						</div>
 					{/if}
 				{/each}

@@ -28,6 +28,10 @@ export const randomCardOrder = persisted<boolean>('appare_random_card_order', fa
 /** User-defined card layout: ordered list of cards, each with one or more fields */
 export const cardLayout = persisted<CardLayout>('appare_card_layout', DEFAULT_CARD_LAYOUT, { onChange: syncToCloud });
 
+/** Which field to show as the primary text in word list rows */
+export type ListDisplayLang = 'italiano' | 'hiragana' | 'romaji' | 'kanji';
+export const listDisplayLang = persisted<ListDisplayLang>('appare_list_display_lang', 'italiano', { onChange: syncToCloud });
+
 /** Per-field flashcard font sizes in rem (independent of global appFontScale) */
 export const fontSizeItaliano  = persisted<number>('appare_fs_italiano',  3.0, { onChange: syncToCloud });
 export const fontSizeHiragana  = persisted<number>('appare_fs_hiragana',  3.0, { onChange: syncToCloud });
@@ -42,6 +46,7 @@ export function clearSettings() {
 	randomWordOrder.set(false);
 	randomCardOrder.set(false);
 	cardLayout.set(DEFAULT_CARD_LAYOUT);
+	listDisplayLang.set('italiano');
 	fontSizeItaliano.set(3.0);
 	fontSizeHiragana.set(3.0);
 	fontSizeRomaji.set(2.5);
@@ -56,6 +61,7 @@ export function clearSettings() {
 		localStorage.removeItem('appare_random_card_order');
 		localStorage.removeItem('appare_daily_words');
 		localStorage.removeItem('appare_card_layout');
+		localStorage.removeItem('appare_list_display_lang');
 		localStorage.removeItem('appare_fs_italiano');
 		localStorage.removeItem('appare_fs_hiragana');
 		localStorage.removeItem('appare_fs_romaji');
