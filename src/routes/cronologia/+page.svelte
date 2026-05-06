@@ -1,5 +1,7 @@
 <script module lang="ts">
 	let savedPath: string[] = [];
+	let savedSelectMode = false;
+	let savedSelectedKeys: string[] = [];
 </script>
 
 <script lang="ts">
@@ -95,13 +97,26 @@
 		return current;
 	});
 
+	function resetLevelState() {
+		selectMode = false;
+		selectedKeys = new Set();
+		daySelectMode = false;
+		wordSortMode = 'newest';
+		periodSortMode = 'newest';
+		periodSearchQuery = '';
+		scoreFilter = 'all';
+		clearSelection();
+	}
+
 	function navigateTo(key: string) {
 		path = [...path, key];
+		resetLevelState();
 	}
 
 	function navigateUp() {
 		if (path.length > 0) {
 			path = path.slice(0, -1);
+			resetLevelState();
 		}
 	}
 
@@ -172,9 +187,11 @@
 
 	let selectedInDayView = $derived(dayWords.filter(w => $selectedWordIds.has(w.id)).length);
 
-	// Folder select mode (at non-day levels)
-	let selectMode = $state(false);
-	let selectedKeys = $state(new Set<string>());
+	// Folder select mode (at non-day levels) — persisted at module level across navigation
+	let selectMode = $state(savedSelectMode);
+	let selectedKeys = $state(new Set<string>(savedSelectedKeys));
+	$effect(() => { savedSelectMode = selectMode; });
+	$effect(() => { savedSelectedKeys = [...selectedKeys]; });
 
 	function toggleKeySelect(key: string) {
 		const next = new Set(selectedKeys);
@@ -221,18 +238,6 @@
 		goto('/studia');
 	}
 
-	// Reset select mode when navigating
-	$effect(() => {
-		path; // track path changes
-		selectMode = false;
-		selectedKeys = new Set();
-		daySelectMode = false;
-		wordSortMode = 'newest';
-		periodSortMode = 'newest';
-		periodSearchQuery = '';
-		scoreFilter = 'all';
-		clearSelection();
-	});
 
 	// Color editing for folder nodes
 	let editingColorKey = $state<string | null>(null);
