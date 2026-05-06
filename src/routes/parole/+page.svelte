@@ -130,38 +130,40 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader title="Tutte le parole" backHref="/" hideBackOnDesktop>
-		{#snippet actions()}
-			<button
-				class="filter-btn"
-				class:active={activePills.length > 0}
-				onclick={() => showFilterSheet = true}
-				aria-label="Filtri"
-			>
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<line x1="4" y1="6" x2="20" y2="6" />
-					<line x1="8" y1="12" x2="16" y2="12" />
-					<line x1="12" y1="18" x2="12" y2="18" stroke-width="3" stroke-linecap="round" />
-				</svg>
-				{#if activePills.length > 0}
-					<span class="filter-badge">{activePills.length}</span>
-				{/if}
-			</button>
-		{/snippet}
-	</PageHeader>
+	<div class="sticky-header">
+		<PageHeader title="Tutte le parole" backHref="/" hideBackOnDesktop>
+			{#snippet actions()}
+				<button
+					class="filter-btn"
+					class:active={activePills.length > 0}
+					onclick={() => showFilterSheet = true}
+					aria-label="Filtri"
+				>
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<line x1="4" y1="6" x2="20" y2="6" />
+						<line x1="8" y1="12" x2="16" y2="12" />
+						<line x1="12" y1="18" x2="12" y2="18" stroke-width="3" stroke-linecap="round" />
+					</svg>
+					{#if activePills.length > 0}
+						<span class="filter-badge">{activePills.length}</span>
+					{/if}
+				</button>
+			{/snippet}
+		</PageHeader>
 
-	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
+		<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
-	<ScoreFilter
-		value={scoreFilter}
-		onChange={(v) => scoreFilter = v}
-		sortLabel={SORT_LABELS[sortMode]}
-		onSortCycle={cycleSortMode}
-	/>
+		<ScoreFilter
+			value={scoreFilter}
+			onChange={(v) => scoreFilter = v}
+			sortLabel={SORT_LABELS[sortMode]}
+			onSortCycle={cycleSortMode}
+		/>
 
-	<FilterPills pills={activePills} />
+		<FilterPills pills={activePills} />
 
-	<p class="word-count-label">{filteredWords.length} {typeFilter === 'phrase' ? 'frasi' : filteredWords.length === 1 ? 'parola' : 'parole'}</p>
+		<p class="word-count-label">{filteredWords.length} {typeFilter === 'phrase' ? 'frasi' : filteredWords.length === 1 ? 'parola' : 'parole'}</p>
+	</div>
 
 	<div class="word-list">
 		{#each filteredWords as word (word.id)}

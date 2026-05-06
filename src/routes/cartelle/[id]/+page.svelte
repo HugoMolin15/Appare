@@ -250,20 +250,76 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader
-		title={folder?.name ?? 'Cartella'}
-		backHref={folder?.parentId ? `/cartelle/${folder.parentId}` : "/cartelle"}
-	>
-		{#snippet actions()}
-			<button class="header-action-btn" onclick={openOptions} aria-label="Opzioni cartella">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<circle cx="12" cy="5" r="1" fill="currentColor" stroke="none" />
-					<circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
-					<circle cx="12" cy="19" r="1" fill="currentColor" stroke="none" />
-				</svg>
-			</button>
-		{/snippet}
-	</PageHeader>
+	<div class="sticky-header">
+		<PageHeader
+			title={folder?.name ?? 'Cartella'}
+			backHref={folder?.parentId ? `/cartelle/${folder.parentId}` : "/cartelle"}
+		>
+			{#snippet actions()}
+				<button class="header-action-btn" onclick={openOptions} aria-label="Opzioni cartella">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<circle cx="12" cy="5" r="1" fill="currentColor" stroke="none" />
+						<circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+						<circle cx="12" cy="19" r="1" fill="currentColor" stroke="none" />
+					</svg>
+				</button>
+			{/snippet}
+		</PageHeader>
+
+		{#if folder && (subfolders.length > 0 || folderWords.length > 0)}
+			<!-- ① Search — always at top -->
+			<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle e parole..." />
+
+			<!-- ② Controls bar: count + Seleziona/Fine -->
+			<div class="controls-bar">
+				<span class="count-label">{countLabel}</span>
+				<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
+					{selectMode ? 'Fine' : 'Seleziona'}
+				</button>
+			</div>
+
+			<!-- ③ Action row — always visible -->
+			{#if selectMode && totalSelected > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={studySelected} disabled={selectedWordCount === 0}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia {selectedWordCount > 0 ? selectedWordCount : ''} {selectedWordCount === 1 ? 'parola' : selectedWordCount > 1 ? 'parole' : ''}
+					</button>
+					{#if selectedInFolder > 0}
+						<button class="action-pill" onclick={openMoveSheet}>Sposta</button>
+						<button class="action-pill danger" onclick={confirmDeleteSelected}>Elimina</button>
+					{/if}
+					<button class="action-pill muted" onclick={() => { clearSelection(); selectedSubfolderIds = new Set(); }}>Deseleziona</button>
+				</div>
+			{:else if allDescendantWordIds.length > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={studyAll}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia tutto ({allDescendantWordIds.length})
+					</button>
+				</div>
+			{/if}
+
+			<!-- ④ Sort/reorder controls -->
+			<div class="sort-row">
+				{#if subfolders.length > 1 && !selectMode && !reorderSubfoldersMode}
+					<button class="sort-btn" onclick={enterSubfolderReorder}>Riordina</button>
+				{/if}
+				{#if reorderSubfoldersMode}
+					<button class="sort-btn reorder-active" onclick={exitSubfolderReorder}>Fine</button>
+					{#if $folderOrder[folderId]}
+						<button class="sort-btn" onclick={resetSubfolderOrder}>Reimposta</button>
+					{/if}
+				{/if}
+				{#if folderWords.length > 0 || subfolders.length > 0}
+					<button class="sort-btn" onclick={cycleWordSort}>
+						<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+						{wordSortLabels[wordSortMode]}
+					</button>
+				{/if}
+			</div>
+		{/if}
+	</div>
 
 	{#if !folder}
 		<div class="empty-state">
@@ -282,58 +338,6 @@
 		</div>
 
 	{:else}
-		<!-- ① Search — always at top -->
-		<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle e parole..." />
-
-		<!-- ② Controls bar: count + Seleziona/Fine -->
-		<div class="controls-bar">
-			<span class="count-label">{countLabel}</span>
-			<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
-				{selectMode ? 'Fine' : 'Seleziona'}
-			</button>
-		</div>
-
-		<!-- ③ Action row — always visible -->
-		{#if selectMode && totalSelected > 0}
-			<div class="action-row">
-				<button class="study-btn" onclick={studySelected} disabled={selectedWordCount === 0}>
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-					Studia {selectedWordCount > 0 ? selectedWordCount : ''} {selectedWordCount === 1 ? 'parola' : selectedWordCount > 1 ? 'parole' : ''}
-				</button>
-				{#if selectedInFolder > 0}
-					<button class="action-pill" onclick={openMoveSheet}>Sposta</button>
-					<button class="action-pill danger" onclick={confirmDeleteSelected}>Elimina</button>
-				{/if}
-				<button class="action-pill muted" onclick={() => { clearSelection(); selectedSubfolderIds = new Set(); }}>Deseleziona</button>
-			</div>
-		{:else if allDescendantWordIds.length > 0}
-			<div class="action-row">
-				<button class="study-btn" onclick={studyAll}>
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-					Studia tutto ({allDescendantWordIds.length})
-				</button>
-			</div>
-		{/if}
-
-		<!-- ④ Sort/reorder controls -->
-		<div class="sort-row">
-			{#if subfolders.length > 1 && !selectMode && !reorderSubfoldersMode}
-				<button class="sort-btn" onclick={enterSubfolderReorder}>Riordina</button>
-			{/if}
-			{#if reorderSubfoldersMode}
-				<button class="sort-btn reorder-active" onclick={exitSubfolderReorder}>Fine</button>
-				{#if $folderOrder[folderId]}
-					<button class="sort-btn" onclick={resetSubfolderOrder}>Reimposta</button>
-				{/if}
-			{/if}
-			{#if folderWords.length > 0 || subfolders.length > 0}
-				<button class="sort-btn" onclick={cycleWordSort}>
-					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
-					{wordSortLabels[wordSortMode]}
-				</button>
-			{/if}
-		</div>
-
 		<!-- ⑤ Subfolders -->
 		{#if filteredSubfolders.length > 0}
 			<div class="item-list">

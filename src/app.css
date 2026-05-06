@@ -257,6 +257,24 @@ body {
 }
 
 /* ========================================
+   Sticky page header
+   ======================================== */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-bg);
+  /* Pull element up to the scroll container top, canceling page padding-top */
+  margin-top: calc(-1 * var(--spacing-page));
+  /* Expand to full container width, covering left/right page padding */
+  width: calc(100% + 2 * var(--spacing-page));
+  margin-left: calc(-1 * var(--spacing-page));
+  /* Restore visual padding */
+  padding: var(--spacing-page);
+  padding-bottom: 0.75rem;
+}
+
+/* ========================================
    Category Colors
    ======================================== */
 

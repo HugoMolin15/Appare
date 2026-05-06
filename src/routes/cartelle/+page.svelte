@@ -119,7 +119,61 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader title="Cartelle" hideBackOnDesktop />
+	<div class="sticky-header">
+		<PageHeader title="Cartelle" hideBackOnDesktop />
+
+		{#if allFolderCount > 0}
+			<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle..." />
+
+			<!-- ② Controls bar -->
+			<div class="controls-bar">
+				<span class="count-label">{allFolderCount} {allFolderCount === 1 ? 'cartella' : 'cartelle'} · {totalWordCount} parole</span>
+				<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
+					{selectMode ? 'Fine' : 'Seleziona'}
+				</button>
+			</div>
+
+			<!-- ③ Action row — always visible -->
+			{#if selectMode && selectedFolderIds.size > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={studySelected} disabled={selectedWordCount === 0}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia {selectedFolderIds.size} {selectedFolderIds.size === 1 ? 'cartella' : 'cartelle'} ({selectedWordCount})
+					</button>
+					<button class="action-pill muted" onclick={() => selectedFolderIds = new Set()}>Deseleziona</button>
+				</div>
+			{:else}
+				<div class="action-row">
+					<button class="study-btn" onclick={studyAll} disabled={totalWordCount === 0}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia tutto ({totalWordCount})
+					</button>
+				</div>
+			{/if}
+
+			<!-- ④ Sort / reorder row -->
+			{#if !selectMode}
+				<div class="sort-row">
+					{#if !reorderMode}
+						<button class="sort-btn" onclick={cycleFolderSort}>
+						<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+						{folderSortLabels[folderSortMode]}
+					</button>
+					{/if}
+					{#if folderList.length > 1}
+						{#if reorderMode}
+							<button class="sort-btn reorder-active" onclick={exitReorderMode}>Fine</button>
+							{#if $folderOrder['root']}
+								<button class="sort-btn" onclick={resetFolderOrder}>Reimposta</button>
+							{/if}
+						{:else}
+							<button class="sort-btn" onclick={enterReorderMode}>Riordina</button>
+						{/if}
+					{/if}
+				</div>
+			{/if}
+		{/if}
+	</div>
 
 	{#if allFolderCount === 0}
 		<EmptyState
@@ -128,56 +182,6 @@
 			subtitle="Le cartelle raggruppano le parole per argomento."
 		/>
 	{:else}
-		<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle..." />
-
-		<!-- ② Controls bar -->
-		<div class="controls-bar">
-			<span class="count-label">{allFolderCount} {allFolderCount === 1 ? 'cartella' : 'cartelle'} · {totalWordCount} parole</span>
-			<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
-				{selectMode ? 'Fine' : 'Seleziona'}
-			</button>
-		</div>
-
-		<!-- ③ Action row — always visible -->
-		{#if selectMode && selectedFolderIds.size > 0}
-			<div class="action-row">
-				<button class="study-btn" onclick={studySelected} disabled={selectedWordCount === 0}>
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-					Studia {selectedFolderIds.size} {selectedFolderIds.size === 1 ? 'cartella' : 'cartelle'} ({selectedWordCount})
-				</button>
-				<button class="action-pill muted" onclick={() => selectedFolderIds = new Set()}>Deseleziona</button>
-			</div>
-		{:else}
-			<div class="action-row">
-				<button class="study-btn" onclick={studyAll} disabled={totalWordCount === 0}>
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-					Studia tutto ({totalWordCount})
-				</button>
-			</div>
-		{/if}
-
-		<!-- ④ Sort / reorder row -->
-		{#if !selectMode}
-			<div class="sort-row">
-				{#if !reorderMode}
-					<button class="sort-btn" onclick={cycleFolderSort}>
-					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
-					{folderSortLabels[folderSortMode]}
-				</button>
-				{/if}
-				{#if folderList.length > 1}
-					{#if reorderMode}
-						<button class="sort-btn reorder-active" onclick={exitReorderMode}>Fine</button>
-						{#if $folderOrder['root']}
-							<button class="sort-btn" onclick={resetFolderOrder}>Reimposta</button>
-						{/if}
-					{:else}
-						<button class="sort-btn" onclick={enterReorderMode}>Riordina</button>
-					{/if}
-				{/if}
-			</div>
-		{/if}
-
 		<!-- ⑤ Folder list -->
 		<div class="folder-list">
 			<!-- "Le mie parole" pinned folder -->
