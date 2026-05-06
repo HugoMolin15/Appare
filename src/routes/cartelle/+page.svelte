@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { get } from 'svelte/store';
-	import { goto } from '$app/navigation';
+	import { goto, afterNavigate } from '$app/navigation';
 	import { folders } from '$lib/stores/folders';
 	import { words } from '$lib/stores/words';
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
@@ -15,18 +15,21 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
-	// Restore selection from study-return context if it matches this page.
-	const _ctx = get(studyReturnContext);
-	const _restore = _ctx?.href === '/cartelle' && Array.isArray(_ctx.folderIds) && _ctx.folderIds.length > 0;
-
 	let showModal = $state(false);
 	let reorderMode = $state(false);
-	let selectMode = $state(_restore);
-	let selectedFolderIds = $state(new Set<string>(_restore ? _ctx!.folderIds! : []));
-
-	// Consume the context so subsequent visits start clean.
-	if (_restore) studyReturnContext.set(null);
+	let selectMode = $state(false);
+	let selectedFolderIds = $state(new Set<string>());
 	let searchQuery = $state('');
+
+	// Restore selection from study-return context if we're returning from /studia.
+	afterNavigate(() => {
+		const ctx = get(studyReturnContext);
+		if (ctx?.href === '/cartelle' && Array.isArray(ctx.folderIds) && ctx.folderIds.length > 0) {
+			selectMode = true;
+			selectedFolderIds = new Set(ctx.folderIds);
+			studyReturnContext.set(null);
+		}
+	});
 
 	type FolderSort = 'newest' | 'oldest' | 'name-az';
 	let folderSortMode = $state<FolderSort>('newest');
@@ -125,7 +128,7 @@
 			href: '/cartelle',
 			label: 'Torna alle cartelle',
 			wordIds: ids,
-			folderIds: [...selectedFolderIds]
+			folderIds: Array.from(selectedFolderIds)
 		});
 		setSelectedWords(ids);
 		goto('/studia');

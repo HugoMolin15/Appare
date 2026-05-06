@@ -9,7 +9,7 @@
 	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, studyReturnContext } from '$lib/stores/studySession';
 	import { dateColors, setDateColor } from '$lib/stores/dateColors';
 	import { FOLDER_COLORS } from '$lib/constants';
-	import { goto } from '$app/navigation';
+	import { goto, afterNavigate } from '$app/navigation';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
@@ -194,14 +194,18 @@
 	let selectedInDayView = $derived(dayWords.filter(w => $selectedWordIds.has(w.id)).length);
 
 	// Folder/period select mode (at non-day levels)
-	// Restore selection from study-return context if it matches this page.
-	const _ctx = get(studyReturnContext);
-	const _restoreSelection = _ctx?.href === '/cronologia' && Array.isArray(_ctx.selectedKeys) && _ctx.selectedKeys.length > 0;
+	let selectMode = $state(false);
+	let selectedKeys = $state(new Set<string>());
 
-	let selectMode = $state(_restoreSelection);
-	let selectedKeys = $state(new Set<string>(_restoreSelection ? _ctx!.selectedKeys! : []));
-
-	if (_restoreSelection) studyReturnContext.set(null);
+	// Restore selection from study-return context if returning from /studia.
+	afterNavigate(() => {
+		const ctx = get(studyReturnContext);
+		if (ctx?.href === '/cronologia' && Array.isArray(ctx.selectedKeys) && ctx.selectedKeys.length > 0) {
+			selectMode = true;
+			selectedKeys = new Set(ctx.selectedKeys);
+			studyReturnContext.set(null);
+		}
+	});
 
 	function toggleKeySelect(key: string) {
 		const next = new Set(selectedKeys);
