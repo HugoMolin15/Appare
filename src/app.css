@@ -257,16 +257,6 @@ body {
 }
 
 /* ========================================
-   Sheet scroll lock — pure CSS, no JS timing issues
-   When any .sheet-backdrop is mounted, prevent background scroll on mobile.
-   On desktop the scroll container is .main-content, not html, so this is a no-op there.
-   ======================================== */
-html:has(.sheet-backdrop) {
-  overflow: hidden;
-  overscroll-behavior: none;
-}
-
-/* ========================================
    Sticky page header
    ======================================== */
 .sticky-header {

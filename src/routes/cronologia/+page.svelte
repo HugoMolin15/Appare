@@ -254,6 +254,11 @@
 		editingColorKey = null;
 	}
 
+	$effect(() => {
+		if (editingColorKey) document.body.style.overflow = 'hidden';
+		else document.body.style.overflow = '';
+		return () => { document.body.style.overflow = ''; };
+	});
 </script>
 
 <svelte:head>

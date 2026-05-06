@@ -75,7 +75,11 @@
 		moveBreadcrumb = [];
 	}
 
-
+	$effect(() => {
+		if (showMoveSheet) document.body.style.overflow = 'hidden';
+		else document.body.style.overflow = '';
+		return () => { document.body.style.overflow = ''; };
+	});
 
 	const allPresetValues = new Set(Object.values(CATEGORIES).flat() as string[]);
 
