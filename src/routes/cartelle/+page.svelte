@@ -22,6 +22,8 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
+	let showModal = $state(false);
+	let reorderMode = $state(false);
 	// Restore selection when returning from study; clear flag so subsequent
 	// visits start fresh unless another study session was launched.
 	let selectMode = $state(_returningFromStudy ? _savedSelectMode : false);
