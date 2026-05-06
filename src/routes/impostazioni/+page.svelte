@@ -26,7 +26,7 @@
 		studyGoal.set(value);
 	}
 
-	const ALL_FIELDS: CardField[] = ['italiano', 'hiragana', 'katakana', 'romaji', 'kanji'];
+	const SINGLE_FIELDS: CardField[] = ['italiano', 'romaji', 'kanji'];
 	const FIELD_LABELS: Record<CardField, string> = {
 		italiano: 'Italiano',
 		hiragana: 'Hiragana',
@@ -34,6 +34,40 @@
 		romaji: 'Romaji',
 		kanji: 'Kanji',
 	};
+
+	// ---- Drag state ----
+	let draggingIdx: number | null = $state(null);
+	let dropTargetIdx: number | null = $state(null);
+
+	function onDragStart(e: DragEvent, ci: number) {
+		draggingIdx = ci;
+		if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+	}
+
+	function onDragOver(e: DragEvent, ci: number) {
+		e.preventDefault();
+		if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+		dropTargetIdx = ci;
+	}
+
+	function onDrop(e: DragEvent, ci: number) {
+		e.preventDefault();
+		if (draggingIdx === null || draggingIdx === ci) { draggingIdx = null; dropTargetIdx = null; return; }
+		const from = draggingIdx;
+		cardLayout.update(l => {
+			const next = [...l];
+			const [item] = next.splice(from, 1);
+			next.splice(ci, 0, item);
+			return next;
+		});
+		draggingIdx = null;
+		dropTargetIdx = null;
+	}
+
+	function onDragEnd() {
+		draggingIdx = null;
+		dropTargetIdx = null;
+	}
 
 	// ---- Card layout helpers ----
 	function addCard() {
@@ -47,24 +81,6 @@
 		});
 	}
 
-	function moveCardUp(i: number) {
-		cardLayout.update(l => {
-			if (i === 0) return l;
-			const next = [...l];
-			[next[i - 1], next[i]] = [next[i], next[i - 1]];
-			return next;
-		});
-	}
-
-	function moveCardDown(i: number) {
-		cardLayout.update(l => {
-			if (i === l.length - 1) return l;
-			const next = [...l];
-			[next[i], next[i + 1]] = [next[i + 1], next[i]];
-			return next;
-		});
-	}
-
 	function addFieldToCard(cardIdx: number, field: CardField) {
 		cardLayout.update(l => {
 			const next = l.map((c, i) =>
@@ -74,13 +90,33 @@
 		});
 	}
 
+	function addKanaToCard(cardIdx: number) {
+		cardLayout.update(l => l.map((c, i) => {
+			if (i !== cardIdx) return c;
+			const fields = [...c.fields];
+			if (!fields.includes('hiragana')) fields.push('hiragana');
+			if (!fields.includes('katakana')) fields.push('katakana');
+			return { fields };
+		}));
+	}
+
 	function removeFieldFromCard(cardIdx: number, fieldIdx: number) {
 		cardLayout.update(l => {
 			const card = l[cardIdx];
 			const newFields = card.fields.filter((_, i) => i !== fieldIdx);
 			if (newFields.length === 0) {
-				// Remove the whole card if it becomes empty
-				if (l.length <= 1) return l; // keep at least one card
+				if (l.length <= 1) return l;
+				return l.filter((_, i) => i !== cardIdx);
+			}
+			return l.map((c, i) => i === cardIdx ? { fields: newFields } : c);
+		});
+	}
+
+	function removeKanaFromCard(cardIdx: number) {
+		cardLayout.update(l => {
+			const newFields = l[cardIdx].fields.filter(f => f !== 'hiragana' && f !== 'katakana');
+			if (newFields.length === 0) {
+				if (l.length <= 1) return l;
 				return l.filter((_, i) => i !== cardIdx);
 			}
 			return l.map((c, i) => i === cardIdx ? { fields: newFields } : c);
@@ -139,51 +175,74 @@
 		</div>
 
 		<!-- Card builder -->
-		<div class="card-builder">
+		<div class="card-builder" role="list">
 			{#each $cardLayout as card, ci}
-				<div class="builder-card">
+				<div
+					class="builder-card"
+					class:dragging={draggingIdx === ci}
+					class:drag-over={dropTargetIdx === ci && draggingIdx !== ci}
+					draggable="true"
+					role="listitem"
+					ondragstart={(e) => onDragStart(e, ci)}
+					ondragover={(e) => onDragOver(e, ci)}
+					ondrop={(e) => onDrop(e, ci)}
+					ondragend={onDragEnd}
+				>
 					<!-- Card header -->
 					<div class="builder-card-header">
-						<span class="builder-card-title">Carta {ci + 1}</span>
-						<div class="builder-card-actions">
-							<button class="arrow-btn" onclick={() => moveCardUp(ci)} disabled={ci === 0} aria-label="Sposta su">
+						<div class="builder-card-header-left">
+							<span class="drag-handle" aria-label="Trascina per riordinare">
 								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-									<polyline points="18 15 12 9 6 15" />
+									<line x1="4" y1="7" x2="20" y2="7" />
+									<line x1="4" y1="12" x2="20" y2="12" />
+									<line x1="4" y1="17" x2="20" y2="17" />
 								</svg>
-							</button>
-							<button class="arrow-btn" onclick={() => moveCardDown(ci)} disabled={ci === $cardLayout.length - 1} aria-label="Sposta giù">
-								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-									<polyline points="6 9 12 15 18 9" />
-								</svg>
-							</button>
-							{#if $cardLayout.length > 1}
-								<button class="remove-card-btn" onclick={() => removeCard(ci)} aria-label="Rimuovi carta">
-									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-										<line x1="18" y1="6" x2="6" y2="18" />
-										<line x1="6" y1="6" x2="18" y2="18" />
-									</svg>
-								</button>
-							{/if}
+							</span>
+							<span class="builder-card-title">Carta {ci + 1}</span>
 						</div>
-					</div>
-
-					<!-- Fields on this card -->
-					{#each card.fields as field, fi}
-						<div class="builder-field-row">
-							<span class="builder-field-dot"></span>
-							<span class="builder-field-label">{FIELD_LABELS[field]}</span>
-							<button class="remove-field-btn" onclick={() => removeFieldFromCard(ci, fi)} aria-label="Rimuovi campo">
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						{#if $cardLayout.length > 1}
+							<button class="remove-card-btn" onclick={() => removeCard(ci)} aria-label="Rimuovi carta">
+								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 									<line x1="18" y1="6" x2="6" y2="18" />
 									<line x1="6" y1="6" x2="18" y2="18" />
 								</svg>
 							</button>
-						</div>
+						{/if}
+					</div>
+
+					<!-- Fields on this card -->
+					{#each card.fields as field, fi}
+						{#if field === 'katakana' && card.fields.includes('hiragana')}
+							<!-- skip: shown together with hiragana -->
+						{:else}
+							<div class="builder-field-row">
+								<span class="builder-field-dot"></span>
+								<span class="builder-field-label">
+									{field === 'hiragana' && card.fields.includes('katakana') ? 'Hiragana / Katakana' : FIELD_LABELS[field]}
+								</span>
+								<button
+									class="remove-field-btn"
+									onclick={() => {
+										if (field === 'hiragana' && card.fields.includes('katakana')) {
+											removeKanaFromCard(ci);
+										} else {
+											removeFieldFromCard(ci, fi);
+										}
+									}}
+									aria-label="Rimuovi campo"
+								>
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+										<line x1="18" y1="6" x2="6" y2="18" />
+										<line x1="6" y1="6" x2="18" y2="18" />
+									</svg>
+								</button>
+							</div>
+						{/if}
 					{/each}
 
 					<!-- Add field chips -->
 					<div class="builder-add-field-row">
-						{#each ALL_FIELDS as f}
+						{#each SINGLE_FIELDS as f}
 							<button
 								class="field-chip"
 								class:disabled={card.fields.includes(f)}
@@ -193,6 +252,14 @@
 								+ {FIELD_LABELS[f]}
 							</button>
 						{/each}
+						<button
+							class="field-chip"
+							class:disabled={card.fields.includes('hiragana') && card.fields.includes('katakana')}
+							onclick={() => { if (!(card.fields.includes('hiragana') && card.fields.includes('katakana'))) addKanaToCard(ci); }}
+							disabled={card.fields.includes('hiragana') && card.fields.includes('katakana')}
+						>
+							+ Hiragana / Katakana
+						</button>
 					</div>
 				</div>
 			{/each}
@@ -611,11 +678,42 @@
 		padding: 0.75rem 1rem;
 	}
 
+	.builder-card {
+		transition: opacity 0.15s ease, border-color 0.15s ease;
+	}
+
+	.builder-card.dragging {
+		opacity: 0.4;
+		cursor: grabbing;
+	}
+
+	.builder-card.drag-over {
+		border-color: var(--color-primary);
+	}
+
 	.builder-card-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		margin-bottom: 0.5rem;
+	}
+
+	.builder-card-header-left {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.drag-handle {
+		display: flex;
+		align-items: center;
+		color: var(--color-text-tertiary);
+		cursor: grab;
+		padding: 0.2rem;
+	}
+
+	.drag-handle:active {
+		cursor: grabbing;
 	}
 
 	.builder-card-title {
@@ -624,29 +722,6 @@
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
 		color: var(--color-text-secondary);
-	}
-
-	.builder-card-actions {
-		display: flex;
-		align-items: center;
-		gap: 0.15rem;
-	}
-
-	.arrow-btn {
-		background: none;
-		border: none;
-		padding: 0.3rem;
-		cursor: pointer;
-		color: var(--color-text-secondary);
-		border-radius: var(--radius-md);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.arrow-btn:disabled {
-		opacity: 0.25;
-		cursor: default;
 	}
 
 	.remove-card-btn {
