@@ -1,3 +1,7 @@
+<script module lang="ts">
+	let savedPath: string[] = [];
+</script>
+
 <script lang="ts">
 	import { studyHistory } from '$lib/stores/history';
 	import { words } from '$lib/stores/words';
@@ -27,8 +31,9 @@
 		known: '#1D6FA4',
 	};
 
-	// Path state: [Year, Month, Week, Date]
-	let path = $state<string[]>([]);
+	// Path state: [Year, Month, Week, Date] — persisted at module level across navigation
+	let path = $state<string[]>(savedPath);
+	$effect(() => { savedPath = [...path]; });
 
 	const monthNames = [
 		'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
@@ -406,7 +411,7 @@
 					<div class="word-row" class:selectable={daySelectMode} onclick={daySelectMode ? () => toggleWordSelection(word.id) : undefined}>
 						{#if daySelectMode}
 							<div class="word-checkbox" class:checked={$selectedWordIds.has(word.id)}>
-								<Icon name="check" strokeWidth={3} />
+								<Icon name="check" size={14} strokeWidth={3} />
 							</div>
 						{/if}
 						<div class="word-main">

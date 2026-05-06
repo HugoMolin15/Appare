@@ -35,5 +35,6 @@ export interface StudyReturnContext {
 	label: string;      // button label
 	wordIds: string[];  // to restore selection on return
 	folderId?: string;  // set only for cartelle/[id] to re-enable selectMode
+	folderIds?: string[]; // set only for cartelle to restore multi-folder selection
 }
 export const studyReturnContext = writable<StudyReturnContext | null>(null);

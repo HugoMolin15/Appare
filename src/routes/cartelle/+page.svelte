@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { get } from 'svelte/store';
-	import { goto } from '$app/navigation';
+	import { goto, afterNavigate } from '$app/navigation';
 	import { folders } from '$lib/stores/folders';
 	import { words } from '$lib/stores/words';
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
@@ -114,10 +114,19 @@
 		let ids = [...new Set(Array.from(selectedFolderIds).flatMap(collect))];
 		if (ids.length === 0) return;
 		if (get(randomCardOrder)) ids = shuffle(ids);
-		studyReturnContext.set({ href: '/cartelle', label: 'Torna alle cartelle', wordIds: ids });
+		studyReturnContext.set({ href: '/cartelle', label: 'Torna alle cartelle', wordIds: ids, folderIds: [...selectedFolderIds] });
 		setSelectedWords(ids);
 		goto('/studia');
 	}
+
+	afterNavigate(() => {
+		const ctx = get(studyReturnContext);
+		if (ctx && ctx.href === '/cartelle' && ctx.folderIds) {
+			studyReturnContext.set(null);
+			selectedFolderIds = new Set(ctx.folderIds);
+			selectMode = true;
+		}
+	});
 </script>
 
 <svelte:head>
