@@ -18,7 +18,8 @@ import {
 	studyGoal,
 	appFontScale,
 	cardOrder,
-	randomCardOrder
+	randomCardOrder,
+	randomWordOrder
 } from '$lib/stores/settings';
 import { get } from 'svelte/store';
 import { currentUserId } from '$lib/stores/auth';
@@ -82,6 +83,7 @@ async function pullWords(userId: string) {
 		romaji: r.romaji,
 		kanji: r.kanji,
 		category: r.category ?? undefined,
+		tags: r.tags ?? undefined,
 		wordType: r.word_type ?? undefined,
 		folderId: r.folder_id ?? undefined,
 		createdAt: r.created_at
@@ -182,6 +184,7 @@ async function pullSettings(userId: string) {
 	appFontScale.set(scale);
 	cardOrder.set(data.card_order);
 	randomCardOrder.set(data.random_card_order);
+	randomWordOrder.set(data.random_word_order ?? false);
 	if (data.word_scores) wordScores.set(data.word_scores);
 	if (data.folder_order) folderOrder.set(data.folder_order);
 }
@@ -214,6 +217,7 @@ async function pushAllWords(userId: string) {
 			romaji: w.romaji,
 			kanji: w.kanji,
 			category: w.category ?? null,
+			tags: w.tags ?? null,
 			word_type: w.wordType ?? null,
 			folder_id: w.folderId ?? null,
 			created_at: w.createdAt
@@ -266,6 +270,7 @@ async function pushSettings(userId: string) {
 		japanese_font_size: get(appFontScale),
 		card_order: get(cardOrder),
 		random_card_order: get(randomCardOrder),
+		random_word_order: get(randomWordOrder),
 		word_scores: get(wordScores),
 		folder_order: get(folderOrder)
 	});
@@ -286,6 +291,7 @@ export async function pushWord(word: Word, userId: string) {
 		romaji: word.romaji,
 		kanji: word.kanji,
 		category: word.category ?? null,
+		tags: word.tags ?? null,
 		word_type: word.wordType ?? null,
 		folder_id: word.folderId ?? null,
 		created_at: word.createdAt
@@ -305,6 +311,7 @@ export async function pushWords(wordList: Word[], userId: string) {
 			romaji: w.romaji,
 			kanji: w.kanji,
 			category: w.category ?? null,
+			tags: w.tags ?? null,
 			word_type: w.wordType ?? null,
 			folder_id: w.folderId ?? null,
 			created_at: w.createdAt
@@ -381,6 +388,9 @@ import { clearSettings } from '$lib/stores/settings';
 import { clearWordScores } from '$lib/stores/wordScores';
 import { clearWordAttempts } from '$lib/stores/wordAttempts';
 import { clearAllFolderOrder } from '$lib/stores/folderOrder';
+import { clearUserTags } from '$lib/stores/userTags';
+import { resetCronologiaNav } from '$lib/stores/cronologiaNav';
+import { resetParoleNav } from '$lib/stores/paroleNav';
 import { browser } from '$app/environment';
 
 /**
@@ -401,6 +411,9 @@ export function clearAllStores() {
 	clearWordScores();
 	clearWordAttempts();
 	clearAllFolderOrder();
+	clearUserTags();
+	resetCronologiaNav();
+	resetParoleNav();
 	if (browser) {
 		localStorage.removeItem(LOCAL_SYNCED_KEY);
 	}

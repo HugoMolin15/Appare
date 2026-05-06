@@ -1,18 +1,3 @@
-<script module lang="ts">
-	import type { WordScore } from '$lib/types/word';
-	type WordSort = 'newest' | 'oldest' | 'it-az' | 'jp-az';
-
-	// Persists across navigation within the same SPA session
-	let saved = {
-		searchQuery: '',
-		scoreFilter: 'all' as 'all' | WordScore,
-		sourceFilter: 'all' as 'all' | 'app' | 'mine',
-		typeFilter: 'all' as 'all' | 'word' | 'phrase',
-		selectedGroups: [] as string[],
-		sortMode: 'newest' as WordSort,
-	};
-</script>
-
 <script lang="ts">
 	import { words } from '$lib/stores/words';
 	import { CATEGORIES } from '$lib/types/word';
@@ -27,7 +12,9 @@
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { fly } from 'svelte/transition';
+	import { getParoleSaved, setParoleSaved, type WordSort } from '$lib/stores/paroleNav';
 
+	const saved = getParoleSaved();
 	let searchQuery = $state(saved.searchQuery);
 	let scoreFilter = $state(saved.scoreFilter);
 	let sourceFilter = $state(saved.sourceFilter);
@@ -37,12 +24,14 @@
 	let sortMode = $state(saved.sortMode);
 
 	$effect(() => {
-		saved.searchQuery = searchQuery;
-		saved.scoreFilter = scoreFilter;
-		saved.sourceFilter = sourceFilter;
-		saved.typeFilter = typeFilter;
-		saved.selectedGroups = [...selectedGroups];
-		saved.sortMode = sortMode;
+		setParoleSaved({
+			searchQuery,
+			scoreFilter,
+			sourceFilter,
+			typeFilter,
+			selectedGroups: [...selectedGroups],
+			sortMode
+		});
 	});
 
 	const categoryGroups = Object.entries(CATEGORIES) as [string, readonly string[]][];
