@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
+	import { goto, afterNavigate } from '$app/navigation';
+	import { tick } from 'svelte';
 	import { get } from 'svelte/store';
 	import { folders, removeFolder, updateFolder } from '$lib/stores/folders';
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
@@ -21,6 +22,19 @@
 
 	let folderId = $derived($page.params.id as string);
 	let isProtected = $derived(folderId === MY_WORDS_FOLDER_ID);
+
+	// ---- Word highlight (from ?highlight=wordId param) ----
+	let highlightWordId = $state<string | null>(null);
+
+	afterNavigate(async () => {
+		const target = $page.url.searchParams.get('highlight');
+		if (!target) return;
+		highlightWordId = target;
+		await tick();
+		const el = document.getElementById(`word-${target}`);
+		if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		setTimeout(() => { highlightWordId = null; }, 2000);
+	});
 	let showFolderModal = $state(false);
 	let showAddWordsModal = $state(false);
 	let showOptionsSheet = $state(false);
@@ -405,7 +419,9 @@
 							{/snippet}
 						</WordRow>
 					{:else}
-						<WordRow {word} href="/parole/{word.id}?from=/cartelle/{folderId}" />
+						<div id="word-{word.id}" class:word-highlight={highlightWordId === word.id}>
+							<WordRow {word} href="/parole/{word.id}?from=/cartelle/{folderId}" />
+						</div>
 					{/if}
 				{/each}
 			</div>
@@ -648,6 +664,15 @@
 		display: flex;
 		flex-direction: column;
 		margin-bottom: 0.5rem;
+	}
+
+	@keyframes word-flash {
+		0%   { background: color-mix(in srgb, var(--color-primary) 18%, transparent); border-radius: var(--radius-md); }
+		100% { background: transparent; }
+	}
+
+	.word-highlight {
+		animation: word-flash 2s ease-out forwards;
 	}
 
 	.folder-item {

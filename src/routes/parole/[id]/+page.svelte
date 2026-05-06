@@ -217,7 +217,9 @@
 			<div class="field">
 				<span class="field-label">Cartella</span>
 				<div class="folder-path-field">
-					{#if folderPath}
+					{#if folderPath && word?.folderId}
+						<a href="/cartelle/{word.folderId}?highlight={wordId}" class="folder-path folder-path-link">{folderPath.join(' / ')}</a>
+					{:else if folderPath}
 						<span class="folder-path">{folderPath.join(' / ')}</span>
 					{:else}
 						<span class="folder-path-none">Nessuna cartella</span>
@@ -541,6 +543,15 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	.folder-path-link {
+		color: var(--color-primary);
+		text-decoration: none;
+	}
+
+	.folder-path-link:hover {
+		text-decoration: underline;
 	}
 
 	.folder-path-none {
