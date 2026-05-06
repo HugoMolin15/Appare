@@ -28,10 +28,12 @@ export function clearSelection() {
 export const hasSelectedWords = derived(selectedWordIds, $ids => $ids.size > 0);
 export const selectedCount = derived(selectedWordIds, $ids => $ids.size);
 
-// Return context: set when starting a study session from a folder so the
-// finished screen can offer a "back to folder" button.
-interface StudyReturnContext {
-	folderId: string;
-	wordIds: string[];
+// Return context: set when starting a study session so the finished screen
+// can offer a "go back" button to wherever the session was launched from.
+export interface StudyReturnContext {
+	href: string;       // URL to navigate back to
+	label: string;      // button label
+	wordIds: string[];  // to restore selection on return
+	folderId?: string;  // set only for cartelle/[id] to re-enable selectMode
 }
 export const studyReturnContext = writable<StudyReturnContext | null>(null);

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { studyHistory } from '$lib/stores/history';
 	import { words } from '$lib/stores/words';
-	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection } from '$lib/stores/studySession';
+	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, studyReturnContext } from '$lib/stores/studySession';
 	import { dateColors, setDateColor } from '$lib/stores/dateColors';
 	import { FOLDER_COLORS } from '$lib/constants';
 	import { goto } from '$app/navigation';
@@ -200,6 +200,7 @@
 		let unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
 		if (unique.length === 0) return;
 		if (get(randomCardOrder)) unique = shuffle(unique);
+		studyReturnContext.set({ href: '/cronologia', label: 'Torna alla cronologia', wordIds: unique });
 		setSelectedWords(unique);
 		goto('/studia');
 	}
@@ -210,6 +211,7 @@
 		let unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
 		if (unique.length === 0) return;
 		if (get(randomCardOrder)) unique = shuffle(unique);
+		studyReturnContext.set({ href: '/cronologia', label: 'Torna alla cronologia', wordIds: unique });
 		setSelectedWords(unique);
 		goto('/studia');
 	}
@@ -317,7 +319,7 @@
 						<button class="study-btn" onclick={() => {
 							let ids = dayWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id);
 							if (get(randomCardOrder)) ids = shuffle(ids);
-							setSelectedWords(ids); goto('/studia');
+							studyReturnContext.set({ href: '/cronologia', label: 'Torna alla cronologia', wordIds: ids }); setSelectedWords(ids); goto('/studia');
 						}}>
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
 							Studia {selectedInDayView} {selectedInDayView === 1 ? 'parola' : 'parole'}
@@ -329,7 +331,7 @@
 						<button class="study-btn" onclick={() => {
 							let ids = dayWords.map(w => w.id);
 							if (get(randomCardOrder)) ids = shuffle(ids);
-							setSelectedWords(ids); goto('/studia');
+							studyReturnContext.set({ href: '/cronologia', label: 'Torna alla cronologia', wordIds: ids }); setSelectedWords(ids); goto('/studia');
 						}}>
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
 							Studia tutto ({dayWords.length})

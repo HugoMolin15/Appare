@@ -4,7 +4,7 @@
 	import { folders } from '$lib/stores/folders';
 	import { words } from '$lib/stores/words';
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
-	import { setSelectedWords } from '$lib/stores/studySession';
+	import { setSelectedWords, studyReturnContext } from '$lib/stores/studySession';
 	import { shuffle } from '$lib/utils/shuffle';
 	import { randomCardOrder } from '$lib/stores/settings';
 	import PageHeader from '$lib/components/PageHeader.svelte';
@@ -99,6 +99,7 @@
 		let ids = get(words).map(w => w.id);
 		if (ids.length === 0) return;
 		if (get(randomCardOrder)) ids = shuffle(ids);
+		studyReturnContext.set({ href: '/cartelle', label: 'Torna alle cartelle', wordIds: ids });
 		setSelectedWords(ids);
 		goto('/studia');
 	}
@@ -113,6 +114,7 @@
 		let ids = [...new Set(Array.from(selectedFolderIds).flatMap(collect))];
 		if (ids.length === 0) return;
 		if (get(randomCardOrder)) ids = shuffle(ids);
+		studyReturnContext.set({ href: '/cartelle', label: 'Torna alle cartelle', wordIds: ids });
 		setSelectedWords(ids);
 		goto('/studia');
 	}

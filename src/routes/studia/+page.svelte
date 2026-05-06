@@ -66,12 +66,12 @@
 		finished = false;
 	}
 
-	function returnToFolder() {
+	function returnToOrigin() {
 		const ctx = get(studyReturnContext);
 		if (!ctx) return;
 		setSelectedWords(ctx.wordIds);
 		bypassGuard = true;
-		goto(`/cartelle/${ctx.folderId}`);
+		goto(ctx.href);
 	}
 
 	let showExitModal = $state(false);
@@ -177,9 +177,9 @@
 					Ricomincia
 				</button>
 				{#if $studyReturnContext}
-					<button type="button" class="action-btn action-folder" onclick={returnToFolder}>
+					<button type="button" class="action-btn action-folder" onclick={returnToOrigin}>
 						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-						Torna alla cartella
+						{$studyReturnContext.label}
 					</button>
 				{/if}
 				<a href="/" class="action-btn action-home" onclick={() => { bypassGuard = true; }}>

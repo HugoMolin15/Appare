@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { words } from '$lib/stores/words';
 	import { wordScores } from '$lib/stores/wordScores';
-	import { selectedWordIds, toggleWordSelection, selectedCount, setSelectedWords } from '$lib/stores/studySession';
+	import { selectedWordIds, toggleWordSelection, selectedCount, setSelectedWords, studyReturnContext } from '$lib/stores/studySession';
 	import { goto } from '$app/navigation';
 	import { get } from 'svelte/store';
 	import { shuffle } from '$lib/utils/shuffle';
@@ -110,6 +110,7 @@
 		if ($selectedCount === 0) return;
 		let ids = [...get(selectedWordIds)];
 		if (get(randomCardOrder)) ids = shuffle(ids);
+		studyReturnContext.set({ href: '/studia/seleziona', label: 'Modifica selezione', wordIds: ids });
 		setSelectedWords(ids);
 		goto('/studia');
 	}
