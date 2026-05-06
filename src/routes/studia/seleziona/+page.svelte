@@ -100,11 +100,6 @@
 
 	let showFilterSheet = $state(false);
 
-	$effect(() => {
-		if (showFilterSheet) document.body.style.overflow = 'hidden';
-		else document.body.style.overflow = '';
-		return () => { document.body.style.overflow = ''; };
-	});
 
 	function startStudy() {
 		if ($selectedCount === 0) return;
