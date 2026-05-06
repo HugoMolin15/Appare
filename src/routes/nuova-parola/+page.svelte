@@ -44,11 +44,9 @@
 		(wordType === 'phrase' || selectedTags.length > 0)
 	);
 
-	function handleSave() {
-		if (!isValid) return;
+	function saveWord() {
 		const realTags = selectedTags.filter(t => t !== UNCATEGORIZED_TAG);
 		const finalTags = realTags.length > 0 ? realTags : selectedTags;
-
 		addWord({
 			italiano: italiano.trim(),
 			hiragana: hiragana.trim(),
@@ -60,8 +58,24 @@
 			wordType,
 			folderId: destFolderId || undefined
 		});
+	}
 
+	function handleSave() {
+		if (!isValid) return;
+		saveWord();
 		goto(destFolderId ? `/cartelle/${destFolderId}` : '/');
+	}
+
+	function handleSaveAndAddNew() {
+		if (!isValid) return;
+		saveWord();
+		italiano = '';
+		hiragana = '';
+		romaji = '';
+		kanji = '';
+		selectedTags = ['Verbo Godan'];
+		wordType = 'word';
+		// keep destFolderId so the user can keep adding to the same folder
 	}
 </script>
 
@@ -157,6 +171,15 @@
 				<Icon name="check" strokeWidth={2.5} />
 			{/if}
 			Salva
+		</button>
+		<button
+			type="button"
+			class="save-add-btn"
+			class:ready={isValid}
+			disabled={!isValid}
+			onclick={handleSaveAndAddNew}
+		>
+			Salva e aggiungi nuova
 		</button>
 	</div>
 </div>
@@ -285,6 +308,9 @@
 	.save-area {
 		margin-top: auto;
 		padding-top: 0.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
 	}
 
 	.save-btn {
@@ -317,6 +343,30 @@
 
 	.save-btn.ready:active {
 		background-color: var(--color-primary-dark);
+		transform: scale(0.98);
+	}
+
+	.save-add-btn {
+		width: 100%;
+		padding: 0.9rem;
+		background-color: var(--color-surface);
+		color: var(--color-text-tertiary);
+		border: none;
+		border-radius: var(--radius-lg);
+		font-size: 0.9rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		cursor: not-allowed;
+		transition: all 0.25s ease;
+	}
+
+	.save-add-btn.ready {
+		color: var(--color-primary);
+		cursor: pointer;
+	}
+
+	.save-add-btn.ready:active {
+		opacity: 0.7;
 		transform: scale(0.98);
 	}
 </style>
