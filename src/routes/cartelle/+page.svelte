@@ -484,7 +484,7 @@
 	}
 
 	/* ---- FAB ---- */
-	.fab-container { position: fixed; bottom: 2rem; right: var(--spacing-page); z-index: 50; }
+	.fab-container { position: fixed; bottom: calc(var(--bottom-nav-height) + 1rem); right: var(--spacing-page); z-index: 50; }
 
 	.fab {
 		display: flex; align-items: center; gap: 0.5rem; padding: 0.875rem 1.5rem;

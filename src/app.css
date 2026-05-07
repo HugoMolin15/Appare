@@ -77,6 +77,10 @@
    Base Styles
    ======================================== */
 
+:root {
+  --bottom-nav-height: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+
 html, body {
   overscroll-behavior-x: none !important;
 }
@@ -217,6 +221,12 @@ body {
 @media (min-width: 768px) {
   :root {
     --spacing-page: 2rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .main-content {
+    padding-bottom: var(--bottom-nav-height);
   }
 }
 

@@ -9,6 +9,7 @@
 	import { beforeNavigate, afterNavigate } from '$app/navigation';
 	import { ensureSeeded } from '$lib/stores/words';
 	import { appFontScale } from '$lib/stores/settings';
+	import BottomNav from '$lib/components/BottomNav.svelte';
 
 	$effect(() => {
 		if (!browser) return;
@@ -66,7 +67,7 @@
 	let isLoginPage = $derived(path === '/login');
 </script>
 
-<div class="app-shell safe-top safe-bottom">
+<div class="app-shell safe-top">
 	<aside class="sidebar" class:hidden={isLoginPage}>
 		<div class="sidebar-logo">
 			<img src="/secondary_icon.png" alt="Appare logo" class="sidebar-icon" />
@@ -110,6 +111,8 @@
 	<main class="main-content" bind:this={mainContent}>
 		{@render children()}
 	</main>
+
+	<BottomNav />
 </div>
 
 <style>
