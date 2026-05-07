@@ -1,22 +1,8 @@
-<script module lang="ts">
-	import type { WordScore } from '$lib/types/word';
-	type WordSort = 'newest' | 'oldest' | 'it-az' | 'jp-az';
-
-	// Persists across navigation within the same SPA session
-	let saved = {
-		searchQuery: '',
-		scoreFilter: 'all' as 'all' | WordScore,
-		sourceFilter: 'all' as 'all' | 'app' | 'mine',
-		typeFilter: 'all' as 'all' | 'word' | 'phrase',
-		selectedGroups: [] as string[],
-		sortMode: 'newest' as WordSort,
-	};
-</script>
-
 <script lang="ts">
 	import { words } from '$lib/stores/words';
 	import { CATEGORIES } from '$lib/types/word';
 	import { wordScores } from '$lib/stores/wordScores';
+	import { listDisplayLang, type ListDisplayLang } from '$lib/stores/settings';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import WordRow from '$lib/components/WordRow.svelte';
 	import ScoreFilter from '$lib/components/ScoreFilter.svelte';
@@ -26,7 +12,9 @@
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { fly } from 'svelte/transition';
+	import { getParoleSaved, setParoleSaved, type WordSort } from '$lib/stores/paroleNav';
 
+	const saved = getParoleSaved();
 	let searchQuery = $state(saved.searchQuery);
 	let scoreFilter = $state(saved.scoreFilter);
 	let sourceFilter = $state(saved.sourceFilter);
@@ -36,12 +24,14 @@
 	let sortMode = $state(saved.sortMode);
 
 	$effect(() => {
-		saved.searchQuery = searchQuery;
-		saved.scoreFilter = scoreFilter;
-		saved.sourceFilter = sourceFilter;
-		saved.typeFilter = typeFilter;
-		saved.selectedGroups = [...selectedGroups];
-		saved.sortMode = sortMode;
+		setParoleSaved({
+			searchQuery,
+			scoreFilter,
+			sourceFilter,
+			typeFilter,
+			selectedGroups: [...selectedGroups],
+			sortMode
+		});
 	});
 
 	const categoryGroups = Object.entries(CATEGORIES) as [string, readonly string[]][];
@@ -74,6 +64,13 @@
 		selectedGroups = next;
 	}
 
+	const LANG_LABELS: Record<ListDisplayLang, string> = {
+		italiano: 'Italiano',
+		hiragana: 'Hiragana / Katakana',
+		romaji: 'Romaji',
+		kanji: 'Kanji',
+	};
+
 	// All active filter pills: { label, remove() }
 	let activePills = $derived.by(() => {
 		const pills: { label: string; remove: () => void }[] = [];
@@ -82,6 +79,7 @@
 		if (typeFilter === 'word') pills.push({ label: 'Parole', remove: removeType });
 		if (typeFilter === 'phrase') pills.push({ label: 'Frasi', remove: removeType });
 		for (const g of selectedGroups) pills.push({ label: g, remove: () => removeGroup(g) });
+		if ($listDisplayLang !== 'italiano') pills.push({ label: LANG_LABELS[$listDisplayLang], remove: () => listDisplayLang.set('italiano') });
 		return pills;
 	});
 
@@ -90,6 +88,25 @@
 		const bNum = /^\d/.test(b);
 		if (aNum !== bNum) return aNum ? 1 : -1;
 		return a.localeCompare(b, 'it');
+	}
+
+	const MONTH_NAMES = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+		'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+
+	function isSameDay(a: Date, b: Date) {
+		return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+	}
+
+	function getDateLabel(ts: number): string {
+		if (!ts) return 'Data non disponibile';
+		const d = new Date(ts);
+		const today = new Date();
+		const yesterday = new Date(today);
+		yesterday.setDate(today.getDate() - 1);
+		if (isSameDay(d, today)) return 'Oggi';
+		if (isSameDay(d, yesterday)) return 'Ieri';
+		const base = `${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
+		return d.getFullYear() !== today.getFullYear() ? `${base} ${d.getFullYear()}` : base;
 	}
 
 	let filteredWords = $derived.by(() => {
@@ -118,6 +135,25 @@
 		return result.sort((a, b) => b.createdAt - a.createdAt);
 	});
 
+	type WordListItem = { type: 'divider'; label: string } | { type: 'word'; word: typeof filteredWords[number] };
+
+	let wordListItems = $derived.by((): WordListItem[] => {
+		if (sortMode !== 'newest' && sortMode !== 'oldest') {
+			return filteredWords.map(w => ({ type: 'word', word: w }));
+		}
+		const items: WordListItem[] = [];
+		let lastLabel = '';
+		for (const word of filteredWords) {
+			const label = getDateLabel(word.createdAt);
+			if (label !== lastLabel) {
+				items.push({ type: 'divider', label });
+				lastLabel = label;
+			}
+			items.push({ type: 'word', word });
+		}
+		return items;
+	});
+
 	$effect(() => {
 		if (showFilterSheet) document.body.style.overflow = 'hidden';
 		else document.body.style.overflow = '';
@@ -130,42 +166,48 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader title="Tutte le parole" backHref="/" hideBackOnDesktop>
-		{#snippet actions()}
-			<button
-				class="filter-btn"
-				class:active={activePills.length > 0}
-				onclick={() => showFilterSheet = true}
-				aria-label="Filtri"
-			>
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<line x1="4" y1="6" x2="20" y2="6" />
-					<line x1="8" y1="12" x2="16" y2="12" />
-					<line x1="12" y1="18" x2="12" y2="18" stroke-width="3" stroke-linecap="round" />
-				</svg>
-				{#if activePills.length > 0}
-					<span class="filter-badge">{activePills.length}</span>
-				{/if}
-			</button>
-		{/snippet}
-	</PageHeader>
+	<div class="sticky-header">
+		<PageHeader title="Tutte le parole" hideBack>
+			{#snippet actions()}
+				<button
+					class="filter-btn"
+					class:active={activePills.length > 0}
+					onclick={() => showFilterSheet = true}
+					aria-label="Filtri"
+				>
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<line x1="4" y1="6" x2="20" y2="6" />
+						<line x1="8" y1="12" x2="16" y2="12" />
+						<line x1="12" y1="18" x2="12" y2="18" stroke-width="3" stroke-linecap="round" />
+					</svg>
+					{#if activePills.length > 0}
+						<span class="filter-badge">{activePills.length}</span>
+					{/if}
+				</button>
+			{/snippet}
+		</PageHeader>
 
-	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
+		<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
-	<ScoreFilter
-		value={scoreFilter}
-		onChange={(v) => scoreFilter = v}
-		sortLabel={SORT_LABELS[sortMode]}
-		onSortCycle={cycleSortMode}
-	/>
+		<ScoreFilter
+			value={scoreFilter}
+			onChange={(v) => scoreFilter = v}
+			sortLabel={SORT_LABELS[sortMode]}
+			onSortCycle={cycleSortMode}
+		/>
 
-	<FilterPills pills={activePills} />
+		<FilterPills pills={activePills} />
 
-	<p class="word-count-label">{filteredWords.length} {typeFilter === 'phrase' ? 'frasi' : filteredWords.length === 1 ? 'parola' : 'parole'}</p>
+		<p class="word-count-label">{filteredWords.length} {typeFilter === 'phrase' ? 'frasi' : filteredWords.length === 1 ? 'parola' : 'parole'}</p>
+	</div>
 
 	<div class="word-list">
-		{#each filteredWords as word (word.id)}
-			<WordRow {word} href="/parole/{word.id}" />
+		{#each wordListItems as item (item.type === 'word' ? item.word.id : 'div_' + item.label)}
+			{#if item.type === 'divider'}
+				<div class="date-divider">{item.label}</div>
+			{:else}
+				<WordRow word={item.word} href="/parole/{item.word.id}" displayLang={$listDisplayLang} />
+			{/if}
 		{/each}
 	</div>
 </div>
@@ -179,6 +221,22 @@
 		</div>
 
 		<div class="sheet-body">
+			<div class="filter-section">
+				<span class="section-label">Lingua visualizzata</span>
+				<div class="option-list">
+					{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
+						<button
+							class="option-row"
+							class:selected={$listDisplayLang === val}
+							onclick={() => listDisplayLang.set(val as ListDisplayLang)}
+						>
+							<span>{label}</span>
+							{#if $listDisplayLang === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+						</button>
+					{/each}
+				</div>
+			</div>
+
 			<div class="filter-section">
 				<span class="section-label">Origine</span>
 				<div class="option-list">
@@ -300,6 +358,20 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+	}
+
+	/* ---- Date divider ---- */
+	.date-divider {
+		font-size: 0.75rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--color-text-tertiary);
+		padding: 1rem 0 0.4rem;
+	}
+
+	.date-divider:first-child {
+		padding-top: 0;
 	}
 
 	/* ---- Word list ---- */

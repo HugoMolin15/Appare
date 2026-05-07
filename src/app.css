@@ -77,18 +77,18 @@
    Base Styles
    ======================================== */
 
+:root {
+  --bottom-nav-height: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+
 html, body {
   overscroll-behavior-x: none !important;
 }
 
-/* Hide scrollbars globally */
+/* Scrollbars: thin and subtle globally */
 * {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-}
-
-*::-webkit-scrollbar {
-  display: none !important;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
 }
 
 * {
@@ -174,7 +174,7 @@ input[type="radio"]:active,
 }
 
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -187,8 +187,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: clip;
 }
 
 /* ========================================
@@ -225,6 +224,12 @@ body {
   }
 }
 
+@media (max-width: 767px) {
+  .main-content {
+    padding-bottom: var(--bottom-nav-height);
+  }
+}
+
 /* ========================================
    Utility Classes
    ======================================== */
@@ -258,6 +263,24 @@ body {
 }
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* ========================================
+   Sticky page header
+   ======================================== */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-bg);
+  /* Pull element up to the scroll container top, canceling page padding-top */
+  margin-top: calc(-1 * var(--spacing-page));
+  /* Expand to full container width, covering left/right page padding */
+  width: calc(100% + 2 * var(--spacing-page));
+  margin-left: calc(-1 * var(--spacing-page));
+  /* Restore visual padding */
+  padding: var(--spacing-page);
+  padding-bottom: 0.75rem;
 }
 
 /* ========================================

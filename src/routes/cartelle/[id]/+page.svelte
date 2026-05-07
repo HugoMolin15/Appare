@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
+	import { goto, afterNavigate } from '$app/navigation';
+	import { tick } from 'svelte';
 	import { get } from 'svelte/store';
 	import { folders, removeFolder, updateFolder } from '$lib/stores/folders';
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
 	import { words, removeWord, moveWordsToFolder } from '$lib/stores/words';
-	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection } from '$lib/stores/studySession';
+	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, studyReturnContext } from '$lib/stores/studySession';
+	import { randomCardOrder, listDisplayLang } from '$lib/stores/settings';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import FolderModal from '$lib/components/FolderModal.svelte';
 	import WordSelectionModal from '$lib/components/WordSelectionModal.svelte';
 	import ConfirmationModal from '$lib/components/ConfirmationModal.svelte';
@@ -21,6 +24,26 @@
 
 	let folderId = $derived($page.params.id as string);
 	let isProtected = $derived(folderId === MY_WORDS_FOLDER_ID);
+
+	// ---- Word highlight (from ?highlight=wordId param) ----
+	let highlightWordId = $state<string | null>(null);
+
+	afterNavigate(async () => {
+		const target = $page.url.searchParams.get('highlight');
+		if (target) {
+			highlightWordId = target;
+			await tick();
+			const el = document.getElementById(`word-${target}`);
+			if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			setTimeout(() => { highlightWordId = null; }, 2000);
+		}
+
+		const ctx = get(studyReturnContext);
+		if (ctx && ctx.folderId === folderId) {
+			studyReturnContext.set(null);
+			selectMode = true;
+		}
+	});
 	let showFolderModal = $state(false);
 	let showAddWordsModal = $state(false);
 	let showOptionsSheet = $state(false);
@@ -196,7 +219,9 @@
 	// ---- Study ----
 	function studyAll() {
 		if (allDescendantWordIds.length === 0) return;
-		setSelectedWords(shuffle(allDescendantWordIds));
+		const ids = get(randomCardOrder) ? shuffle(allDescendantWordIds) : allDescendantWordIds;
+		studyReturnContext.set({ href: `/cartelle/${folderId}`, label: 'Torna alla cartella', wordIds: ids, folderId });
+		setSelectedWords(ids);
 		goto('/studia');
 	}
 
@@ -209,8 +234,10 @@
 		}
 		const fromFolders = [...selectedSubfolderIds].flatMap(collect);
 		const fromWords = folderWords.filter(w => sel.has(w.id)).map(w => w.id);
-		const ids = shuffle([...new Set([...fromFolders, ...fromWords])]);
+		let ids = [...new Set([...fromFolders, ...fromWords])];
 		if (ids.length === 0) return;
+		if (get(randomCardOrder)) ids = shuffle(ids);
+		studyReturnContext.set({ href: `/cartelle/${folderId}`, label: 'Torna alla cartella', wordIds: ids, folderId });
 		setSelectedWords(ids);
 		goto('/studia');
 	}
@@ -250,20 +277,77 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader
-		title={folder?.name ?? 'Cartella'}
-		backHref={folder?.parentId ? `/cartelle/${folder.parentId}` : "/cartelle"}
-	>
-		{#snippet actions()}
-			<button class="header-action-btn" onclick={openOptions} aria-label="Opzioni cartella">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<circle cx="12" cy="5" r="1" fill="currentColor" stroke="none" />
-					<circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
-					<circle cx="12" cy="19" r="1" fill="currentColor" stroke="none" />
-				</svg>
-			</button>
-		{/snippet}
-	</PageHeader>
+	<div class="sticky-header">
+		<PageHeader
+			title={folder?.name ?? 'Cartella'}
+			backHref={folder?.parentId ? `/cartelle/${folder.parentId}` : "/cartelle"}
+		>
+			{#snippet actions()}
+				<button class="header-action-btn" onclick={openOptions} aria-label="Opzioni cartella">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<circle cx="12" cy="5" r="1" fill="currentColor" stroke="none" />
+						<circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+						<circle cx="12" cy="19" r="1" fill="currentColor" stroke="none" />
+					</svg>
+				</button>
+			{/snippet}
+		</PageHeader>
+
+		{#if folder && (subfolders.length > 0 || folderWords.length > 0)}
+			<!-- ① Search — always at top -->
+			<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle e parole..." />
+
+			<!-- ② Controls bar: count + Seleziona/Fine -->
+			<div class="controls-bar">
+				<span class="count-label">{countLabel}</span>
+				<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
+					{selectMode ? 'Fine' : 'Seleziona'}
+				</button>
+			</div>
+
+			<!-- ③ Action row — always visible -->
+			{#if selectMode && totalSelected > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={studySelected} disabled={selectedWordCount === 0}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia {selectedWordCount > 0 ? selectedWordCount : ''} {selectedWordCount === 1 ? 'parola' : selectedWordCount > 1 ? 'parole' : ''}
+					</button>
+					{#if selectedInFolder > 0}
+						<button class="action-pill" onclick={openMoveSheet}>Sposta</button>
+						<button class="action-pill danger" onclick={confirmDeleteSelected}>Elimina</button>
+					{/if}
+					<button class="action-pill muted" onclick={() => { clearSelection(); selectedSubfolderIds = new Set(); }}>Deseleziona</button>
+				</div>
+			{:else if allDescendantWordIds.length > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={studyAll}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia tutto ({allDescendantWordIds.length})
+					</button>
+				</div>
+			{/if}
+
+			<!-- ④ Sort/reorder + random pills -->
+			<div class="sort-row">
+				{#if subfolders.length > 1 && !selectMode && !reorderSubfoldersMode}
+					<button class="sort-btn" onclick={enterSubfolderReorder}>Riordina</button>
+				{/if}
+				{#if reorderSubfoldersMode}
+					<button class="sort-btn reorder-active" onclick={exitSubfolderReorder}>Fine</button>
+					{#if $folderOrder[folderId]}
+						<button class="sort-btn" onclick={resetSubfolderOrder}>Reimposta</button>
+					{/if}
+				{/if}
+				{#if folderWords.length > 0 || subfolders.length > 0}
+					<button class="sort-btn" onclick={cycleWordSort}>
+						<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+						{wordSortLabels[wordSortMode]}
+					</button>
+				{/if}
+				<StudyRandomPills />
+			</div>
+		{/if}
+	</div>
 
 	{#if !folder}
 		<div class="empty-state">
@@ -282,58 +366,6 @@
 		</div>
 
 	{:else}
-		<!-- ① Search — always at top -->
-		<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle e parole..." />
-
-		<!-- ② Controls bar: count + Seleziona/Fine -->
-		<div class="controls-bar">
-			<span class="count-label">{countLabel}</span>
-			<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
-				{selectMode ? 'Fine' : 'Seleziona'}
-			</button>
-		</div>
-
-		<!-- ③ Action row — always visible -->
-		{#if selectMode && totalSelected > 0}
-			<div class="action-row">
-				<button class="study-btn" onclick={studySelected} disabled={selectedWordCount === 0}>
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-					Studia {selectedWordCount > 0 ? selectedWordCount : ''} {selectedWordCount === 1 ? 'parola' : selectedWordCount > 1 ? 'parole' : ''}
-				</button>
-				{#if selectedInFolder > 0}
-					<button class="action-pill" onclick={openMoveSheet}>Sposta</button>
-					<button class="action-pill danger" onclick={confirmDeleteSelected}>Elimina</button>
-				{/if}
-				<button class="action-pill muted" onclick={() => { clearSelection(); selectedSubfolderIds = new Set(); }}>Deseleziona</button>
-			</div>
-		{:else if allDescendantWordIds.length > 0}
-			<div class="action-row">
-				<button class="study-btn" onclick={studyAll}>
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-					Studia tutto ({allDescendantWordIds.length})
-				</button>
-			</div>
-		{/if}
-
-		<!-- ④ Sort/reorder controls -->
-		<div class="sort-row">
-			{#if subfolders.length > 1 && !selectMode && !reorderSubfoldersMode}
-				<button class="sort-btn" onclick={enterSubfolderReorder}>Riordina</button>
-			{/if}
-			{#if reorderSubfoldersMode}
-				<button class="sort-btn reorder-active" onclick={exitSubfolderReorder}>Fine</button>
-				{#if $folderOrder[folderId]}
-					<button class="sort-btn" onclick={resetSubfolderOrder}>Reimposta</button>
-				{/if}
-			{/if}
-			{#if folderWords.length > 0 || subfolders.length > 0}
-				<button class="sort-btn" onclick={cycleWordSort}>
-					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
-					{wordSortLabels[wordSortMode]}
-				</button>
-			{/if}
-		</div>
-
 		<!-- ⑤ Subfolders -->
 		{#if filteredSubfolders.length > 0}
 			<div class="item-list">
@@ -393,6 +425,7 @@
 							role="checkbox"
 							ariaChecked={$selectedWordIds.has(word.id)}
 							onclick={() => toggleWordSelection(word.id)}
+						displayLang={$listDisplayLang}
 						>
 							{#snippet leading()}
 								<div class="item-checkbox" class:checked={$selectedWordIds.has(word.id)}>
@@ -401,7 +434,9 @@
 							{/snippet}
 						</WordRow>
 					{:else}
-						<WordRow {word} href="/parole/{word.id}?from=/cartelle/{folderId}" />
+						<div id="word-{word.id}" class:word-highlight={highlightWordId === word.id}>
+							<WordRow {word} href="/parole/{word.id}?from=/cartelle/{folderId}" displayLang={$listDisplayLang} />
+						</div>
 					{/if}
 				{/each}
 			</div>
@@ -646,6 +681,15 @@
 		margin-bottom: 0.5rem;
 	}
 
+	@keyframes word-flash {
+		0%   { background: color-mix(in srgb, var(--color-primary) 18%, transparent); border-radius: var(--radius-md); }
+		100% { background: transparent; }
+	}
+
+	.word-highlight {
+		animation: word-flash 2s ease-out forwards;
+	}
+
 	.folder-item {
 		display: flex;
 		align-items: center;
@@ -761,7 +805,7 @@
 	.reorder-btn:not(:disabled):active { background: var(--color-border); }
 
 	/* ---- FAB ---- */
-	.fab-container { position: fixed; bottom: 2rem; right: var(--spacing-page); z-index: 50; }
+	.fab-container { position: fixed; bottom: calc(var(--bottom-nav-height) + 1rem); right: var(--spacing-page); z-index: 50; }
 
 	.fab {
 		display: flex;

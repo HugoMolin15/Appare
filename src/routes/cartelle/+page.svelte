@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { get } from 'svelte/store';
-	import { goto } from '$app/navigation';
+	import { goto, afterNavigate } from '$app/navigation';
 	import { folders } from '$lib/stores/folders';
 	import { words } from '$lib/stores/words';
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
-	import { setSelectedWords } from '$lib/stores/studySession';
+	import { setSelectedWords, studyReturnContext } from '$lib/stores/studySession';
 	import { shuffle } from '$lib/utils/shuffle';
+	import { randomCardOrder } from '$lib/stores/settings';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import FolderModal from '$lib/components/FolderModal.svelte';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
@@ -18,6 +20,16 @@
 	let selectMode = $state(false);
 	let selectedFolderIds = $state(new Set<string>());
 	let searchQuery = $state('');
+
+	// Restore selection from study-return context if we're returning from /studia.
+	afterNavigate(() => {
+		const ctx = get(studyReturnContext);
+		if (ctx?.href === '/cartelle' && Array.isArray(ctx.folderIds) && ctx.folderIds.length > 0) {
+			selectMode = true;
+			selectedFolderIds = new Set(ctx.folderIds);
+			studyReturnContext.set(null);
+		}
+	});
 
 	type FolderSort = 'newest' | 'oldest' | 'name-az';
 	let folderSortMode = $state<FolderSort>('newest');
@@ -94,8 +106,10 @@
 	});
 
 	function studyAll() {
-		const ids = shuffle(get(words).map(w => w.id));
+		let ids = get(words).map(w => w.id);
 		if (ids.length === 0) return;
+		if (get(randomCardOrder)) ids = shuffle(ids);
+		studyReturnContext.set({ href: '/cartelle', label: 'Torna alle cartelle', wordIds: ids });
 		setSelectedWords(ids);
 		goto('/studia');
 	}
@@ -107,8 +121,15 @@
 			const subs = fs.filter(f => f.parentId === folderId).map(f => f.id);
 			return [...direct, ...subs.flatMap(collect)];
 		}
-		const ids = shuffle([...new Set(Array.from(selectedFolderIds).flatMap(collect))]);
+		let ids = [...new Set(Array.from(selectedFolderIds).flatMap(collect))];
 		if (ids.length === 0) return;
+		if (get(randomCardOrder)) ids = shuffle(ids);
+		studyReturnContext.set({
+			href: '/cartelle',
+			label: 'Torna alle cartelle',
+			wordIds: ids,
+			folderIds: Array.from(selectedFolderIds)
+		});
 		setSelectedWords(ids);
 		goto('/studia');
 	}
@@ -119,7 +140,62 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader title="Cartelle" hideBackOnDesktop />
+	<div class="sticky-header">
+		<PageHeader title="Cartelle" hideBackOnDesktop />
+
+		{#if allFolderCount > 0}
+			<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle..." />
+
+			<!-- ② Controls bar -->
+			<div class="controls-bar">
+				<span class="count-label">{allFolderCount} {allFolderCount === 1 ? 'cartella' : 'cartelle'} · {totalWordCount} parole</span>
+				<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
+					{selectMode ? 'Fine' : 'Seleziona'}
+				</button>
+			</div>
+
+			<!-- ③ Action row — always visible -->
+			{#if selectMode && selectedFolderIds.size > 0}
+				<div class="action-row">
+					<button class="study-btn" onclick={studySelected} disabled={selectedWordCount === 0}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia {selectedFolderIds.size} {selectedFolderIds.size === 1 ? 'cartella' : 'cartelle'} ({selectedWordCount})
+					</button>
+					<button class="action-pill muted" onclick={() => selectedFolderIds = new Set()}>Deseleziona</button>
+				</div>
+			{:else}
+				<div class="action-row">
+					<button class="study-btn" onclick={studyAll} disabled={totalWordCount === 0}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Studia tutto ({totalWordCount})
+					</button>
+				</div>
+			{/if}
+
+			<!-- ④ Sort / reorder + random pills row -->
+			{#if !selectMode}
+				<div class="sort-row">
+					{#if !reorderMode}
+						<button class="sort-btn" onclick={cycleFolderSort}>
+						<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+						{folderSortLabels[folderSortMode]}
+					</button>
+					{/if}
+					{#if folderList.length > 1}
+						{#if reorderMode}
+							<button class="sort-btn reorder-active" onclick={exitReorderMode}>Fine</button>
+							{#if $folderOrder['root']}
+								<button class="sort-btn" onclick={resetFolderOrder}>Reimposta</button>
+							{/if}
+						{:else}
+							<button class="sort-btn" onclick={enterReorderMode}>Riordina</button>
+						{/if}
+					{/if}
+					<StudyRandomPills />
+				</div>
+			{/if}
+		{/if}
+	</div>
 
 	{#if allFolderCount === 0}
 		<EmptyState
@@ -128,56 +204,6 @@
 			subtitle="Le cartelle raggruppano le parole per argomento."
 		/>
 	{:else}
-		<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle..." />
-
-		<!-- ② Controls bar -->
-		<div class="controls-bar">
-			<span class="count-label">{allFolderCount} {allFolderCount === 1 ? 'cartella' : 'cartelle'} · {totalWordCount} parole</span>
-			<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
-				{selectMode ? 'Fine' : 'Seleziona'}
-			</button>
-		</div>
-
-		<!-- ③ Action row — always visible -->
-		{#if selectMode && selectedFolderIds.size > 0}
-			<div class="action-row">
-				<button class="study-btn" onclick={studySelected} disabled={selectedWordCount === 0}>
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-					Studia {selectedFolderIds.size} {selectedFolderIds.size === 1 ? 'cartella' : 'cartelle'} ({selectedWordCount})
-				</button>
-				<button class="action-pill muted" onclick={() => selectedFolderIds = new Set()}>Deseleziona</button>
-			</div>
-		{:else}
-			<div class="action-row">
-				<button class="study-btn" onclick={studyAll} disabled={totalWordCount === 0}>
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-					Studia tutto ({totalWordCount})
-				</button>
-			</div>
-		{/if}
-
-		<!-- ④ Sort / reorder row -->
-		{#if !selectMode}
-			<div class="sort-row">
-				{#if !reorderMode}
-					<button class="sort-btn" onclick={cycleFolderSort}>
-					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
-					{folderSortLabels[folderSortMode]}
-				</button>
-				{/if}
-				{#if folderList.length > 1}
-					{#if reorderMode}
-						<button class="sort-btn reorder-active" onclick={exitReorderMode}>Fine</button>
-						{#if $folderOrder['root']}
-							<button class="sort-btn" onclick={resetFolderOrder}>Reimposta</button>
-						{/if}
-					{:else}
-						<button class="sort-btn" onclick={enterReorderMode}>Riordina</button>
-					{/if}
-				{/if}
-			</div>
-		{/if}
-
 		<!-- ⑤ Folder list -->
 		<div class="folder-list">
 			<!-- "Le mie parole" pinned folder -->
@@ -458,7 +484,7 @@
 	}
 
 	/* ---- FAB ---- */
-	.fab-container { position: fixed; bottom: 2rem; right: var(--spacing-page); z-index: 50; }
+	.fab-container { position: fixed; bottom: calc(var(--bottom-nav-height) + 1rem); right: var(--spacing-page); z-index: 50; }
 
 	.fab {
 		display: flex; align-items: center; gap: 0.5rem; padding: 0.875rem 1.5rem;

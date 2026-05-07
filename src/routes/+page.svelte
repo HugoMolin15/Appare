@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { wordCount } from '$lib/stores/words';
 	import { folderCount } from '$lib/stores/folders';
 	import Heatmap from '$lib/components/Heatmap.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+
+	let heatmapExpanded = $state(false);
 </script>
 
 <svelte:head>
@@ -19,41 +20,28 @@
 				<span class="header-subtitle">Scuola di lingua Giapponese<br>di Tomoko Yamane</span>
 			</div>
 		</div>
-		<a href="/impostazioni" class="settings-btn" aria-label="Impostazioni">
-			<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-				<path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 000 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 002.28-.819l.923-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 000-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 00-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 00-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 00-1.85-1.567h-1.843zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" clip-rule="evenodd" />
-			</svg>
-		</a>
 	</header>
 
 	<!-- Study Section (Heatmap will go here) -->
 	<section class="daily-section">
-		<h1 class="daily-title">I tuoi progressi</h1>
-		
-		<Heatmap />
+		<div class="daily-title-row">
+			<h1 class="daily-title">I tuoi progressi</h1>
+			<button class="expand-toggle" onclick={() => heatmapExpanded = !heatmapExpanded} aria-label={heatmapExpanded ? 'Comprimi' : 'Espandi calendario'}>
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.25s ease; transform: rotate({heatmapExpanded ? 180 : 0}deg)">
+					<polyline points="6 9 12 15 18 9" />
+				</svg>
+			</button>
+		</div>
+
+		<Heatmap bind:expanded={heatmapExpanded} />
 
 		<a href="/studia/seleziona" class="cta-button" style="margin-top: 1rem;">
 			Inizia a studiare
 		</a>
 	</section>
 
-	<!-- Divider -->
-
 	<!-- Menu List -->
 	<nav class="menu-list hide-desktop">
-		<a href="/parole" class="menu-item">
-			<div class="menu-icon">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-					<path d="M11.25 4.533A9.707 9.707 0 006 3a9.735 9.735 0 00-3.25.555.75.75 0 00-.5.707v14.25a.75.75 0 001 .707A8.237 8.237 0 016 18.75c1.995 0 3.823.707 5.25 1.886V4.533zM12.75 20.636A8.214 8.214 0 0118 18.75c.966 0 1.89.166 2.75.47a.75.75 0 001-.708V4.262a.75.75 0 00-.5-.707A9.735 9.735 0 0018 3a9.707 9.707 0 00-5.25 1.533v16.103z" />
-				</svg>
-			</div>
-			<div class="menu-text">
-				<span class="menu-label">Tutte le parole</span>
-				<span class="menu-count">{$wordCount} parole</span>
-			</div>
-			<Icon name="chevron-right" class="menu-chevron" />
-		</a>
-
 		<a href="/cartelle" class="menu-item">
 			<div class="menu-icon">
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -93,7 +81,7 @@
 <style>
 	.page {
 		padding: var(--spacing-page);
-		padding-bottom: 100px;
+		padding-bottom: calc(var(--bottom-nav-height) + 1rem);
 		min-height: 100dvh;
 		display: flex;
 		flex-direction: column;
@@ -145,28 +133,40 @@
 	}
 
 
-	.settings-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 40px;
-		height: 40px;
-		border-radius: var(--radius-full);
-		color: var(--color-text);
-		text-decoration: none;
-	}
-
 	/* ---- Daily Words ---- */
 	.daily-section {
 		margin-bottom: 1.5rem;
+	}
+
+	.daily-title-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 0.25rem;
 	}
 
 	.daily-title {
 		font-size: 1.75rem;
 		font-weight: 700;
 		letter-spacing: -0.02em;
-		margin: 0 0 0.25rem 0;
+		margin: 0;
 	}
+
+	.expand-toggle {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--color-text-secondary);
+		padding: 0.25rem;
+		border-radius: var(--radius-md);
+		-webkit-tap-highlight-color: transparent;
+		flex-shrink: 0;
+	}
+
+	.expand-toggle:active { opacity: 0.5; }
 
 	.cta-button {
 		display: block;
@@ -183,13 +183,6 @@
 		text-decoration: none;
 		text-align: center;
 		box-sizing: border-box;
-	}
-
-	/* ---- Divider ---- */
-	.divider {
-		height: 1px;
-		background-color: var(--color-border-light);
-		margin: 0.5rem 0 0.75rem 0;
 	}
 
 	/* ---- Menu List ---- */
@@ -250,7 +243,7 @@
 	/* ---- FAB ---- */
 	.fab-container {
 		position: fixed;
-		bottom: 2rem;
+		bottom: calc(var(--bottom-nav-height) + 1rem);
 		right: var(--spacing-page);
 		z-index: 50;
 	}

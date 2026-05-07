@@ -1,13 +1,14 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { Word } from '$lib/types/word';
+	import type { ListDisplayLang } from '$lib/stores/settings';
 	import { wordScores } from '$lib/stores/wordScores';
 
 	const SCORE_COLORS: Record<string, string> = {
 		none: 'var(--color-border)',
-		unknown: '#C5221F',
-		learning: '#D97706',
-		known: '#1D6FA4',
+		unknown: '#EF5350',
+		learning: '#42A5F5',
+		known: '#66BB6A',
 	};
 
 	interface Props {
@@ -19,6 +20,7 @@
 		ariaChecked?: boolean;
 		leading?: Snippet;
 		trailing?: Snippet;
+		displayLang?: ListDisplayLang;
 	}
 
 	let {
@@ -29,17 +31,26 @@
 		role,
 		ariaChecked,
 		leading,
-		trailing
+		trailing,
+		displayLang = 'italiano',
 	}: Props = $props();
 
 	const scoreColor = $derived(SCORE_COLORS[$wordScores[word.id] ?? 'none']);
+
+	let displayText = $derived.by(() => {
+		if (displayLang === 'hiragana') return word.hiragana || word.katakana || word.italiano;
+		if (displayLang === 'romaji')   return word.romaji   || word.italiano;
+		if (displayLang === 'kanji')    return word.kanji    || word.hiragana || word.italiano;
+		return word.italiano;
+	});
+	let displayIsJapanese = $derived(displayLang === 'hiragana' || displayLang === 'kanji');
 </script>
 
 {#if href}
 	<a {href} class="word-row" class:selectable {onclick}>
 		{#if leading}{@render leading()}{/if}
 		<div class="word-main">
-			<span class="word-it">{word.italiano}</span>
+			<span class="word-it" class:font-jp={displayIsJapanese}>{displayText}</span>
 		</div>
 		<div class="word-trailing">
 			{#if word.tags && word.tags.length > 0}
@@ -67,7 +78,7 @@
 	>
 		{#if leading}{@render leading()}{/if}
 		<div class="word-main">
-			<span class="word-it">{word.italiano}</span>
+			<span class="word-it" class:font-jp={displayIsJapanese}>{displayText}</span>
 		</div>
 		<div class="word-trailing">
 			{#if word.tags && word.tags.length > 0}
@@ -123,8 +134,8 @@
 	}
 
 	.word-score-dot {
-		width: 8px;
-		height: 8px;
+		width: 11px;
+		height: 11px;
 		border-radius: 50%;
 		flex-shrink: 0;
 	}

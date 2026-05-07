@@ -24,9 +24,9 @@
 
 	const COLORS: Record<WordScore, string> = {
 		none: 'var(--color-border)',
-		unknown: '#C5221F',
-		learning: '#D97706',
-		known: '#1D6FA4',
+		unknown: '#EF5350',
+		learning: '#42A5F5',
+		known: '#66BB6A',
 	};
 </script>
 
@@ -92,8 +92,8 @@
 	}
 
 	.score-chip-dot {
-		width: 7px;
-		height: 7px;
+		width: 9px;
+		height: 9px;
 		border-radius: 50%;
 		flex-shrink: 0;
 	}

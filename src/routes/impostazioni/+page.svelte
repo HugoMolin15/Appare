@@ -1,10 +1,23 @@
 <script lang="ts">
-	import { studyGoal, appFontScale, cardLayout, randomCardOrder } from '$lib/stores/settings';
-	import type { CardField } from '$lib/types/word';
+	import { studyGoal, appFontScale, cardLayout, randomCardOrder, randomWordOrder, fontSizeItaliano, fontSizeHiragana, fontSizeRomaji, fontSizeKanji } from '$lib/stores/settings';
+	import type { CardField, Word } from '$lib/types/word';
 	import { manualWordCount } from '$lib/stores/words';
 	import { currentUser, signOut } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import Flashcard from '$lib/components/Flashcard.svelte';
+
+	const previewWord: Word = {
+		id: 'preview',
+		italiano: 'grande',
+		hiragana: 'おおきい',
+		katakana: 'オオキイ',
+		romaji: 'ōkii',
+		kanji: '大きい',
+		category: 'Aggettivo I',
+		wordType: 'word',
+		createdAt: 0,
+	};
 
 	async function handleSignOut() {
 		await signOut();
@@ -18,6 +31,20 @@
 		appFontScale.set(Number(target.value));
 	}
 
+	// Per-field flashcard font sliders (0.5–5 rem range)
+	const FS_MIN = 0.5, FS_MAX = 5;
+	function fsProgress(v: number) { return Math.round(((v - FS_MIN) / (FS_MAX - FS_MIN)) * 100); }
+	let fsProgressIt  = $derived(fsProgress($fontSizeItaliano));
+	let fsProgressHi  = $derived(fsProgress($fontSizeHiragana));
+	let fsProgressRo  = $derived(fsProgress($fontSizeRomaji));
+	let fsProgressKa  = $derived(fsProgress($fontSizeKanji));
+
+	function handleFsInput(store: { set: (v: number) => void }, e: Event) {
+		store.set(Number((e.target as HTMLInputElement).value));
+	}
+
+	const FS_DEFAULTS = { italiano: 3.0, hiragana: 3.0, romaji: 2.5, kanji: 3.0 };
+
 	function handleGoalInput(e: Event) {
 		const target = e.target as HTMLInputElement;
 		let value = Number(target.value);
@@ -26,7 +53,7 @@
 		studyGoal.set(value);
 	}
 
-	const ALL_FIELDS: CardField[] = ['italiano', 'hiragana', 'katakana', 'romaji', 'kanji'];
+	const SINGLE_FIELDS: CardField[] = ['italiano', 'romaji', 'kanji'];
 	const FIELD_LABELS: Record<CardField, string> = {
 		italiano: 'Italiano',
 		hiragana: 'Hiragana',
@@ -34,6 +61,40 @@
 		romaji: 'Romaji',
 		kanji: 'Kanji',
 	};
+
+	// ---- Drag state ----
+	let draggingIdx: number | null = $state(null);
+	let dropTargetIdx: number | null = $state(null);
+
+	function onDragStart(e: DragEvent, ci: number) {
+		draggingIdx = ci;
+		if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+	}
+
+	function onDragOver(e: DragEvent, ci: number) {
+		e.preventDefault();
+		if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+		dropTargetIdx = ci;
+	}
+
+	function onDrop(e: DragEvent, ci: number) {
+		e.preventDefault();
+		if (draggingIdx === null || draggingIdx === ci) { draggingIdx = null; dropTargetIdx = null; return; }
+		const from = draggingIdx;
+		cardLayout.update(l => {
+			const next = [...l];
+			const [item] = next.splice(from, 1);
+			next.splice(ci, 0, item);
+			return next;
+		});
+		draggingIdx = null;
+		dropTargetIdx = null;
+	}
+
+	function onDragEnd() {
+		draggingIdx = null;
+		dropTargetIdx = null;
+	}
 
 	// ---- Card layout helpers ----
 	function addCard() {
@@ -47,24 +108,6 @@
 		});
 	}
 
-	function moveCardUp(i: number) {
-		cardLayout.update(l => {
-			if (i === 0) return l;
-			const next = [...l];
-			[next[i - 1], next[i]] = [next[i], next[i - 1]];
-			return next;
-		});
-	}
-
-	function moveCardDown(i: number) {
-		cardLayout.update(l => {
-			if (i === l.length - 1) return l;
-			const next = [...l];
-			[next[i], next[i + 1]] = [next[i + 1], next[i]];
-			return next;
-		});
-	}
-
 	function addFieldToCard(cardIdx: number, field: CardField) {
 		cardLayout.update(l => {
 			const next = l.map((c, i) =>
@@ -74,13 +117,33 @@
 		});
 	}
 
+	function addKanaToCard(cardIdx: number) {
+		cardLayout.update(l => l.map((c, i) => {
+			if (i !== cardIdx) return c;
+			const fields = [...c.fields];
+			if (!fields.includes('hiragana')) fields.push('hiragana');
+			if (!fields.includes('katakana')) fields.push('katakana');
+			return { fields };
+		}));
+	}
+
 	function removeFieldFromCard(cardIdx: number, fieldIdx: number) {
 		cardLayout.update(l => {
 			const card = l[cardIdx];
 			const newFields = card.fields.filter((_, i) => i !== fieldIdx);
 			if (newFields.length === 0) {
-				// Remove the whole card if it becomes empty
-				if (l.length <= 1) return l; // keep at least one card
+				if (l.length <= 1) return l;
+				return l.filter((_, i) => i !== cardIdx);
+			}
+			return l.map((c, i) => i === cardIdx ? { fields: newFields } : c);
+		});
+	}
+
+	function removeKanaFromCard(cardIdx: number) {
+		cardLayout.update(l => {
+			const newFields = l[cardIdx].fields.filter(f => f !== 'hiragana' && f !== 'katakana');
+			if (newFields.length === 0) {
+				if (l.length <= 1) return l;
 				return l.filter((_, i) => i !== cardIdx);
 			}
 			return l.map((c, i) => i === cardIdx ? { fields: newFields } : c);
@@ -93,7 +156,7 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader title="Impostazioni" />
+	<PageHeader title="Impostazioni" hideBack />
 
 	<!-- Account / Login -->
 	{#if $currentUser}
@@ -122,7 +185,23 @@
 		<h2 class="section-heading">Struttura flashcard</h2>
 		<p class="section-subtitle">Definisci le carte che appaiono durante lo studio. Ogni carta può mostrare uno o più campi.</p>
 
-		<!-- Random order toggle -->
+		<!-- Random word order toggle -->
+		<div class="order-toggle" onclick={() => randomWordOrder.set(!$randomWordOrder)} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && randomWordOrder.set(!$randomWordOrder)}>
+			<div class="order-toggle-left">
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="16 3 21 3 21 8" />
+					<line x1="4" y1="20" x2="21" y2="3" />
+					<polyline points="21 16 21 21 16 21" />
+					<line x1="15" y1="15" x2="21" y2="21" />
+				</svg>
+				<span class="order-toggle-label">Ordine casuale delle parole</span>
+			</div>
+			<div class="toggle-switch" class:on={$randomWordOrder}>
+				<div class="toggle-thumb"></div>
+			</div>
+		</div>
+
+		<!-- Random card order toggle -->
 		<div class="order-toggle" onclick={() => randomCardOrder.set(!$randomCardOrder)} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && randomCardOrder.set(!$randomCardOrder)}>
 			<div class="order-toggle-left">
 				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -139,51 +218,74 @@
 		</div>
 
 		<!-- Card builder -->
-		<div class="card-builder">
+		<div class="card-builder" role="list">
 			{#each $cardLayout as card, ci}
-				<div class="builder-card">
+				<div
+					class="builder-card"
+					class:dragging={draggingIdx === ci}
+					class:drag-over={dropTargetIdx === ci && draggingIdx !== ci}
+					draggable="true"
+					role="listitem"
+					ondragstart={(e) => onDragStart(e, ci)}
+					ondragover={(e) => onDragOver(e, ci)}
+					ondrop={(e) => onDrop(e, ci)}
+					ondragend={onDragEnd}
+				>
 					<!-- Card header -->
 					<div class="builder-card-header">
-						<span class="builder-card-title">Carta {ci + 1}</span>
-						<div class="builder-card-actions">
-							<button class="arrow-btn" onclick={() => moveCardUp(ci)} disabled={ci === 0} aria-label="Sposta su">
+						<div class="builder-card-header-left">
+							<span class="drag-handle" aria-label="Trascina per riordinare">
 								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-									<polyline points="18 15 12 9 6 15" />
+									<line x1="4" y1="7" x2="20" y2="7" />
+									<line x1="4" y1="12" x2="20" y2="12" />
+									<line x1="4" y1="17" x2="20" y2="17" />
 								</svg>
-							</button>
-							<button class="arrow-btn" onclick={() => moveCardDown(ci)} disabled={ci === $cardLayout.length - 1} aria-label="Sposta giù">
-								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-									<polyline points="6 9 12 15 18 9" />
-								</svg>
-							</button>
-							{#if $cardLayout.length > 1}
-								<button class="remove-card-btn" onclick={() => removeCard(ci)} aria-label="Rimuovi carta">
-									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-										<line x1="18" y1="6" x2="6" y2="18" />
-										<line x1="6" y1="6" x2="18" y2="18" />
-									</svg>
-								</button>
-							{/if}
+							</span>
+							<span class="builder-card-title">Carta {ci + 1}</span>
 						</div>
-					</div>
-
-					<!-- Fields on this card -->
-					{#each card.fields as field, fi}
-						<div class="builder-field-row">
-							<span class="builder-field-dot"></span>
-							<span class="builder-field-label">{FIELD_LABELS[field]}</span>
-							<button class="remove-field-btn" onclick={() => removeFieldFromCard(ci, fi)} aria-label="Rimuovi campo">
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						{#if $cardLayout.length > 1}
+							<button class="remove-card-btn" onclick={() => removeCard(ci)} aria-label="Rimuovi carta">
+								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 									<line x1="18" y1="6" x2="6" y2="18" />
 									<line x1="6" y1="6" x2="18" y2="18" />
 								</svg>
 							</button>
-						</div>
+						{/if}
+					</div>
+
+					<!-- Fields on this card -->
+					{#each card.fields as field, fi}
+						{#if field === 'katakana' && card.fields.includes('hiragana')}
+							<!-- skip: shown together with hiragana -->
+						{:else}
+							<div class="builder-field-row">
+								<span class="builder-field-dot"></span>
+								<span class="builder-field-label">
+									{field === 'hiragana' && card.fields.includes('katakana') ? 'Hiragana / Katakana' : FIELD_LABELS[field]}
+								</span>
+								<button
+									class="remove-field-btn"
+									onclick={() => {
+										if (field === 'hiragana' && card.fields.includes('katakana')) {
+											removeKanaFromCard(ci);
+										} else {
+											removeFieldFromCard(ci, fi);
+										}
+									}}
+									aria-label="Rimuovi campo"
+								>
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+										<line x1="18" y1="6" x2="6" y2="18" />
+										<line x1="6" y1="6" x2="18" y2="18" />
+									</svg>
+								</button>
+							</div>
+						{/if}
 					{/each}
 
 					<!-- Add field chips -->
 					<div class="builder-add-field-row">
-						{#each ALL_FIELDS as f}
+						{#each SINGLE_FIELDS as f}
 							<button
 								class="field-chip"
 								class:disabled={card.fields.includes(f)}
@@ -193,6 +295,14 @@
 								+ {FIELD_LABELS[f]}
 							</button>
 						{/each}
+						<button
+							class="field-chip"
+							class:disabled={card.fields.includes('hiragana') && card.fields.includes('katakana')}
+							onclick={() => { if (!(card.fields.includes('hiragana') && card.fields.includes('katakana'))) addKanaToCard(ci); }}
+							disabled={card.fields.includes('hiragana') && card.fields.includes('katakana')}
+						>
+							+ Hiragana / Katakana
+						</button>
 					</div>
 				</div>
 			{/each}
@@ -216,12 +326,8 @@
 		<h2 class="section-heading">Dimensione testo</h2>
 		<p class="section-subtitle">Regola la dimensione di tutto il testo nell'app.</p>
 
-		<div class="preview-card">
-			<div class="preview-inner">
-				<span class="preview-label" style="font-size: {$appFontScale * 0.01 * 0.82}rem; color: var(--color-text-secondary);">Tutte le parole</span>
-				<span class="preview-title" style="font-size: {$appFontScale * 0.01 * 1.75}rem;">I miei progressi</span>
-				<span class="preview-jp font-jp" style="font-size: {$appFontScale * 0.01 * 3}rem; color: var(--color-primary);">大きい</span>
-			</div>
+		<div class="card-preview-wrap">
+			<Flashcard word={previewWord} />
 		</div>
 
 		<div class="slider-row">
@@ -251,6 +357,101 @@
 	<!-- Divider -->
 	<div class="divider"></div>
 
+	<!-- Per-field flashcard font sizes -->
+	<section class="section">
+		<h2 class="section-heading">Dimensione testo carte</h2>
+		<p class="section-subtitle">Regola la dimensione del testo per ogni campo nelle flashcard.</p>
+
+		<div class="fs-field-list">
+			<!-- Italiano -->
+			<div class="fs-field-row">
+				<span class="fs-field-label">Italiano</span>
+				<div class="fs-slider-wrap">
+					<span class="slider-label-sm">A</span>
+					<div class="slider-container">
+						<input type="range" min={FS_MIN} max={FS_MAX} step="0.1"
+							value={$fontSizeItaliano}
+							oninput={(e) => handleFsInput(fontSizeItaliano, e)}
+							class="font-slider"
+							style="--progress: {fsProgressIt}%"
+						/>
+					</div>
+					<span class="slider-label-lg">A</span>
+					<span class="fs-value">{$fontSizeItaliano.toFixed(1)}</span>
+				</div>
+				{#if $fontSizeItaliano !== FS_DEFAULTS.italiano}
+					<button class="reset-btn" onclick={() => fontSizeItaliano.set(FS_DEFAULTS.italiano)}>Ripristina</button>
+				{/if}
+			</div>
+
+			<!-- Hiragana / Katakana -->
+			<div class="fs-field-row">
+				<span class="fs-field-label">Hiragana / Katakana</span>
+				<div class="fs-slider-wrap">
+					<span class="slider-label-sm font-jp">あ</span>
+					<div class="slider-container">
+						<input type="range" min={FS_MIN} max={FS_MAX} step="0.1"
+							value={$fontSizeHiragana}
+							oninput={(e) => handleFsInput(fontSizeHiragana, e)}
+							class="font-slider"
+							style="--progress: {fsProgressHi}%"
+						/>
+					</div>
+					<span class="slider-label-lg font-jp">あ</span>
+					<span class="fs-value">{$fontSizeHiragana.toFixed(1)}</span>
+				</div>
+				{#if $fontSizeHiragana !== FS_DEFAULTS.hiragana}
+					<button class="reset-btn" onclick={() => fontSizeHiragana.set(FS_DEFAULTS.hiragana)}>Ripristina</button>
+				{/if}
+			</div>
+
+			<!-- Romaji -->
+			<div class="fs-field-row">
+				<span class="fs-field-label">Romaji</span>
+				<div class="fs-slider-wrap">
+					<span class="slider-label-sm">A</span>
+					<div class="slider-container">
+						<input type="range" min={FS_MIN} max={FS_MAX} step="0.1"
+							value={$fontSizeRomaji}
+							oninput={(e) => handleFsInput(fontSizeRomaji, e)}
+							class="font-slider"
+							style="--progress: {fsProgressRo}%"
+						/>
+					</div>
+					<span class="slider-label-lg">A</span>
+					<span class="fs-value">{$fontSizeRomaji.toFixed(1)}</span>
+				</div>
+				{#if $fontSizeRomaji !== FS_DEFAULTS.romaji}
+					<button class="reset-btn" onclick={() => fontSizeRomaji.set(FS_DEFAULTS.romaji)}>Ripristina</button>
+				{/if}
+			</div>
+
+			<!-- Kanji -->
+			<div class="fs-field-row">
+				<span class="fs-field-label">Kanji</span>
+				<div class="fs-slider-wrap">
+					<span class="slider-label-sm font-jp">字</span>
+					<div class="slider-container">
+						<input type="range" min={FS_MIN} max={FS_MAX} step="0.1"
+							value={$fontSizeKanji}
+							oninput={(e) => handleFsInput(fontSizeKanji, e)}
+							class="font-slider"
+							style="--progress: {fsProgressKa}%"
+						/>
+					</div>
+					<span class="slider-label-lg font-jp">字</span>
+					<span class="fs-value">{$fontSizeKanji.toFixed(1)}</span>
+				</div>
+				{#if $fontSizeKanji !== FS_DEFAULTS.kanji}
+					<button class="reset-btn" onclick={() => fontSizeKanji.set(FS_DEFAULTS.kanji)}>Ripristina</button>
+				{/if}
+			</div>
+		</div>
+	</section>
+
+	<!-- Divider -->
+	<div class="divider"></div>
+
 	<!-- Study Goal Section -->
 	<section class="section">
 		<h2 class="section-heading">Obiettivo di studio</h2>
@@ -270,23 +471,23 @@
 
 		<div class="intensity-legend">
 			<div class="legend-item">
-				<div class="legend-color intensity-0"></div>
+				<img src="/heatmap-1.png" alt="0 parole" class="legend-img" />
 				<span class="legend-text">0</span>
 			</div>
 			<div class="legend-item">
-				<div class="legend-color intensity-1"></div>
-				<span class="legend-text">1-{Math.max(1, Math.floor($studyGoal * 0.5) - 1)}</span>
+				<img src="/heatmap-2.png" alt="basso" class="legend-img" />
+				<span class="legend-text">1–{Math.max(1, Math.floor($studyGoal * 0.5) - 1)}</span>
 			</div>
 			<div class="legend-item">
-				<div class="legend-color intensity-2"></div>
+				<img src="/heatmap-3.png" alt="medio" class="legend-img" />
 				<span class="legend-text">{Math.floor($studyGoal * 0.5)}+</span>
 			</div>
 			<div class="legend-item">
-				<div class="legend-color intensity-3"></div>
+				<img src="/heatmap-4.png" alt="alto" class="legend-img" />
 				<span class="legend-text">{Math.floor($studyGoal * 0.75)}+</span>
 			</div>
 			<div class="legend-item">
-				<div class="legend-color intensity-4"></div>
+				<img src="/heatmap-5.png" alt="obiettivo" class="legend-img" />
 				<span class="legend-text">{$studyGoal}+</span>
 			</div>
 		</div>
@@ -406,11 +607,10 @@
 		flex: 1;
 	}
 
-	.legend-color {
-		width: 100%;
-		height: 10px;
-		border-radius: 4px;
-		border: 1px solid var(--color-border);
+	.legend-img {
+		width: 36px;
+		height: 36px;
+		object-fit: contain;
 	}
 
 	.legend-text {
@@ -426,40 +626,14 @@
 		margin: 0.5rem 0 1.5rem 0;
 	}
 
-	/* ---- Preview Card ---- */
-	.preview-card {
+	/* ---- Card Preview ---- */
+	.card-preview-wrap {
 		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 1.5rem 1rem;
+		flex-direction: column;
 		background-color: var(--color-surface);
 		border-radius: var(--radius-xl);
 		margin-bottom: 1rem;
-		min-height: 100px;
-	}
-
-	.preview-inner {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.15rem;
-		user-select: none;
-	}
-
-	.preview-label {
-		font-weight: 600;
-		color: var(--color-text-secondary);
-		line-height: 1.2;
-	}
-
-	.preview-title {
-		font-weight: 700;
-		line-height: 1.2;
-	}
-
-	.preview-jp {
-		font-weight: 700;
-		line-height: 1.2;
+		min-height: 200px;
 	}
 
 	/* ---- Slider ---- */
@@ -541,6 +715,39 @@
 		cursor: pointer;
 	}
 
+	/* ---- Per-field font size sliders ---- */
+	.fs-field-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+	}
+
+	.fs-field-row {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+
+	.fs-field-label {
+		font-size: 0.82rem;
+		font-weight: 700;
+		color: var(--color-text-secondary);
+	}
+
+	.fs-slider-wrap {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.fs-value {
+		font-size: 0.78rem;
+		font-weight: 600;
+		color: var(--color-text-tertiary);
+		min-width: 2.5rem;
+		text-align: right;
+	}
+
 	/* ---- Card Layout / Toggle ---- */
 	.order-toggle {
 		display: flex;
@@ -611,11 +818,42 @@
 		padding: 0.75rem 1rem;
 	}
 
+	.builder-card {
+		transition: opacity 0.15s ease, border-color 0.15s ease;
+	}
+
+	.builder-card.dragging {
+		opacity: 0.4;
+		cursor: grabbing;
+	}
+
+	.builder-card.drag-over {
+		border-color: var(--color-primary);
+	}
+
 	.builder-card-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		margin-bottom: 0.5rem;
+	}
+
+	.builder-card-header-left {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.drag-handle {
+		display: flex;
+		align-items: center;
+		color: var(--color-text-tertiary);
+		cursor: grab;
+		padding: 0.2rem;
+	}
+
+	.drag-handle:active {
+		cursor: grabbing;
 	}
 
 	.builder-card-title {
@@ -624,29 +862,6 @@
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
 		color: var(--color-text-secondary);
-	}
-
-	.builder-card-actions {
-		display: flex;
-		align-items: center;
-		gap: 0.15rem;
-	}
-
-	.arrow-btn {
-		background: none;
-		border: none;
-		padding: 0.3rem;
-		cursor: pointer;
-		color: var(--color-text-secondary);
-		border-radius: var(--radius-md);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.arrow-btn:disabled {
-		opacity: 0.25;
-		cursor: default;
 	}
 
 	.remove-card-btn {

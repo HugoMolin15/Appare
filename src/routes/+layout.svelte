@@ -5,9 +5,11 @@
 	import { pullFromSupabase } from '$lib/services/sync';
 	import { supabaseReady } from '$lib/supabase';
 	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
+	import { beforeNavigate, afterNavigate } from '$app/navigation';
 	import { ensureSeeded } from '$lib/stores/words';
 	import { appFontScale } from '$lib/stores/settings';
+	import BottomNav from '$lib/components/BottomNav.svelte';
 
 	$effect(() => {
 		if (!browser) return;
@@ -17,6 +19,29 @@
 	let { children } = $props();
 	let path = $derived($page.url.pathname);
 	let syncedUserId = $state<string | null>(null);
+
+	// ---- Scroll restoration ----
+	// Saves scroll position before every navigation and restores it when returning.
+	// Handles both desktop (.main-content overflow container) and mobile (window).
+	let mainContent = $state<HTMLElement | undefined>(undefined);
+	const scrollHistory = new Map<string, number>();
+
+	beforeNavigate(({ from }) => {
+		if (!browser || !from) return;
+		const pos = mainContent ? mainContent.scrollTop : window.scrollY;
+		scrollHistory.set(from.url.href, pos);
+	});
+
+	afterNavigate(async ({ to, type }) => {
+		if (!browser || !to || type === 'enter') return;
+		await tick();
+		const pos = scrollHistory.get(to.url.href) ?? 0;
+		if (mainContent) {
+			mainContent.scrollTop = pos;
+		} else {
+			window.scrollTo(0, pos);
+		}
+	});
 
 	$effect(() => {
 		if (!browser || !supabaseReady) return;
@@ -42,7 +67,7 @@
 	let isLoginPage = $derived(path === '/login');
 </script>
 
-<div class="app-shell safe-top safe-bottom">
+<div class="app-shell safe-top">
 	<aside class="sidebar" class:hidden={isLoginPage}>
 		<div class="sidebar-logo">
 			<img src="/secondary_icon.png" alt="Appare logo" class="sidebar-icon" />
@@ -83,9 +108,11 @@
 		</div>
 	</aside>
 
-	<main class="main-content">
+	<main class="main-content" bind:this={mainContent}>
 		{@render children()}
 	</main>
+
+	<BottomNav />
 </div>
 
 <style>

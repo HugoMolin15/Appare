@@ -3,14 +3,14 @@
 	import { goto, beforeNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { words } from '$lib/stores/words';
-	import { selectedWordIds, clearSelection } from '$lib/stores/studySession';
+	import { selectedWordIds, clearSelection, studyReturnContext, setSelectedWords } from '$lib/stores/studySession';
 	import { recordStudy } from '$lib/stores/history';
-	import { setWordScore } from '$lib/stores/wordScores';
-	import type { WordScore } from '$lib/types/word';
+	import { recordAttempt } from '$lib/stores/wordAttempts';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Flashcard from '$lib/components/Flashcard.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { shuffle } from '$lib/utils/shuffle';
+	import { randomCardOrder } from '$lib/stores/settings';
 
 	const allWordsData = get(words);
 	const selectedIds = get(selectedWordIds);
@@ -30,6 +30,14 @@
 	let currentIndex = $state(0);
 	let studiedCount = $state(0);
 	let finished = $state(false);
+	let highWaterMark = $state(0);
+	// Per-card answer: true = correct, false = incorrect, undefined = unanswered
+	let answers = $state<Record<number, boolean>>({});
+	// Cards whose answers have been committed to storage (can't re-commit)
+	let committed = new Set<number>();
+
+	let currentAnswer = $derived(answers[currentIndex]);
+	let isAnswered = $derived(currentAnswer !== undefined);
 
 	let currentWord = $derived(studySet[currentIndex]);
 	let progress = $derived(`${currentIndex + 1} / ${studySet.length}`);
@@ -42,26 +50,59 @@
 		noteText = '';
 	});
 
-	function assess(score: WordScore) {
-		setWordScore(currentWord.id, score);
+	function commitCurrent() {
+		if (committed.has(currentIndex)) return;
+		const answer = answers[currentIndex];
+		if (answer === undefined) return;
+		recordAttempt(currentWord.id, answer);
 		recordStudy([currentWord.id]);
-		if (currentIndex < studySet.length - 1) {
-			studiedCount++;
-			currentIndex++;
+		committed.add(currentIndex);
+		studiedCount++;
+	}
+
+	function advanceFrom(idx: number) {
+		if (idx < studySet.length - 1) {
+			currentIndex = idx + 1;
 		} else {
-			studiedCount++;
 			finished = true;
 		}
+	}
+
+	function assess(wasCorrect: boolean) {
+		answers = { ...answers, [currentIndex]: wasCorrect };
+		if (currentIndex >= highWaterMark) {
+			highWaterMark = currentIndex + 1;
+		}
+		commitCurrent();
+		advanceFrom(currentIndex);
 	}
 
 	function prev() {
 		if (currentIndex > 0) currentIndex--;
 	}
 
+	function next() {
+		if (currentIndex >= highWaterMark) return;
+		commitCurrent();
+		advanceFrom(currentIndex);
+	}
+
 	function restart() {
+		if (get(randomCardOrder)) studySet = shuffle([...studySet]);
 		currentIndex = 0;
 		studiedCount = 0;
+		highWaterMark = 0;
+		answers = {};
+		committed = new Set();
 		finished = false;
+	}
+
+	function returnToOrigin() {
+		const ctx = get(studyReturnContext);
+		if (!ctx) return;
+		setSelectedWords(ctx.wordIds);
+		bypassGuard = true;
+		goto(ctx.href);
 	}
 
 	let showExitModal = $state(false);
@@ -166,7 +207,13 @@
 					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
 					Ricomincia
 				</button>
-				<a href="/" class="action-btn action-home">
+				{#if $studyReturnContext}
+					<button type="button" class="action-btn action-folder" onclick={returnToOrigin}>
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+						{$studyReturnContext.label}
+					</button>
+				{/if}
+				<a href="/" class="action-btn action-home" onclick={() => { bypassGuard = true; }}>
 					Torna alla home
 				</a>
 			</div>
@@ -199,24 +246,39 @@
 		<!-- Assessment buttons -->
 		<div class="assess-area">
 			<div class="assess-row">
-				<button type="button" class="assess-btn assess-unknown" onclick={() => assess('unknown')}>
-					Difficile
+				<button
+					type="button"
+					class="assess-btn assess-incorrect"
+					class:selected={isAnswered && currentAnswer === false}
+					class:faded={isAnswered && currentAnswer !== false}
+					class:locked={isAnswered}
+					onclick={() => assess(false)}
+				>
+					Sbagliato
 				</button>
-				<button type="button" class="assess-btn assess-learning" onclick={() => assess('learning')}>
-					Buono
-				</button>
-				<button type="button" class="assess-btn assess-known" onclick={() => assess('known')}>
-					Facile
+				<button
+					type="button"
+					class="assess-btn assess-correct"
+					class:selected={isAnswered && currentAnswer === true}
+					class:faded={isAnswered && currentAnswer !== true}
+					class:locked={isAnswered}
+					onclick={() => assess(true)}
+				>
+					Corretto
 				</button>
 			</div>
-			<button
-				type="button"
-				class="prev-link"
-				onclick={prev}
-				disabled={currentIndex === 0}
-			>
-				← Precedente
-			</button>
+			<div class="nav-row">
+				<button type="button" class="nav-chevron" onclick={prev} disabled={currentIndex === 0} aria-label="Precedente">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						<polyline points="15 18 9 12 15 6" />
+					</svg>
+				</button>
+				<button type="button" class="nav-chevron" onclick={next} disabled={currentIndex >= highWaterMark} aria-label="Successivo">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						<polyline points="9 18 15 12 9 6" />
+					</svg>
+				</button>
+			</div>
 		</div>
 	{/if}
 </div>
@@ -327,33 +389,54 @@
 		font-family: var(--font-sans);
 		cursor: pointer;
 		color: white;
-		transition: opacity 0.15s ease;
+		transition: opacity 0.2s ease;
 	}
 
-	.assess-btn:active {
+	.assess-btn:not(.locked):active {
 		opacity: 0.8;
 	}
 
-	.assess-unknown  { background: #C5221F; }
-	.assess-learning { background: #D97706; }
-	.assess-known    { background: #1D6FA4; }
+	.assess-incorrect { background: #EF5350; }
+	.assess-correct   { background: #66BB6A; }
 
-	.prev-link {
-		background: none;
-		border: none;
-		padding: 0.25rem 0;
-		font-size: 0.8rem;
-		font-weight: 500;
-		font-family: var(--font-sans);
-		color: var(--color-text-tertiary);
-		cursor: pointer;
-		text-align: center;
-		width: 100%;
+	.assess-btn.locked { cursor: default; }
+
+	/* Selected: full opacity, no size change */
+	.assess-btn.selected {
+		opacity: 1;
 	}
 
-	.prev-link:disabled {
-		opacity: 0.3;
+	/* The other button dims out */
+	.assess-btn.faded {
+		opacity: 0.25;
+	}
+
+	.nav-row {
+		display: flex;
+		justify-content: center;
+		gap: 1.5rem;
+	}
+
+	.nav-chevron {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: none;
+		border: none;
+		padding: 0.3rem 0.75rem;
+		color: var(--color-text-tertiary);
+		cursor: pointer;
+		border-radius: var(--radius-md);
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	.nav-chevron:disabled {
+		opacity: 0.25;
 		cursor: default;
+	}
+
+	.nav-chevron:not(:disabled):active {
+		opacity: 0.5;
 	}
 
 	/* ---- Finished state ---- */
@@ -406,6 +489,12 @@
 	.action-restart {
 		background: var(--color-primary);
 		color: white;
+	}
+
+	.action-folder {
+		background: var(--color-surface);
+		color: var(--color-text);
+		border: 1.5px solid var(--color-border);
 	}
 
 	.action-home {

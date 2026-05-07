@@ -1,8 +1,12 @@
 <script lang="ts">
 	import { words } from '$lib/stores/words';
 	import { wordScores } from '$lib/stores/wordScores';
-	import { selectedWordIds, toggleWordSelection, selectedCount } from '$lib/stores/studySession';
+	import { selectedWordIds, toggleWordSelection, selectedCount, setSelectedWords, studyReturnContext } from '$lib/stores/studySession';
 	import { goto } from '$app/navigation';
+	import { get } from 'svelte/store';
+	import { shuffle } from '$lib/utils/shuffle';
+	import { randomCardOrder, listDisplayLang, type ListDisplayLang } from '$lib/stores/settings';
+	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import { CATEGORIES } from '$lib/types/word';
 	import type { WordScore } from '$lib/types/word';
 	import PageHeader from '$lib/components/PageHeader.svelte';
@@ -47,11 +51,19 @@
 		selectedGroups = next;
 	}
 
+	const LANG_LABELS: Record<ListDisplayLang, string> = {
+		italiano: 'Italiano',
+		hiragana: 'Hiragana / Katakana',
+		romaji: 'Romaji',
+		kanji: 'Kanji',
+	};
+
 	let activePills = $derived.by(() => {
 		const pills: { label: string; remove: () => void }[] = [];
 		if (typeFilter === 'word') pills.push({ label: 'Parole', remove: removeType });
 		if (typeFilter === 'phrase') pills.push({ label: 'Frasi', remove: removeType });
 		for (const g of selectedGroups) pills.push({ label: g, remove: () => removeGroup(g) });
+		if ($listDisplayLang !== 'italiano') pills.push({ label: LANG_LABELS[$listDisplayLang], remove: () => listDisplayLang.set('italiano') });
 		return pills;
 	});
 
@@ -95,7 +107,12 @@
 	});
 
 	function startStudy() {
-		if ($selectedCount > 0) goto('/studia');
+		if ($selectedCount === 0) return;
+		let ids = [...get(selectedWordIds)];
+		if (get(randomCardOrder)) ids = shuffle(ids);
+		studyReturnContext.set({ href: '/studia/seleziona', label: 'Modifica selezione', wordIds: ids });
+		setSelectedWords(ids);
+		goto('/studia');
 	}
 </script>
 
@@ -126,12 +143,15 @@
 
 	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
-	<ScoreFilter
-		value={scoreFilter}
-		onChange={(v) => scoreFilter = v}
-		sortLabel={SORT_LABELS[sortMode]}
-		onSortCycle={cycleSortMode}
-	/>
+	<div class="filter-sort-row">
+		<ScoreFilter
+			value={scoreFilter}
+			onChange={(v) => scoreFilter = v}
+			sortLabel={SORT_LABELS[sortMode]}
+			onSortCycle={cycleSortMode}
+		/>
+		<StudyRandomPills />
+	</div>
 
 	<FilterPills pills={activePills} />
 
@@ -150,6 +170,7 @@
 					role="checkbox"
 					ariaChecked={$selectedWordIds.has(word.id)}
 					onclick={() => toggleWordSelection(word.id)}
+					displayLang={$listDisplayLang}
 				>
 					{#snippet leading()}
 						<div class="word-checkbox" class:checked={$selectedWordIds.has(word.id)}>
@@ -180,6 +201,21 @@
 			<button class="sheet-close" onclick={() => showFilterSheet = false}>Chiudi</button>
 		</div>
 		<div class="sheet-body">
+			<div class="filter-section">
+				<span class="section-label">Lingua visualizzata</span>
+				<div class="option-list">
+					{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
+						<button
+							class="option-row"
+							class:selected={$listDisplayLang === val}
+							onclick={() => listDisplayLang.set(val as ListDisplayLang)}
+						>
+							<span>{label}</span>
+							{#if $listDisplayLang === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+						</button>
+					{/each}
+				</div>
+			</div>
 			<div class="filter-section">
 				<span class="section-label">Tipo</span>
 				<div class="option-list">
@@ -222,6 +258,14 @@
 		flex-direction: column;
 		position: relative;
 		padding-bottom: 120px;
+	}
+
+	.filter-sort-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		flex-wrap: wrap;
 	}
 
 	.word-count-label {

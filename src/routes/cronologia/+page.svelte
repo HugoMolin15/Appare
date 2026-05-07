@@ -1,10 +1,15 @@
 <script lang="ts">
+	import {
+		consumeCronologiaJumpDate,
+		getCronologiaPath,
+		setCronologiaPath
+	} from '$lib/stores/cronologiaNav';
 	import { studyHistory } from '$lib/stores/history';
 	import { words } from '$lib/stores/words';
-	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection } from '$lib/stores/studySession';
+	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, studyReturnContext } from '$lib/stores/studySession';
 	import { dateColors, setDateColor } from '$lib/stores/dateColors';
 	import { FOLDER_COLORS } from '$lib/constants';
-	import { goto } from '$app/navigation';
+	import { goto, afterNavigate } from '$app/navigation';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
@@ -15,22 +20,33 @@
 	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { fly } from 'svelte/transition';
 	import { shuffle } from '$lib/utils/shuffle';
+	import { get } from 'svelte/store';
+	import { randomCardOrder } from '$lib/stores/settings';
+	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import { wordScores } from '$lib/stores/wordScores';
 
 	const SCORE_COLORS: Record<string, string> = {
 		none: 'var(--color-border)',
-		unknown: '#C5221F',
-		learning: '#D97706',
-		known: '#1D6FA4',
+		unknown: '#EF5350',
+		learning: '#42A5F5',
+		known: '#66BB6A',
 	};
-
-	// Path state: [Year, Month, Week, Date]
-	let path = $state<string[]>([]);
 
 	const monthNames = [
 		'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
 		'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
 	];
+
+	// Path state: [Year, Month, Week, Date] — persisted across navigation in cronologiaNav.
+	const _jumpDate = consumeCronologiaJumpDate();
+	if (_jumpDate) {
+		const year = _jumpDate.substring(0, 4);
+		const month = _jumpDate.substring(5, 7);
+		const week = getWeekKey(_jumpDate);
+		setCronologiaPath([year, month, week, _jumpDate]);
+	}
+	let path = $state<string[]>(getCronologiaPath());
+	$effect(() => { setCronologiaPath(path); });
 
 	function getWeekKey(dateStr: string) {
 		const d = new Date(dateStr);
@@ -87,13 +103,26 @@
 		return current;
 	});
 
+	function resetLevelState() {
+		selectMode = false;
+		selectedKeys = new Set();
+		daySelectMode = false;
+		wordSortMode = 'newest';
+		periodSortMode = 'newest';
+		periodSearchQuery = '';
+		scoreFilter = 'all';
+		clearSelection();
+	}
+
 	function navigateTo(key: string) {
 		path = [...path, key];
+		resetLevelState();
 	}
 
 	function navigateUp() {
 		if (path.length > 0) {
 			path = path.slice(0, -1);
+			resetLevelState();
 		}
 	}
 
@@ -164,9 +193,19 @@
 
 	let selectedInDayView = $derived(dayWords.filter(w => $selectedWordIds.has(w.id)).length);
 
-	// Folder select mode (at non-day levels)
+	// Folder/period select mode (at non-day levels)
 	let selectMode = $state(false);
 	let selectedKeys = $state(new Set<string>());
+
+	// Restore selection from study-return context if returning from /studia.
+	afterNavigate(() => {
+		const ctx = get(studyReturnContext);
+		if (ctx?.href === '/cronologia' && Array.isArray(ctx.selectedKeys) && ctx.selectedKeys.length > 0) {
+			selectMode = true;
+			selectedKeys = new Set(ctx.selectedKeys);
+			studyReturnContext.set(null);
+		}
+	});
 
 	function toggleKeySelect(key: string) {
 		const next = new Set(selectedKeys);
@@ -194,33 +233,30 @@
 	function studySelectedPeriods() {
 		const items = currentItems();
 		const allIds = Array.from(selectedKeys).flatMap(k => collectWordIdsFromNode(items[k]));
-		const unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
+		let unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
 		if (unique.length === 0) return;
-		setSelectedWords(shuffle(unique));
+		if (get(randomCardOrder)) unique = shuffle(unique);
+		studyReturnContext.set({
+			href: '/cronologia',
+			label: 'Torna alla cronologia',
+			wordIds: unique,
+			selectedKeys: [...selectedKeys]
+		});
+		setSelectedWords(unique);
 		goto('/studia');
 	}
 
 	function studyAllPeriods() {
 		const items = currentItems();
 		const allIds = Object.values(items as Record<string, unknown>).flatMap(v => collectWordIdsFromNode(v));
-		const unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
+		let unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
 		if (unique.length === 0) return;
-		setSelectedWords(shuffle(unique));
+		if (get(randomCardOrder)) unique = shuffle(unique);
+		studyReturnContext.set({ href: '/cronologia', label: 'Torna alla cronologia', wordIds: unique });
+		setSelectedWords(unique);
 		goto('/studia');
 	}
 
-	// Reset select mode when navigating
-	$effect(() => {
-		path; // track path changes
-		selectMode = false;
-		selectedKeys = new Set();
-		daySelectMode = false;
-		wordSortMode = 'newest';
-		periodSortMode = 'newest';
-		periodSearchQuery = '';
-		scoreFilter = 'all';
-		clearSelection();
-	});
 
 	// Color editing for folder nodes
 	let editingColorKey = $state<string | null>(null);
@@ -254,11 +290,96 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader
-		title={getTitle()}
-		onback={path.length > 0 ? navigateUp : () => window.history.back()}
-		hideBackOnDesktop={path.length === 0}
-	/>
+	<div class="sticky-header">
+		<PageHeader
+			title={getTitle()}
+			onback={path.length > 0 ? navigateUp : () => window.history.back()}
+			hideBackOnDesktop={path.length === 0}
+		/>
+
+		{#if Object.keys(currentItems()).length > 0}
+			{#if path.length < 4}
+				<!-- Period view controls -->
+				<SearchInput bind:value={periodSearchQuery} placeholder="Cerca..." />
+				<div class="controls-bar">
+					<span class="count-label">{filteredPeriodKeys.length} {filteredPeriodKeys.length === 1 ? 'periodo' : 'periodi'}</span>
+					<button class="select-toggle" onclick={() => selectMode ? exitSelectMode() : selectMode = true}>
+						{selectMode ? 'Fine' : 'Seleziona'}
+					</button>
+				</div>
+
+				{#if selectMode && selectedKeys.size > 0}
+					<div class="action-row">
+						<button class="study-btn" onclick={studySelectedPeriods} disabled={selectedNodeWordCount === 0}>
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+							Studia {selectedNodeWordCount} {selectedNodeWordCount === 1 ? 'parola' : 'parole'}
+						</button>
+						<button class="action-pill muted" onclick={exitSelectMode}>Deseleziona</button>
+					</div>
+				{:else if currentLevelWordCount > 0}
+					<div class="action-row">
+						<button class="study-btn" onclick={studyAllPeriods}>
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+							Studia tutto ({currentLevelWordCount})
+						</button>
+					</div>
+				{/if}
+
+				<div class="sort-row">
+					<button class="sort-btn" onclick={cyclePeriodSort}>
+						<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+						{periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}
+					</button>
+					<StudyRandomPills />
+				</div>
+			{:else}
+				<!-- Day word view controls -->
+				<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
+
+				<div class="controls-bar">
+					<span class="count-label">{dayWords.length} {dayWords.length === 1 ? 'parola' : 'parole'}</span>
+					<button class="select-toggle" onclick={() => { daySelectMode = !daySelectMode; if (!daySelectMode) clearSelection(); }}>
+						{daySelectMode ? 'Fine' : 'Seleziona'}
+					</button>
+				</div>
+
+				{#if daySelectMode && selectedInDayView > 0}
+					<div class="action-row">
+						<button class="study-btn" onclick={() => {
+							let ids = dayWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id);
+							if (get(randomCardOrder)) ids = shuffle(ids);
+							studyReturnContext.set({ href: '/cronologia', label: 'Torna alla cronologia', wordIds: ids }); setSelectedWords(ids); goto('/studia');
+						}}>
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+							Studia {selectedInDayView} {selectedInDayView === 1 ? 'parola' : 'parole'}
+						</button>
+						<button class="action-pill muted" onclick={clearSelection}>Deseleziona</button>
+					</div>
+				{:else if dayWords.length > 0}
+					<div class="action-row">
+						<button class="study-btn" onclick={() => {
+							let ids = dayWords.map(w => w.id);
+							if (get(randomCardOrder)) ids = shuffle(ids);
+							studyReturnContext.set({ href: '/cronologia', label: 'Torna alla cronologia', wordIds: ids }); setSelectedWords(ids); goto('/studia');
+						}}>
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+							Studia tutto ({dayWords.length})
+						</button>
+					</div>
+				{/if}
+
+				<div class="sort-row">
+					<ScoreFilter
+						value={scoreFilter}
+						onChange={(v) => scoreFilter = v}
+						sortLabel={wordSortLabels[wordSortMode]}
+						onSortCycle={cycleWordSort}
+					/>
+					<StudyRandomPills />
+				</div>
+			{/if}
+		{/if}
+	</div>
 
 	<div class="content">
 		{#if Object.keys(currentItems()).length === 0}
@@ -270,39 +391,6 @@
 				<p>Nessuna sessione di studio trovata.</p>
 			</div>
 		{:else if path.length < 4}
-			<!-- Show Folders -->
-			<SearchInput bind:value={periodSearchQuery} placeholder="Cerca..." />
-			<div class="controls-bar">
-				<span class="count-label">{filteredPeriodKeys.length} {filteredPeriodKeys.length === 1 ? 'periodo' : 'periodi'}</span>
-				<button class="select-toggle" onclick={() => selectMode ? exitSelectMode() : selectMode = true}>
-					{selectMode ? 'Fine' : 'Seleziona'}
-				</button>
-			</div>
-
-			{#if selectMode && selectedKeys.size > 0}
-				<div class="action-row">
-					<button class="study-btn" onclick={studySelectedPeriods} disabled={selectedNodeWordCount === 0}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-						Studia {selectedNodeWordCount} {selectedNodeWordCount === 1 ? 'parola' : 'parole'}
-					</button>
-					<button class="action-pill muted" onclick={exitSelectMode}>Deseleziona</button>
-				</div>
-			{:else if currentLevelWordCount > 0}
-				<div class="action-row">
-					<button class="study-btn" onclick={studyAllPeriods}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-						Studia tutto ({currentLevelWordCount})
-					</button>
-				</div>
-			{/if}
-
-			<div class="sort-row">
-				<button class="sort-btn" onclick={cyclePeriodSort}>
-					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
-					{periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}
-				</button>
-			</div>
-
 			<div class="folder-list">
 				{#each filteredPeriodKeys as key}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -340,39 +428,6 @@
 			</div>
 		{:else}
 			<!-- Show Words for the selected day -->
-			<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
-
-			<div class="controls-bar">
-				<span class="count-label">{dayWords.length} {dayWords.length === 1 ? 'parola' : 'parole'}</span>
-				<button class="select-toggle" onclick={() => { daySelectMode = !daySelectMode; if (!daySelectMode) clearSelection(); }}>
-					{daySelectMode ? 'Fine' : 'Seleziona'}
-				</button>
-			</div>
-
-			{#if daySelectMode && selectedInDayView > 0}
-				<div class="action-row">
-					<button class="study-btn" onclick={() => { setSelectedWords(shuffle(dayWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id))); goto('/studia'); }}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-						Studia {selectedInDayView} {selectedInDayView === 1 ? 'parola' : 'parole'}
-					</button>
-					<button class="action-pill muted" onclick={clearSelection}>Deseleziona</button>
-				</div>
-			{:else if dayWords.length > 0}
-				<div class="action-row">
-					<button class="study-btn" onclick={() => { setSelectedWords(shuffle(dayWords.map(w => w.id))); goto('/studia'); }}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-						Studia tutto ({dayWords.length})
-					</button>
-				</div>
-			{/if}
-
-			<ScoreFilter
-				value={scoreFilter}
-				onChange={(v) => scoreFilter = v}
-				sortLabel={wordSortLabels[wordSortMode]}
-				onSortCycle={cycleWordSort}
-			/>
-
 			<div class="word-list">
 				{#each filteredWords as word (word.id)}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -380,7 +435,7 @@
 					<div class="word-row" class:selectable={daySelectMode} onclick={daySelectMode ? () => toggleWordSelection(word.id) : undefined}>
 						{#if daySelectMode}
 							<div class="word-checkbox" class:checked={$selectedWordIds.has(word.id)}>
-								<Icon name="check" strokeWidth={3} />
+								<Icon name="check" size={14} strokeWidth={3} />
 							</div>
 						{/if}
 						<div class="word-main">
@@ -794,8 +849,8 @@
 	}
 
 	.word-score-dot {
-		width: 8px;
-		height: 8px;
+		width: 11px;
+		height: 11px;
 		border-radius: 50%;
 		flex-shrink: 0;
 	}
