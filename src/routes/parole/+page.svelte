@@ -167,7 +167,7 @@
 
 <div class="page page-enter">
 	<div class="sticky-header">
-		<PageHeader title="Tutte le parole" backHref="/" hideBackOnDesktop>
+		<PageHeader title="Tutte le parole" hideBack>
 			{#snippet actions()}
 				<button
 					class="filter-btn"

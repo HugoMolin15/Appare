@@ -12,13 +12,15 @@
 		actions?: Snippet;
 		/** Hide the back button on desktop (≥768 px) — use for top-level pages in the sidebar nav */
 		hideBackOnDesktop?: boolean;
+		/** Hide the back button everywhere — use for pages reachable via the bottom nav */
+		hideBack?: boolean;
 	}
 
-	let { title, backHref = '/', onback, actions, hideBackOnDesktop = false }: Props = $props();
+	let { title, backHref = '/', onback, actions, hideBackOnDesktop = false, hideBack = false }: Props = $props();
 </script>
 
 <header class="page-header">
-	<div class="back-wrap" class:hide-desktop={hideBackOnDesktop}>
+	<div class="back-wrap" class:hide-desktop={hideBackOnDesktop} class:invisible={hideBack}>
 		{#if onback}
 			<button class="back-btn" onclick={onback} aria-label="Indietro">
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -56,6 +58,10 @@
 	.back-wrap {
 		width: 40px;
 		flex-shrink: 0;
+	}
+
+	.back-wrap.invisible {
+		visibility: hidden;
 	}
 
 	.back-btn {

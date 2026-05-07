@@ -156,7 +156,7 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader title="Impostazioni" />
+	<PageHeader title="Impostazioni" hideBack />
 
 	<!-- Account / Login -->
 	{#if $currentUser}
