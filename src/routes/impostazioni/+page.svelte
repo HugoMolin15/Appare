@@ -471,23 +471,23 @@
 
 		<div class="intensity-legend">
 			<div class="legend-item">
-				<div class="legend-color intensity-0"></div>
+				<img src="/heatmap-1.png" alt="0 parole" class="legend-img" />
 				<span class="legend-text">0</span>
 			</div>
 			<div class="legend-item">
-				<div class="legend-color intensity-1"></div>
-				<span class="legend-text">1-{Math.max(1, Math.floor($studyGoal * 0.5) - 1)}</span>
+				<img src="/heatmap-2.png" alt="basso" class="legend-img" />
+				<span class="legend-text">1–{Math.max(1, Math.floor($studyGoal * 0.5) - 1)}</span>
 			</div>
 			<div class="legend-item">
-				<div class="legend-color intensity-2"></div>
+				<img src="/heatmap-3.png" alt="medio" class="legend-img" />
 				<span class="legend-text">{Math.floor($studyGoal * 0.5)}+</span>
 			</div>
 			<div class="legend-item">
-				<div class="legend-color intensity-3"></div>
+				<img src="/heatmap-4.png" alt="alto" class="legend-img" />
 				<span class="legend-text">{Math.floor($studyGoal * 0.75)}+</span>
 			</div>
 			<div class="legend-item">
-				<div class="legend-color intensity-4"></div>
+				<img src="/heatmap-5.png" alt="obiettivo" class="legend-img" />
 				<span class="legend-text">{$studyGoal}+</span>
 			</div>
 		</div>
@@ -607,11 +607,10 @@
 		flex: 1;
 	}
 
-	.legend-color {
-		width: 100%;
-		height: 10px;
-		border-radius: 4px;
-		border: 1px solid var(--color-border);
+	.legend-img {
+		width: 36px;
+		height: 36px;
+		object-fit: contain;
 	}
 
 	.legend-text {

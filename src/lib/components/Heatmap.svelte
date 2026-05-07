@@ -349,8 +349,7 @@
 	.day-img {
 		width: 28px;
 		height: 28px;
-		object-fit: cover;
-		border-radius: 50%;
+		object-fit: contain;
 	}
 
 	.intensity-0 { background-color: var(--color-surface); border: 1px solid #e0dce6; }
