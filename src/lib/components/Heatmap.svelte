@@ -1,6 +1,5 @@
 <!--
-  Heatmap — full-month calendar view with prev/next navigation.
-  Replaces the fixed 7-day strip so users can browse their entire history.
+  Heatmap — 7-day strip by default, expandable to full month calendar.
 -->
 <script lang="ts">
 	import { goto } from '$app/navigation';
@@ -26,6 +25,10 @@
 		return 1;
 	}
 
+	// ---- Expand state ----
+	let expanded = $state(false);
+
+	// ---- Month navigation (used only when expanded) ----
 	const now = new Date();
 	let viewYear = $state(now.getFullYear());
 	let viewMonth = $state(now.getMonth()); // 0-indexed
@@ -45,14 +48,48 @@
 		else viewMonth++;
 	}
 
+	function toggleExpand() {
+		expanded = !expanded;
+		// Reset to current month when expanding
+		if (expanded) {
+			viewYear = now.getFullYear();
+			viewMonth = now.getMonth();
+		}
+	}
+
+	// ---- Types ----
 	type DayCell = {
 		date: string;
 		dayNum: number;
+		dayName: string;
 		intensity: 0 | 1 | 2 | 3 | 4;
 		isToday: boolean;
 		isFuture: boolean;
 	};
 
+	// ---- 7-day strip (collapsed) ----
+	let weekDays = $derived.by((): DayCell[] => {
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		const todayStr = getLocalValue(today);
+
+		return Array.from({ length: 7 }, (_, i) => {
+			const d = new Date(today);
+			d.setDate(today.getDate() - (6 - i));
+			const dateStr = getLocalValue(d);
+			const count = $studyHistory[dateStr]?.length ?? 0;
+			return {
+				date: dateStr,
+				dayNum: d.getDate(),
+				dayName: DAY_NAMES[d.getDay()],
+				intensity: calculateIntensity(count, $studyGoal),
+				isToday: dateStr === todayStr,
+				isFuture: false,
+			};
+		});
+	});
+
+	// ---- Full month grid (expanded) ----
 	let calendarGrid = $derived.by((): (DayCell | null)[] => {
 		const todayMidnight = new Date();
 		todayMidnight.setHours(0, 0, 0, 0);
@@ -60,7 +97,7 @@
 
 		const firstDay = new Date(viewYear, viewMonth, 1);
 		const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-		const startDow = firstDay.getDay(); // 0=Sun
+		const startDow = firstDay.getDay();
 
 		const cells: (DayCell | null)[] = Array(startDow).fill(null);
 
@@ -72,6 +109,7 @@
 			cells.push({
 				date: dateStr,
 				dayNum: d,
+				dayName: DAY_NAMES[date.getDay()],
 				intensity: isFuture ? 0 : calculateIntensity(count, $studyGoal),
 				isToday: dateStr === todayStr,
 				isFuture,
@@ -89,51 +127,133 @@
 </script>
 
 <div class="tracker-container">
-	<div class="month-nav">
-		<button class="nav-btn" onclick={prevMonth} aria-label="Mese precedente">
-			<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-				<polyline points="15 18 9 12 15 6" />
-			</svg>
-		</button>
-		<span class="month-label">{MONTH_NAMES[viewMonth]} {viewYear}</span>
-		<button class="nav-btn" onclick={nextMonth} disabled={isCurrentMonth} aria-label="Mese successivo">
-			<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-				<polyline points="9 18 15 12 9 6" />
-			</svg>
-		</button>
-	</div>
 
-	<div class="cal-grid">
-		{#each DAY_NAMES as name}
-			<span class="cal-header">{name}</span>
-		{/each}
-		{#each calendarGrid as cell}
-			{#if cell === null}
-				<span class="cal-empty"></span>
-			{:else}
-				<button
-					class="cal-day"
-					class:today={cell.isToday}
-					class:future={cell.isFuture}
-					onclick={() => openDay(cell)}
-					disabled={cell.isFuture}
-					aria-label={cell.date}
-				>
-					<span class="day-num">{cell.dayNum}</span>
-					{#if INTENSITY_IMAGES[cell.intensity]}
-						<img src={INTENSITY_IMAGES[cell.intensity]} alt="" class="day-img" />
+	{#if !expanded}
+		<!-- ---- Collapsed: 7-day strip ---- -->
+		<div class="week-row">
+			{#each weekDays as day}
+				<button class="day-col" class:today={day.isToday} onclick={() => openDay(day)}>
+					<span class="day-num">{day.dayNum}</span>
+					<span class="day-name">{day.dayName}</span>
+					{#if INTENSITY_IMAGES[day.intensity]}
+						<img src={INTENSITY_IMAGES[day.intensity]} alt="" class="day-img" />
 					{:else}
-						<div class="day-circle intensity-{cell.intensity}"></div>
+						<div class="day-circle intensity-{day.intensity}"></div>
 					{/if}
 				</button>
-			{/if}
-		{/each}
-	</div>
+			{/each}
+		</div>
+	{:else}
+		<!-- ---- Expanded: month calendar ---- -->
+		<div class="month-nav">
+			<button class="nav-btn" onclick={prevMonth} aria-label="Mese precedente">
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="15 18 9 12 15 6" />
+				</svg>
+			</button>
+			<span class="month-label">{MONTH_NAMES[viewMonth]} {viewYear}</span>
+			<button class="nav-btn" onclick={nextMonth} disabled={isCurrentMonth} aria-label="Mese successivo">
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="9 18 15 12 9 6" />
+				</svg>
+			</button>
+		</div>
+
+		<div class="cal-grid">
+			{#each DAY_NAMES as name}
+				<span class="cal-header">{name}</span>
+			{/each}
+			{#each calendarGrid as cell}
+				{#if cell === null}
+					<span class="cal-empty"></span>
+				{:else}
+					<button
+						class="cal-day"
+						class:today={cell.isToday}
+						class:future={cell.isFuture}
+						onclick={() => openDay(cell)}
+						disabled={cell.isFuture}
+						aria-label={cell.date}
+					>
+						<span class="day-num">{cell.dayNum}</span>
+						{#if INTENSITY_IMAGES[cell.intensity]}
+							<img src={INTENSITY_IMAGES[cell.intensity]} alt="" class="day-img" />
+						{:else}
+							<div class="day-circle intensity-{cell.intensity}"></div>
+						{/if}
+					</button>
+				{/if}
+			{/each}
+		</div>
+	{/if}
+
+	<!-- ---- Expander toggle ---- -->
+	<button class="expand-btn" onclick={toggleExpand} aria-label={expanded ? 'Comprimi' : 'Espandi calendario'}>
+		<svg
+			width="16" height="16" viewBox="0 0 24 24"
+			fill="none" stroke="currentColor" stroke-width="2.5"
+			stroke-linecap="round" stroke-linejoin="round"
+			class:rotated={expanded}
+		>
+			<polyline points="6 9 12 15 18 9" />
+		</svg>
+	</button>
+
 </div>
 
 <style>
 	.tracker-container {
 		width: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	/* ---- 7-day strip ---- */
+	.week-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-end;
+		width: 100%;
+		padding: 0.5rem 0 0;
+	}
+
+	.day-col {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0;
+		background: none;
+		border: none;
+		padding: 0.25rem;
+		cursor: pointer;
+		border-radius: var(--radius-md);
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	.day-col:active { opacity: 0.6; }
+
+	.day-col .day-num {
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: var(--color-text-primary);
+	}
+
+	.day-col .day-name {
+		font-size: 0.65rem;
+		font-weight: 600;
+		color: var(--color-text-secondary);
+		text-transform: uppercase;
+		margin-bottom: 0.5rem;
+	}
+
+	.day-col.today .day-num,
+	.day-col.today .day-name {
+		color: var(--color-primary);
+	}
+
+	.day-col.today .day-circle {
+		transform: scale(1.1);
 	}
 
 	/* ---- Month navigation ---- */
@@ -141,7 +261,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: 0.75rem;
+		width: 100%;
+		padding-top: 0.25rem;
+		margin-bottom: 0.6rem;
 	}
 
 	.month-label {
@@ -165,19 +287,14 @@
 		transition: opacity 0.15s;
 	}
 
-	.nav-btn:disabled {
-		opacity: 0.25;
-		cursor: default;
-	}
-
-	.nav-btn:not(:disabled):active {
-		opacity: 0.5;
-	}
+	.nav-btn:disabled { opacity: 0.25; cursor: default; }
+	.nav-btn:not(:disabled):active { opacity: 0.5; }
 
 	/* ---- Calendar grid ---- */
 	.cal-grid {
 		display: grid;
 		grid-template-columns: repeat(7, 1fr);
+		width: 100%;
 		gap: 2px 0;
 	}
 
@@ -187,12 +304,8 @@
 		color: var(--color-text-secondary);
 		text-transform: uppercase;
 		text-align: center;
-		padding-bottom: 0.4rem;
+		padding-bottom: 0.35rem;
 		letter-spacing: 0.03em;
-	}
-
-	.cal-empty {
-		/* placeholder for days before the 1st */
 	}
 
 	.cal-day {
@@ -208,16 +321,14 @@
 		-webkit-tap-highlight-color: transparent;
 	}
 
-	.cal-day:not(.future):active {
-		opacity: 0.6;
-	}
+	.cal-day:not(.future):active { opacity: 0.6; }
 
 	.cal-day.future {
 		cursor: default;
 		opacity: 0.35;
 	}
 
-	.day-num {
+	.cal-day .day-num {
 		font-size: 0.72rem;
 		font-weight: 600;
 		color: var(--color-text-primary);
@@ -229,15 +340,16 @@
 		font-weight: 800;
 	}
 
+	.cal-day.today .day-circle {
+		transform: scale(1.1);
+	}
+
+	/* ---- Shared ---- */
 	.day-circle {
 		width: 28px;
 		height: 28px;
 		border-radius: 50%;
 		transition: transform 0.15s ease;
-	}
-
-	.cal-day.today .day-circle {
-		transform: scale(1.1);
 	}
 
 	.day-img {
@@ -252,4 +364,29 @@
 	.intensity-2 { background-color: rgba(239, 30, 41, 0.6); border: none; }
 	.intensity-3 { background-color: rgba(239, 30, 41, 0.85); border: none; }
 	.intensity-4 { background-color: rgba(239, 30, 41, 1); border: none; }
+
+	/* ---- Expander button ---- */
+	.expand-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--color-text-secondary);
+		padding: 0.35rem 0.75rem;
+		margin-top: 0.15rem;
+		border-radius: var(--radius-full);
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	.expand-btn:active { opacity: 0.5; }
+
+	.expand-btn svg {
+		transition: transform 0.25s ease;
+	}
+
+	.expand-btn svg.rotated {
+		transform: rotate(180deg);
+	}
 </style>
