@@ -35,8 +35,6 @@
 	let answers = $state<Record<number, boolean>>({});
 	// Cards whose answers have been committed to storage (can't re-commit)
 	let committed = new Set<number>();
-	// Timer for auto-advance on correct answer
-	let autoAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
 
 	let currentAnswer = $derived(answers[currentIndex]);
 	let isAnswered = $derived(currentAnswer !== undefined);
@@ -71,38 +69,25 @@
 	}
 
 	function assess(wasCorrect: boolean) {
-		// Allow re-clicking to change answer before moving on
-		if (autoAdvanceTimer !== null) {
-			clearTimeout(autoAdvanceTimer);
-			autoAdvanceTimer = null;
-		}
 		answers = { ...answers, [currentIndex]: wasCorrect };
 		if (currentIndex >= highWaterMark) {
 			highWaterMark = currentIndex + 1;
 		}
-		if (wasCorrect) {
-			autoAdvanceTimer = setTimeout(() => {
-				autoAdvanceTimer = null;
-				commitCurrent();
-				advanceFrom(currentIndex);
-			}, 600);
-		}
+		commitCurrent();
+		advanceFrom(currentIndex);
 	}
 
 	function prev() {
-		if (autoAdvanceTimer !== null) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
 		if (currentIndex > 0) currentIndex--;
 	}
 
 	function next() {
 		if (currentIndex >= highWaterMark) return;
-		if (autoAdvanceTimer !== null) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
 		commitCurrent();
 		advanceFrom(currentIndex);
 	}
 
 	function restart() {
-		if (autoAdvanceTimer !== null) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
 		if (get(randomCardOrder)) studySet = shuffle([...studySet]);
 		currentIndex = 0;
 		studiedCount = 0;
