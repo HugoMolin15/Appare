@@ -30,6 +30,8 @@
 	let currentIndex = $state(0);
 	let studiedCount = $state(0);
 	let finished = $state(false);
+	// Highest index that has been assessed — gates forward skip navigation
+	let highWaterMark = $state(0);
 
 	let currentWord = $derived(studySet[currentIndex]);
 	let progress = $derived(`${currentIndex + 1} / ${studySet.length}`);
@@ -45,12 +47,18 @@
 	function assess(wasCorrect: boolean) {
 		recordAttempt(currentWord.id, wasCorrect);
 		recordStudy([currentWord.id]);
-		if (currentIndex < studySet.length - 1) {
+		// Only advance the watermark and studiedCount when at the frontier
+		if (currentIndex >= highWaterMark) {
 			studiedCount++;
-			currentIndex++;
+			highWaterMark = currentIndex + 1;
+			if (currentIndex < studySet.length - 1) {
+				currentIndex++;
+			} else {
+				finished = true;
+			}
 		} else {
-			studiedCount++;
-			finished = true;
+			// Re-assessing a card already done — just move forward
+			if (currentIndex < studySet.length - 1) currentIndex++;
 		}
 	}
 
@@ -58,14 +66,16 @@
 		if (currentIndex > 0) currentIndex--;
 	}
 
+	// Only allowed when the destination has already been assessed
 	function next() {
-		if (currentIndex < studySet.length - 1) currentIndex++;
+		if (currentIndex + 1 < highWaterMark) currentIndex++;
 	}
 
 	function restart() {
 		if (get(randomCardOrder)) studySet = shuffle([...studySet]);
 		currentIndex = 0;
 		studiedCount = 0;
+		highWaterMark = 0;
 		finished = false;
 	}
 
@@ -231,7 +241,7 @@
 						<polyline points="15 18 9 12 15 6" />
 					</svg>
 				</button>
-				<button type="button" class="nav-chevron" onclick={next} disabled={currentIndex >= studySet.length - 1} aria-label="Successivo">
+				<button type="button" class="nav-chevron" onclick={next} disabled={currentIndex + 1 >= highWaterMark} aria-label="Successivo">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 						<polyline points="9 18 15 12 9 6" />
 					</svg>
