@@ -635,7 +635,6 @@
 		border-radius: var(--radius-xl);
 		margin-bottom: 1rem;
 		min-height: 200px;
-		pointer-events: none;
 	}
 
 	/* ---- Slider ---- */
