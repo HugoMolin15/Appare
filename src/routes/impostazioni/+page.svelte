@@ -314,17 +314,18 @@
 		<p class="section-subtitle">Regola la dimensione di tutto il testo nell'app.</p>
 
 		<div class="card-preview-wrap">
-			<div class="card-preview-top">
-				<span class="card-preview-category">Aggettivi</span>
-			</div>
 			<div class="card-preview-fields">
 				<div class="card-preview-field">
 					<span class="card-preview-label">Italiano</span>
 					<span class="card-preview-text" style="font-size: {$fontSizeItaliano}rem;">grande</span>
 				</div>
 				<div class="card-preview-field">
-					<span class="card-preview-label">Hiragana</span>
+					<span class="card-preview-label">Hiragana/Katakana</span>
 					<span class="card-preview-text font-jp" style="font-size: {$fontSizeHiragana}rem;">おおきい</span>
+				</div>
+				<div class="card-preview-field">
+					<span class="card-preview-label">Romaji</span>
+					<span class="card-preview-text" style="font-size: {$fontSizeRomaji}rem;">ōkii</span>
 				</div>
 				<div class="card-preview-field">
 					<span class="card-preview-label">Kanji</span>
@@ -643,23 +644,6 @@
 		gap: 0.5rem;
 	}
 
-	.card-preview-top {
-		display: flex;
-		justify-content: center;
-		width: 100%;
-	}
-
-	.card-preview-category {
-		font-size: 0.65rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		padding: 0.2rem 0.55rem;
-		background: var(--color-bg);
-		color: var(--color-text-secondary);
-		border-radius: var(--radius-full);
-	}
-
 	.card-preview-fields {
 		display: flex;
 		flex-direction: column;
@@ -684,8 +668,6 @@
 	.card-preview-label {
 		font-size: 0.72rem;
 		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
 		color: var(--color-text-tertiary);
 	}
 
