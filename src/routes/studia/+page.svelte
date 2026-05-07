@@ -30,8 +30,12 @@
 	let currentIndex = $state(0);
 	let studiedCount = $state(0);
 	let finished = $state(false);
-	// Highest index that has been assessed — gates forward skip navigation
 	let highWaterMark = $state(0);
+	// Per-card answer: true = correct, false = incorrect, undefined = unanswered
+	let answers = $state<Record<number, boolean>>({});
+
+	let currentAnswer = $derived(answers[currentIndex]);
+	let isAnswered = $derived(currentAnswer !== undefined);
 
 	let currentWord = $derived(studySet[currentIndex]);
 	let progress = $derived(`${currentIndex + 1} / ${studySet.length}`);
@@ -45,30 +49,29 @@
 	});
 
 	function assess(wasCorrect: boolean) {
+		if (isAnswered) return; // locked — already answered this card
 		recordAttempt(currentWord.id, wasCorrect);
 		recordStudy([currentWord.id]);
-		// Only advance the watermark and studiedCount when at the frontier
+		answers = { ...answers, [currentIndex]: wasCorrect };
+		// Advance watermark & studiedCount only at the frontier
 		if (currentIndex >= highWaterMark) {
 			studiedCount++;
 			highWaterMark = currentIndex + 1;
-			if (currentIndex < studySet.length - 1) {
-				currentIndex++;
-			} else {
-				finished = true;
-			}
-		} else {
-			// Re-assessing a card already done — just move forward
-			if (currentIndex < studySet.length - 1) currentIndex++;
 		}
+		// Don't auto-navigate — user taps › to continue
 	}
 
 	function prev() {
 		if (currentIndex > 0) currentIndex--;
 	}
 
-	// Only allowed when the destination has already been assessed
 	function next() {
-		if (currentIndex + 1 < highWaterMark) currentIndex++;
+		if (currentIndex >= highWaterMark) return;
+		if (currentIndex < studySet.length - 1) {
+			currentIndex++;
+		} else {
+			finished = true;
+		}
 	}
 
 	function restart() {
@@ -76,6 +79,7 @@
 		currentIndex = 0;
 		studiedCount = 0;
 		highWaterMark = 0;
+		answers = {};
 		finished = false;
 	}
 
@@ -228,10 +232,24 @@
 		<!-- Assessment buttons -->
 		<div class="assess-area">
 			<div class="assess-row">
-				<button type="button" class="assess-btn assess-incorrect" onclick={() => assess(false)}>
+				<button
+					type="button"
+					class="assess-btn assess-incorrect"
+					class:selected={isAnswered && currentAnswer === false}
+					class:faded={isAnswered && currentAnswer !== false}
+					class:locked={isAnswered}
+					onclick={() => assess(false)}
+				>
 					Sbagliato
 				</button>
-				<button type="button" class="assess-btn assess-correct" onclick={() => assess(true)}>
+				<button
+					type="button"
+					class="assess-btn assess-correct"
+					class:selected={isAnswered && currentAnswer === true}
+					class:faded={isAnswered && currentAnswer !== true}
+					class:locked={isAnswered}
+					onclick={() => assess(true)}
+				>
 					Corretto
 				</button>
 			</div>
@@ -241,7 +259,7 @@
 						<polyline points="15 18 9 12 15 6" />
 					</svg>
 				</button>
-				<button type="button" class="nav-chevron" onclick={next} disabled={currentIndex + 1 >= highWaterMark} aria-label="Successivo">
+				<button type="button" class="nav-chevron" onclick={next} disabled={currentIndex >= highWaterMark} aria-label="Successivo">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 						<polyline points="9 18 15 12 9 6" />
 					</svg>
@@ -357,15 +375,29 @@
 		font-family: var(--font-sans);
 		cursor: pointer;
 		color: white;
-		transition: opacity 0.15s ease;
+		transition: opacity 0.2s ease, transform 0.15s ease;
 	}
 
-	.assess-btn:active {
+	.assess-btn:not(.locked):active {
 		opacity: 0.8;
 	}
 
 	.assess-incorrect { background: #EF5350; }
 	.assess-correct   { background: #66BB6A; }
+
+	.assess-btn.locked { cursor: default; }
+
+	/* Selected: full opacity + slight pop */
+	.assess-btn.selected {
+		opacity: 1;
+		transform: scale(1.03);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+	}
+
+	/* The other button dims out */
+	.assess-btn.faded {
+		opacity: 0.25;
+	}
 
 	.nav-row {
 		display: flex;
