@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { folderCount } from '$lib/stores/folders';
 	import Heatmap from '$lib/components/Heatmap.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 
@@ -39,7 +40,34 @@
 		</a>
 	</section>
 
-	<!-- Divider -->
+	<!-- Menu List -->
+	<nav class="menu-list hide-desktop">
+		<a href="/cartelle" class="menu-item">
+			<div class="menu-icon">
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+					<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+				</svg>
+			</div>
+			<div class="menu-text">
+				<span class="menu-label">Cartelle</span>
+				<span class="menu-count">{$folderCount} {$folderCount === 1 ? 'cartella' : 'cartelle'}</span>
+			</div>
+			<Icon name="chevron-right" class="menu-chevron" />
+		</a>
+
+		<a href="/cronologia" class="menu-item">
+			<div class="menu-icon">
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+					<path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clip-rule="evenodd" />
+				</svg>
+			</div>
+			<div class="menu-text">
+				<span class="menu-label">Cronologia</span>
+				<span class="menu-count">Vedi sessioni passate</span>
+			</div>
+			<Icon name="chevron-right" class="menu-chevron" />
+		</a>
+	</nav>
 
 	<!-- FAB -->
 	<div class="fab-container hide-desktop">
@@ -155,6 +183,61 @@
 		text-decoration: none;
 		text-align: center;
 		box-sizing: border-box;
+	}
+
+	/* ---- Menu List ---- */
+	.menu-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+	}
+
+	.menu-item {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem 0.25rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		width: 100%;
+		text-align: left;
+		font-family: var(--font-sans);
+		border-radius: var(--radius-md);
+		text-decoration: none;
+		color: inherit;
+	}
+
+	.menu-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		color: var(--color-text-secondary);
+		flex-shrink: 0;
+	}
+
+	.menu-text {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.menu-label {
+		font-size: 1rem;
+		font-weight: 600;
+		color: var(--color-text);
+	}
+
+	.menu-count {
+		font-size: 0.82rem;
+		color: var(--color-text-secondary);
+		margin-top: 0.1rem;
+	}
+
+	.menu-chevron {
+		color: var(--color-text-tertiary);
+		flex-shrink: 0;
 	}
 
 	/* ---- FAB ---- */
