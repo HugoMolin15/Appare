@@ -33,6 +33,10 @@
 	let highWaterMark = $state(0);
 	// Per-card answer: true = correct, false = incorrect, undefined = unanswered
 	let answers = $state<Record<number, boolean>>({});
+	// Cards whose answers have been committed to storage (can't re-commit)
+	let committed = new Set<number>();
+	// Timer for auto-advance on correct answer
+	let autoAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
 
 	let currentAnswer = $derived(answers[currentIndex]);
 	let isAnswered = $derived(currentAnswer !== undefined);
@@ -48,38 +52,63 @@
 		noteText = '';
 	});
 
-	function assess(wasCorrect: boolean) {
-		if (isAnswered) return; // locked — already answered this card
-		recordAttempt(currentWord.id, wasCorrect);
+	function commitCurrent() {
+		if (committed.has(currentIndex)) return;
+		const answer = answers[currentIndex];
+		if (answer === undefined) return;
+		recordAttempt(currentWord.id, answer);
 		recordStudy([currentWord.id]);
-		answers = { ...answers, [currentIndex]: wasCorrect };
-		// Advance watermark & studiedCount only at the frontier
-		if (currentIndex >= highWaterMark) {
-			studiedCount++;
-			highWaterMark = currentIndex + 1;
-		}
-		// Don't auto-navigate — user taps › to continue
+		committed.add(currentIndex);
+		studiedCount++;
 	}
 
-	function prev() {
-		if (currentIndex > 0) currentIndex--;
-	}
-
-	function next() {
-		if (currentIndex >= highWaterMark) return;
-		if (currentIndex < studySet.length - 1) {
-			currentIndex++;
+	function advanceFrom(idx: number) {
+		if (idx < studySet.length - 1) {
+			currentIndex = idx + 1;
 		} else {
 			finished = true;
 		}
 	}
 
+	function assess(wasCorrect: boolean) {
+		// Allow re-clicking to change answer before moving on
+		if (autoAdvanceTimer !== null) {
+			clearTimeout(autoAdvanceTimer);
+			autoAdvanceTimer = null;
+		}
+		answers = { ...answers, [currentIndex]: wasCorrect };
+		if (currentIndex >= highWaterMark) {
+			highWaterMark = currentIndex + 1;
+		}
+		if (wasCorrect) {
+			autoAdvanceTimer = setTimeout(() => {
+				autoAdvanceTimer = null;
+				commitCurrent();
+				advanceFrom(currentIndex);
+			}, 600);
+		}
+	}
+
+	function prev() {
+		if (autoAdvanceTimer !== null) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
+		if (currentIndex > 0) currentIndex--;
+	}
+
+	function next() {
+		if (currentIndex >= highWaterMark) return;
+		if (autoAdvanceTimer !== null) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
+		commitCurrent();
+		advanceFrom(currentIndex);
+	}
+
 	function restart() {
+		if (autoAdvanceTimer !== null) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
 		if (get(randomCardOrder)) studySet = shuffle([...studySet]);
 		currentIndex = 0;
 		studiedCount = 0;
 		highWaterMark = 0;
 		answers = {};
+		committed = new Set();
 		finished = false;
 	}
 
@@ -375,7 +404,7 @@
 		font-family: var(--font-sans);
 		cursor: pointer;
 		color: white;
-		transition: opacity 0.2s ease, transform 0.15s ease;
+		transition: opacity 0.2s ease;
 	}
 
 	.assess-btn:not(.locked):active {
@@ -387,11 +416,9 @@
 
 	.assess-btn.locked { cursor: default; }
 
-	/* Selected: full opacity + slight pop */
+	/* Selected: full opacity, no size change */
 	.assess-btn.selected {
 		opacity: 1;
-		transform: scale(1.03);
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 	}
 
 	/* The other button dims out */
