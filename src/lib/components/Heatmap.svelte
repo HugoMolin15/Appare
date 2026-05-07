@@ -25,8 +25,9 @@
 		return 1;
 	}
 
-	// ---- Expand state ----
-	let expanded = $state(false);
+	// ---- Expand state (bindable so parent can place the toggle button) ----
+	interface Props { expanded?: boolean; }
+	let { expanded = $bindable(false) }: Props = $props();
 
 	// ---- Month navigation (used only when expanded) ----
 	const now = new Date();
@@ -48,14 +49,13 @@
 		else viewMonth++;
 	}
 
-	function toggleExpand() {
-		expanded = !expanded;
-		// Reset to current month when expanding
+	$effect(() => {
+		// Reset to current month whenever expanding
 		if (expanded) {
 			viewYear = now.getFullYear();
 			viewMonth = now.getMonth();
 		}
-	}
+	});
 
 	// ---- Types ----
 	type DayCell = {
@@ -186,18 +186,6 @@
 			{/each}
 		</div>
 	{/if}
-
-	<!-- ---- Expander toggle ---- -->
-	<button class="expand-btn" onclick={toggleExpand} aria-label={expanded ? 'Comprimi' : 'Espandi calendario'}>
-		<svg
-			width="16" height="16" viewBox="0 0 24 24"
-			fill="none" stroke="currentColor" stroke-width="2.5"
-			stroke-linecap="round" stroke-linejoin="round"
-			class:rotated={expanded}
-		>
-			<polyline points="6 9 12 15 18 9" />
-		</svg>
-	</button>
 
 </div>
 
@@ -365,28 +353,4 @@
 	.intensity-3 { background-color: rgba(239, 30, 41, 0.85); border: none; }
 	.intensity-4 { background-color: rgba(239, 30, 41, 1); border: none; }
 
-	/* ---- Expander button ---- */
-	.expand-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: none;
-		border: none;
-		cursor: pointer;
-		color: var(--color-text-secondary);
-		padding: 0.35rem 0.75rem;
-		margin-top: 0.15rem;
-		border-radius: var(--radius-full);
-		-webkit-tap-highlight-color: transparent;
-	}
-
-	.expand-btn:active { opacity: 0.5; }
-
-	.expand-btn svg {
-		transition: transform 0.25s ease;
-	}
-
-	.expand-btn svg.rotated {
-		transform: rotate(180deg);
-	}
 </style>

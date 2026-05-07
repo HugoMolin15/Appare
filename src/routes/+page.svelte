@@ -3,6 +3,8 @@
 	import { folderCount } from '$lib/stores/folders';
 	import Heatmap from '$lib/components/Heatmap.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+
+	let heatmapExpanded = $state(false);
 </script>
 
 <svelte:head>
@@ -28,9 +30,16 @@
 
 	<!-- Study Section (Heatmap will go here) -->
 	<section class="daily-section">
-		<h1 class="daily-title">I tuoi progressi</h1>
-		
-		<Heatmap />
+		<div class="daily-title-row">
+			<h1 class="daily-title">I tuoi progressi</h1>
+			<button class="expand-toggle" onclick={() => heatmapExpanded = !heatmapExpanded} aria-label={heatmapExpanded ? 'Comprimi' : 'Espandi calendario'}>
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.25s ease; transform: rotate({heatmapExpanded ? 180 : 0}deg)">
+					<polyline points="6 9 12 15 18 9" />
+				</svg>
+			</button>
+		</div>
+
+		<Heatmap bind:expanded={heatmapExpanded} />
 
 		<a href="/studia/seleziona" class="cta-button" style="margin-top: 1rem;">
 			Inizia a studiare
@@ -161,12 +170,35 @@
 		margin-bottom: 1.5rem;
 	}
 
+	.daily-title-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 0.25rem;
+	}
+
 	.daily-title {
 		font-size: 1.75rem;
 		font-weight: 700;
 		letter-spacing: -0.02em;
-		margin: 0 0 0.25rem 0;
+		margin: 0;
 	}
+
+	.expand-toggle {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--color-text-secondary);
+		padding: 0.25rem;
+		border-radius: var(--radius-md);
+		-webkit-tap-highlight-color: transparent;
+		flex-shrink: 0;
+	}
+
+	.expand-toggle:active { opacity: 0.5; }
 
 	.cta-button {
 		display: block;

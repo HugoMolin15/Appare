@@ -58,6 +58,10 @@
 		if (currentIndex > 0) currentIndex--;
 	}
 
+	function next() {
+		if (currentIndex < studySet.length - 1) currentIndex++;
+	}
+
 	function restart() {
 		if (get(randomCardOrder)) studySet = shuffle([...studySet]);
 		currentIndex = 0;
@@ -221,14 +225,18 @@
 					Corretto
 				</button>
 			</div>
-			<button
-				type="button"
-				class="prev-link"
-				onclick={prev}
-				disabled={currentIndex === 0}
-			>
-				← Precedente
-			</button>
+			<div class="nav-row">
+				<button type="button" class="nav-chevron" onclick={prev} disabled={currentIndex === 0} aria-label="Precedente">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						<polyline points="15 18 9 12 15 6" />
+					</svg>
+				</button>
+				<button type="button" class="nav-chevron" onclick={next} disabled={currentIndex >= studySet.length - 1} aria-label="Successivo">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						<polyline points="9 18 15 12 9 6" />
+					</svg>
+				</button>
+			</div>
 		</div>
 	{/if}
 </div>
@@ -349,22 +357,32 @@
 	.assess-incorrect { background: #EF5350; }
 	.assess-correct   { background: #66BB6A; }
 
-	.prev-link {
-		background: none;
-		border: none;
-		padding: 0.25rem 0;
-		font-size: 0.8rem;
-		font-weight: 500;
-		font-family: var(--font-sans);
-		color: var(--color-text-tertiary);
-		cursor: pointer;
-		text-align: center;
-		width: 100%;
+	.nav-row {
+		display: flex;
+		justify-content: center;
+		gap: 1.5rem;
 	}
 
-	.prev-link:disabled {
-		opacity: 0.3;
+	.nav-chevron {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: none;
+		border: none;
+		padding: 0.3rem 0.75rem;
+		color: var(--color-text-tertiary);
+		cursor: pointer;
+		border-radius: var(--radius-md);
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	.nav-chevron:disabled {
+		opacity: 0.25;
 		cursor: default;
+	}
+
+	.nav-chevron:not(:disabled):active {
+		opacity: 0.5;
 	}
 
 	/* ---- Finished state ---- */
