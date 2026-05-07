@@ -7,7 +7,7 @@ import { UNCATEGORIZED_TAG } from '$lib/constants';
 
 const STORAGE_KEY = 'appare_words';
 const SEEDED_KEY = 'appare_seeded';
-const SEED_VERSION = '20';
+const SEED_VERSION = '21';
 
 function loadStoredWords(): Word[] {
 	if (!browser) return [];
@@ -39,9 +39,23 @@ async function doSeed(): Promise<void> {
 	const { SEED_WORDS } = await import('$lib/data/seed-words');
 	const seedMap = new Map(SEED_WORDS.map((w) => [w.id, w]));
 
+	// Folder IDs for the removed sections (verbi + aggettivi)
+	const REMOVED_FOLDER_IDS = new Set([
+		'seed-folder-vp-affermativa', 'seed-folder-vp-negativa',
+		'seed-folder-vp-passato-aff', 'seed-folder-vp-passato-neg',
+		'seed-folder-verbi-dizionario', 'seed-folder-verbi-masu',
+		'seed-folder-verbi-te', 'seed-folder-verbi-nai', 'seed-folder-verbi-ta',
+		'seed-folder-agg-piana', 'seed-folder-agg-pres-aff', 'seed-folder-agg-pres-neg',
+		'seed-folder-agg-pass-aff', 'seed-folder-agg-pass-neg',
+		'seed-folder-agg-p-pres-aff', 'seed-folder-agg-p-pres-neg',
+		'seed-folder-agg-p-pass-aff', 'seed-folder-agg-p-pass-neg',
+	]);
+
 	words.update((current) => {
-		// Update categories of existing seed words
-		const updated = current.map((w) => {
+		// Remove words that belong to the deleted sections
+		const pruned = current.filter((w) => !REMOVED_FOLDER_IDS.has(w.folderId ?? ''));
+		// Update categories of remaining seed words
+		const updated = pruned.map((w) => {
 			const seed = seedMap.get(w.id);
 			return seed ? { ...w, category: seed.category } : w;
 		});
