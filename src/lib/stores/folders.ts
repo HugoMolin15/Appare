@@ -7,34 +7,12 @@ import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
 const STORAGE_KEY = 'appare_folders';
 const SEEDED_KEY = 'appare_folders_seeded';
-const SEED_VERSION = '20';
+const SEED_VERSION = '21';
 
 /** Seed folder IDs */
 export const SEED_FOLDER_ID = 'seed-folder-luoghi';
 export const SEED_FOLDER_GIORNI = 'seed-folder-giorni';
 export const SEED_FOLDER_TEMPORALI = 'seed-folder-temporali';
-export const SEED_FOLDER_AGG_PIANA_PARENT = 'seed-folder-agg-piana-parent';
-export const SEED_FOLDER_AGG_P_PRES_AFF = 'seed-folder-agg-p-pres-aff';
-export const SEED_FOLDER_AGG_P_PRES_NEG = 'seed-folder-agg-p-pres-neg';
-export const SEED_FOLDER_AGG_P_PASS_AFF = 'seed-folder-agg-p-pass-aff';
-export const SEED_FOLDER_AGG_P_PASS_NEG = 'seed-folder-agg-p-pass-neg';
-export const SEED_FOLDER_AGGETTIVI = 'seed-folder-aggettivi';
-export const SEED_FOLDER_AGG_PIANA = 'seed-folder-agg-piana';
-export const SEED_FOLDER_AGG_PRES_AFF = 'seed-folder-agg-pres-aff';
-export const SEED_FOLDER_AGG_PRES_NEG = 'seed-folder-agg-pres-neg';
-export const SEED_FOLDER_AGG_PASS_AFF = 'seed-folder-agg-pass-aff';
-export const SEED_FOLDER_AGG_PASS_NEG = 'seed-folder-agg-pass-neg';
-export const SEED_FOLDER_VERBI = 'seed-folder-verbi';
-export const SEED_FOLDER_VERBI_DIZIONARIO = 'seed-folder-verbi-dizionario';
-export const SEED_FOLDER_VERBI_MASU = 'seed-folder-verbi-masu';
-export const SEED_FOLDER_VERBI_TE = 'seed-folder-verbi-te';
-export const SEED_FOLDER_VERBI_NAI = 'seed-folder-verbi-nai';
-export const SEED_FOLDER_VERBI_TA = 'seed-folder-verbi-ta';
-export const SEED_FOLDER_VERBI_PIANA = 'seed-folder-verbi-piana';
-export const SEED_FOLDER_VP_AFFERMATIVA = 'seed-folder-vp-affermativa';
-export const SEED_FOLDER_VP_NEGATIVA = 'seed-folder-vp-negativa';
-export const SEED_FOLDER_VP_PASSATO_AFF = 'seed-folder-vp-passato-aff';
-export const SEED_FOLDER_VP_PASSATO_NEG = 'seed-folder-vp-passato-neg';
 export const SEED_FOLDER_LEZIONI = 'seed-folder-lezioni';
 export const SEED_FOLDER_L04 = 'seed-folder-l04';
 export const SEED_FOLDER_L05 = 'seed-folder-l05';
@@ -75,134 +53,6 @@ const SEED_FOLDERS: Folder[] = [
 		id: SEED_FOLDER_TEMPORALI,
 		name: 'Termini temporali',
 		createdAt: 1713830400001
-	},
-	{
-		id: SEED_FOLDER_AGG_PIANA_PARENT,
-		name: 'Aggettivi - Forma piana',
-		createdAt: 1713830400006
-	},
-	{
-		id: SEED_FOLDER_AGG_P_PRES_AFF,
-		name: 'Presente affermativa',
-		createdAt: 1713830400006,
-		parentId: SEED_FOLDER_AGG_PIANA_PARENT
-	},
-	{
-		id: SEED_FOLDER_AGG_P_PRES_NEG,
-		name: 'Presente negativa',
-		createdAt: 1713830400006,
-		parentId: SEED_FOLDER_AGG_PIANA_PARENT
-	},
-	{
-		id: SEED_FOLDER_AGG_P_PASS_AFF,
-		name: 'Passato affermativo',
-		createdAt: 1713830400006,
-		parentId: SEED_FOLDER_AGG_PIANA_PARENT
-	},
-	{
-		id: SEED_FOLDER_AGG_P_PASS_NEG,
-		name: 'Passato negativo',
-		createdAt: 1713830400006,
-		parentId: SEED_FOLDER_AGG_PIANA_PARENT
-	},
-	{
-		id: SEED_FOLDER_AGGETTIVI,
-		name: 'Aggettivi',
-		createdAt: 1713830400005
-	},
-	{
-		id: SEED_FOLDER_AGG_PIANA,
-		name: 'Forma piana',
-		createdAt: 1713830400005,
-		parentId: SEED_FOLDER_AGGETTIVI
-	},
-	{
-		id: SEED_FOLDER_AGG_PRES_AFF,
-		name: 'Presente affermativa',
-		createdAt: 1713830400005,
-		parentId: SEED_FOLDER_AGGETTIVI
-	},
-	{
-		id: SEED_FOLDER_AGG_PRES_NEG,
-		name: 'Presente negativa',
-		createdAt: 1713830400005,
-		parentId: SEED_FOLDER_AGGETTIVI
-	},
-	{
-		id: SEED_FOLDER_AGG_PASS_AFF,
-		name: 'Passato affermativo',
-		createdAt: 1713830400005,
-		parentId: SEED_FOLDER_AGGETTIVI
-	},
-	{
-		id: SEED_FOLDER_AGG_PASS_NEG,
-		name: 'Passato negativo',
-		createdAt: 1713830400005,
-		parentId: SEED_FOLDER_AGGETTIVI
-	},
-	{
-		id: SEED_FOLDER_VERBI,
-		name: 'Verbi',
-		createdAt: 1713830400004
-	},
-	{
-		id: SEED_FOLDER_VERBI_DIZIONARIO,
-		name: 'Forma dizionario',
-		createdAt: 1713830400004,
-		parentId: SEED_FOLDER_VERBI
-	},
-	{
-		id: SEED_FOLDER_VERBI_MASU,
-		name: 'Forma in masu',
-		createdAt: 1713830400004,
-		parentId: SEED_FOLDER_VERBI
-	},
-	{
-		id: SEED_FOLDER_VERBI_TE,
-		name: 'Forma in te',
-		createdAt: 1713830400004,
-		parentId: SEED_FOLDER_VERBI
-	},
-	{
-		id: SEED_FOLDER_VERBI_NAI,
-		name: 'Forma in nai',
-		createdAt: 1713830400004,
-		parentId: SEED_FOLDER_VERBI
-	},
-	{
-		id: SEED_FOLDER_VERBI_TA,
-		name: 'Forma in ta',
-		createdAt: 1713830400004,
-		parentId: SEED_FOLDER_VERBI
-	},
-	{
-		id: SEED_FOLDER_VERBI_PIANA,
-		name: 'Verbi - Forma piana',
-		createdAt: 1713830400002
-	},
-	{
-		id: SEED_FOLDER_VP_AFFERMATIVA,
-		name: 'Presente affermativa',
-		createdAt: 1713830400002,
-		parentId: SEED_FOLDER_VERBI_PIANA
-	},
-	{
-		id: SEED_FOLDER_VP_NEGATIVA,
-		name: 'Presente negativa',
-		createdAt: 1713830400002,
-		parentId: SEED_FOLDER_VERBI_PIANA
-	},
-	{
-		id: SEED_FOLDER_VP_PASSATO_AFF,
-		name: 'Passato affermativo',
-		createdAt: 1713830400002,
-		parentId: SEED_FOLDER_VERBI_PIANA
-	},
-	{
-		id: SEED_FOLDER_VP_PASSATO_NEG,
-		name: 'Passato negativo',
-		createdAt: 1713830400002,
-		parentId: SEED_FOLDER_VERBI_PIANA
 	},
 	{
 		id: SEED_FOLDER_LEZIONI,
@@ -353,8 +203,20 @@ function loadFolders(): Folder[] {
 		let folders: Folder[] = raw ? (JSON.parse(raw) as Folder[]) : [];
 
 		if (localStorage.getItem(SEEDED_KEY) !== SEED_VERSION) {
+			const REMOVED_FOLDER_IDS = new Set([
+				'seed-folder-agg-piana-parent', 'seed-folder-agg-p-pres-aff', 'seed-folder-agg-p-pres-neg',
+				'seed-folder-agg-p-pass-aff', 'seed-folder-agg-p-pass-neg',
+				'seed-folder-aggettivi', 'seed-folder-agg-piana', 'seed-folder-agg-pres-aff',
+				'seed-folder-agg-pres-neg', 'seed-folder-agg-pass-aff', 'seed-folder-agg-pass-neg',
+				'seed-folder-verbi', 'seed-folder-verbi-dizionario', 'seed-folder-verbi-masu',
+				'seed-folder-verbi-te', 'seed-folder-verbi-nai', 'seed-folder-verbi-ta',
+				'seed-folder-verbi-piana', 'seed-folder-vp-affermativa', 'seed-folder-vp-negativa',
+				'seed-folder-vp-passato-aff', 'seed-folder-vp-passato-neg',
+			]);
+			folders = folders.filter(f => !REMOVED_FOLDER_IDS.has(f.id));
+
 			const seedMap = new Map(SEED_FOLDERS.map(f => [f.id, f]));
-			
+
 			// Update properties of existing seed folders
 			folders = folders.map(f => {
 				if (seedMap.has(f.id)) {
