@@ -8,8 +8,14 @@
 	import { getLocalValue } from '$lib/utils/date';
 	import { setCronologiaJumpDate } from '$lib/stores/cronologiaNav';
 
-	// Plug in image paths here once assets are ready (index = intensity 0-4)
-	const INTENSITY_IMAGES: (string | null)[] = [null, null, null, null, null];
+	// Index = intensity level 0–4, images named 1–5
+	const INTENSITY_IMAGES: (string | null)[] = [
+		'/heatmap-1.png',
+		'/heatmap-2.png',
+		'/heatmap-3.png',
+		'/heatmap-4.png',
+		'/heatmap-5.png',
+	];
 
 	const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
 	const MONTH_NAMES = [
