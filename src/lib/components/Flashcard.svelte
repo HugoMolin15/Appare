@@ -95,9 +95,11 @@
 		<span class="card-indicator">{sideIndicator}</span>
 	{/if}
 
-	<div class="card-top">
-		<span class="card-category" data-category={word.category}>{word.category}</span>
-	</div>
+	{#if word.category}
+		<div class="card-top">
+			<span class="card-category" data-category={word.category}>{word.category}</span>
+		</div>
+	{/if}
 
 	<div class="card-center">
 		<div class="card-fields">
