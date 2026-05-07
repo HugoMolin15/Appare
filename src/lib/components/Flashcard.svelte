@@ -114,6 +114,10 @@
 		</div>
 	</div>
 
+	{#if word.notes}
+		<p class="card-notes">{word.notes}</p>
+	{/if}
+
 	{#if sides.length > 1}
 		<span class="card-hint">Tocca per continuare</span>
 	{/if}
@@ -233,6 +237,18 @@
 
 	.card-text.phrase-text {
 		font-weight: 600;
+	}
+
+	.card-notes {
+		font-size: 0.78rem;
+		font-style: italic;
+		color: var(--color-text-secondary);
+		text-align: center;
+		margin: 0.4rem 0 0;
+		padding: 0 0.5rem;
+		line-height: 1.4;
+		white-space: pre-wrap;
+		word-break: break-word;
 	}
 
 	.card-hint {

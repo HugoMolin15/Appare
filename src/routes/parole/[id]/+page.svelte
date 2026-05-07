@@ -32,6 +32,7 @@
 	let hiragana = $state('');
 	let romaji = $state('');
 	let kanji = $state('');
+	let notes = $state('');
 	let selectedTags = $state<string[]>([]);
 	let wordType = $state<'word' | 'phrase'>('word');
 	let destFolderId = $state<string | undefined>(undefined);
@@ -43,6 +44,7 @@
 			hiragana = word.hiragana || word.katakana;
 			romaji = word.romaji;
 			kanji = word.kanji;
+			notes = word.notes ?? '';
 			selectedTags = word.tags ?? (word.category ? [word.category] : []);
 			wordType = word.wordType ?? 'word';
 			destFolderId = word.folderId;
@@ -119,6 +121,7 @@
 		katakana: '',
 		romaji: romaji.trim(),
 		kanji: kanji.trim(),
+		notes: notes.trim() || undefined,
 		wordType,
 		createdAt: 0,
 	});
@@ -134,6 +137,7 @@
 			katakana: '',
 			romaji: romaji.trim(),
 			kanji: kanji.trim(),
+			notes: notes.trim() || undefined,
 			category: (finalTags.find(t => allPresetValues.has(t)) as CategoryValue | undefined),
 			tags: finalTags.length > 0 ? finalTags : undefined,
 			wordType,
@@ -271,6 +275,19 @@
 						Attenzione: nel database è già presente una parola con questo campo
 					</span>
 				{/if}
+			</div>
+
+			<div class="field">
+				<label for="input-notes" class="field-label">Note</label>
+				<textarea
+					id="input-notes"
+					class="notes-textarea"
+					bind:value={notes}
+					placeholder="Aggiungi una nota personale…"
+					rows="3"
+					autocomplete="off"
+					autocapitalize="off"
+				></textarea>
 			</div>
 
 			<div class="field">
@@ -523,6 +540,31 @@
 	}
 
 	.phrase-textarea:focus {
+		box-shadow: inset 0 0 0 1.5px #e0dce6;
+	}
+
+	.notes-textarea {
+		width: 100%;
+		padding: 0.8rem 0.9rem;
+		border: none;
+		border-radius: var(--radius-md);
+		background: var(--color-surface);
+		color: var(--color-text);
+		font-size: 0.95rem;
+		font-family: var(--font-sans);
+		outline: none;
+		resize: vertical;
+		box-sizing: border-box;
+		line-height: 1.5;
+		transition: box-shadow 0.2s ease;
+	}
+
+	.notes-textarea::placeholder {
+		color: var(--color-text-tertiary);
+		font-weight: 400;
+	}
+
+	.notes-textarea:focus {
 		box-shadow: inset 0 0 0 1.5px #e0dce6;
 	}
 
