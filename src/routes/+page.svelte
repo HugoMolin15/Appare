@@ -24,6 +24,10 @@
 
 	<!-- Study Section (Heatmap will go here) -->
 	<section class="daily-section">
+		<a href="/studia/seleziona" class="cta-button">
+			Inizia a studiare
+		</a>
+
 		<div class="daily-title-row">
 			<h1 class="daily-title">I tuoi progressi</h1>
 			<button class="expand-toggle" onclick={() => heatmapExpanded = !heatmapExpanded} aria-label={heatmapExpanded ? 'Comprimi' : 'Espandi calendario'}>
@@ -34,10 +38,6 @@
 		</div>
 
 		<Heatmap bind:expanded={heatmapExpanded} />
-
-		<a href="/studia/seleziona" class="cta-button" style="margin-top: 1rem;">
-			Inizia a studiare
-		</a>
 	</section>
 
 	<!-- Menu List -->
@@ -183,6 +183,7 @@
 		text-decoration: none;
 		text-align: center;
 		box-sizing: border-box;
+		margin-bottom: 1.25rem;
 	}
 
 	/* ---- Menu List ---- */
