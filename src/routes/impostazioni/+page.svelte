@@ -1,10 +1,23 @@
 <script lang="ts">
 	import { studyGoal, appFontScale, cardLayout, randomCardOrder, randomWordOrder, fontSizeItaliano, fontSizeHiragana, fontSizeRomaji, fontSizeKanji } from '$lib/stores/settings';
-	import type { CardField } from '$lib/types/word';
+	import type { CardField, Word } from '$lib/types/word';
 	import { manualWordCount } from '$lib/stores/words';
 	import { currentUser, signOut } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import Flashcard from '$lib/components/Flashcard.svelte';
+
+	const previewWord: Word = {
+		id: 'preview',
+		italiano: 'grande',
+		hiragana: 'おおきい',
+		katakana: 'オオキイ',
+		romaji: 'ōkii',
+		kanji: '大きい',
+		category: 'Aggettivo I',
+		wordType: 'word',
+		createdAt: 0,
+	};
 
 	async function handleSignOut() {
 		await signOut();
@@ -314,24 +327,7 @@
 		<p class="section-subtitle">Regola la dimensione di tutto il testo nell'app.</p>
 
 		<div class="card-preview-wrap">
-			<div class="card-preview-fields">
-				<div class="card-preview-field">
-					<span class="card-preview-label">Italiano</span>
-					<span class="card-preview-text" style="font-size: {$fontSizeItaliano}rem;">grande</span>
-				</div>
-				<div class="card-preview-field">
-					<span class="card-preview-label">Hiragana/Katakana</span>
-					<span class="card-preview-text font-jp" style="font-size: {$fontSizeHiragana}rem;">おおきい</span>
-				</div>
-				<div class="card-preview-field">
-					<span class="card-preview-label">Romaji</span>
-					<span class="card-preview-text" style="font-size: {$fontSizeRomaji}rem;">ōkii</span>
-				</div>
-				<div class="card-preview-field">
-					<span class="card-preview-label">Kanji</span>
-					<span class="card-preview-text font-jp" style="font-size: {$fontSizeKanji}rem;">大きい</span>
-				</div>
-			</div>
+			<Flashcard word={previewWord} />
 		</div>
 
 		<div class="slider-row">
@@ -635,52 +631,11 @@
 	.card-preview-wrap {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		padding: 1.25rem 1.5rem 1.5rem;
 		background-color: var(--color-surface);
 		border-radius: var(--radius-xl);
 		margin-bottom: 1rem;
-		user-select: none;
-		gap: 0.5rem;
-	}
-
-	.card-preview-fields {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.75rem;
-		width: 100%;
-	}
-
-	.card-preview-field {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.25rem;
-		width: 100%;
-	}
-
-	.card-preview-field + .card-preview-field {
-		padding-top: 0.75rem;
-		border-top: 1px solid var(--color-border);
-	}
-
-	.card-preview-label {
-		font-size: 0.72rem;
-		font-weight: 700;
-		color: var(--color-text-tertiary);
-	}
-
-	.card-preview-text {
-		font-weight: 700;
-		color: var(--color-text);
-		text-align: center;
-		line-height: 1.5;
-		transition: font-size 0.15s ease;
-	}
-
-	.card-preview-text.font-jp {
-		font-family: var(--font-jp);
+		min-height: 200px;
+		pointer-events: none;
 	}
 
 	/* ---- Slider ---- */
