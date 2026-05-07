@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { CATEGORIES, type CategoryValue } from '$lib/types/word';
+	import { CATEGORIES, type CategoryValue, type Word } from '$lib/types/word';
 	import { words, updateWord, removeWord } from '$lib/stores/words';
 	import { folders } from '$lib/stores/folders';
 	import { UNCATEGORIZED_TAG } from '$lib/constants';
@@ -11,6 +11,15 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { fly } from 'svelte/transition';
+	import Flashcard from '$lib/components/Flashcard.svelte';
+	import { fontSizeItaliano, fontSizeHiragana, fontSizeRomaji, fontSizeKanji } from '$lib/stores/settings';
+
+	const FS_MIN = 0.5, FS_MAX = 5;
+	function fsProgress(v: number) { return Math.round(((v - FS_MIN) / (FS_MAX - FS_MIN)) * 100); }
+	let fsProgIt = $derived(fsProgress($fontSizeItaliano));
+	let fsProgHi = $derived(fsProgress($fontSizeHiragana));
+	let fsProgRo = $derived(fsProgress($fontSizeRomaji));
+	let fsProgKa = $derived(fsProgress($fontSizeKanji));
 
 	let wordId = $derived($page.params.id);
 	let word = $derived($words.find((w) => w.id === wordId));
@@ -103,6 +112,17 @@
 		(wordType === 'phrase' || selectedTags.length > 0)
 	);
 
+	let previewWord = $derived<Word>({
+		id: 'preview',
+		italiano: italiano.trim(),
+		hiragana: hiragana.trim(),
+		katakana: '',
+		romaji: romaji.trim(),
+		kanji: kanji.trim(),
+		wordType,
+		createdAt: 0,
+	});
+
 	function handleSave() {
 		if (!isValid || !wordId) return;
 		// Drop the fallback tag if the user has assigned real tags
@@ -170,6 +190,10 @@
 			{/snippet}
 		</PageHeader>
 
+		<div class="word-preview">
+			<Flashcard word={previewWord} />
+		</div>
+
 		<div class="fields">
 			<div class="field">
 				<label for="input-italiano" class="field-label">Italiano <span class="req">*</span></label>
@@ -186,6 +210,13 @@
 				{:else}
 					<ClearableInput bind:value={italiano} placeholder="es. grande" id="input-italiano" />
 				{/if}
+				<div class="fs-row">
+					<span class="fs-a-sm">A</span>
+					<input type="range" min={FS_MIN} max={FS_MAX} step="0.1" value={$fontSizeItaliano}
+						oninput={(e) => fontSizeItaliano.set(+(e.target as HTMLInputElement).value)}
+						class="fs-slider" style="--progress: {fsProgIt}%" />
+					<span class="fs-a-lg">A</span>
+				</div>
 				{#if dupItaliano}
 					<span class="dup-warn">
 						<Icon name="close" size={12} strokeWidth={3} />
@@ -197,6 +228,13 @@
 			<div class="field">
 				<label for="input-hiragana" class="field-label">Hiragana/Katakana <span class="req">*</span></label>
 				<ClearableInput bind:value={hiragana} placeholder="es. おおきい / オオキイ" id="input-hiragana" japanese lang="ja" />
+				<div class="fs-row">
+					<span class="fs-a-sm font-jp">あ</span>
+					<input type="range" min={FS_MIN} max={FS_MAX} step="0.1" value={$fontSizeHiragana}
+						oninput={(e) => fontSizeHiragana.set(+(e.target as HTMLInputElement).value)}
+						class="fs-slider" style="--progress: {fsProgHi}%" />
+					<span class="fs-a-lg font-jp">あ</span>
+				</div>
 				{#if dupHiragana}
 					<span class="dup-warn">
 						<Icon name="close" size={12} strokeWidth={3} />
@@ -208,11 +246,25 @@
 			<div class="field">
 				<label for="input-romaji" class="field-label">Romaji</label>
 				<ClearableInput bind:value={romaji} placeholder="es. ookii" id="input-romaji" />
+				<div class="fs-row">
+					<span class="fs-a-sm">A</span>
+					<input type="range" min={FS_MIN} max={FS_MAX} step="0.1" value={$fontSizeRomaji}
+						oninput={(e) => fontSizeRomaji.set(+(e.target as HTMLInputElement).value)}
+						class="fs-slider" style="--progress: {fsProgRo}%" />
+					<span class="fs-a-lg">A</span>
+				</div>
 			</div>
 
 			<div class="field">
 				<label for="input-kanji" class="field-label">Kanji</label>
 				<ClearableInput bind:value={kanji} placeholder="es. 大きい" id="input-kanji" japanese lang="ja" />
+				<div class="fs-row">
+					<span class="fs-a-sm font-jp">字</span>
+					<input type="range" min={FS_MIN} max={FS_MAX} step="0.1" value={$fontSizeKanji}
+						oninput={(e) => fontSizeKanji.set(+(e.target as HTMLInputElement).value)}
+						class="fs-slider" style="--progress: {fsProgKa}%" />
+					<span class="fs-a-lg font-jp">字</span>
+				</div>
 				{#if dupKanji}
 					<span class="dup-warn">
 						<Icon name="close" size={12} strokeWidth={3} />
@@ -358,6 +410,71 @@
 	.delete-btn:hover {
 		background-color: #FCE8E6;
 		color: #C5221F;
+	}
+
+	/* ---- Card preview ---- */
+	.word-preview {
+		background: var(--color-surface);
+		border-radius: var(--radius-xl);
+		margin-bottom: 1.25rem;
+	}
+
+	/* ---- Font-size slider row ---- */
+	.fs-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 0.35rem;
+	}
+
+	.fs-a-sm {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--color-text-secondary);
+		flex-shrink: 0;
+	}
+
+	.fs-a-lg {
+		font-size: 1.1rem;
+		font-weight: 700;
+		color: var(--color-text-secondary);
+		flex-shrink: 0;
+	}
+
+	.fs-slider {
+		flex: 1;
+		height: 5px;
+		-webkit-appearance: none;
+		appearance: none;
+		background: linear-gradient(
+			to right,
+			var(--color-primary) 0%,
+			var(--color-primary) var(--progress, 50%),
+			var(--color-border) var(--progress, 50%),
+			var(--color-border) 100%
+		);
+		border-radius: var(--radius-full);
+		outline: none;
+		cursor: pointer;
+	}
+
+	.fs-slider::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: var(--color-primary);
+		border: 3px solid white;
+		cursor: pointer;
+	}
+
+	.fs-slider::-moz-range-thumb {
+		width: 16px;
+		height: 16px;
+		border-radius: 50%;
+		background: var(--color-primary);
+		border: 3px solid white;
+		cursor: pointer;
 	}
 
 	.fields {
