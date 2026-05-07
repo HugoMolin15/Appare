@@ -313,11 +313,23 @@
 		<h2 class="section-heading">Dimensione testo</h2>
 		<p class="section-subtitle">Regola la dimensione di tutto il testo nell'app.</p>
 
-		<div class="preview-card">
-			<div class="preview-inner">
-				<span class="preview-label" style="font-size: {$appFontScale * 0.01 * 0.82}rem; color: var(--color-text-secondary);">Tutte le parole</span>
-				<span class="preview-title" style="font-size: {$appFontScale * 0.01 * 1.75}rem;">I miei progressi</span>
-				<span class="preview-jp font-jp" style="font-size: {$appFontScale * 0.01 * 3}rem; color: var(--color-primary);">大きい</span>
+		<div class="card-preview-wrap">
+			<div class="card-preview-top">
+				<span class="card-preview-category">Aggettivi</span>
+			</div>
+			<div class="card-preview-fields">
+				<div class="card-preview-field">
+					<span class="card-preview-label">Italiano</span>
+					<span class="card-preview-text" style="font-size: {$fontSizeItaliano}rem;">grande</span>
+				</div>
+				<div class="card-preview-field">
+					<span class="card-preview-label">Hiragana</span>
+					<span class="card-preview-text font-jp" style="font-size: {$fontSizeHiragana}rem;">おおきい</span>
+				</div>
+				<div class="card-preview-field">
+					<span class="card-preview-label">Kanji</span>
+					<span class="card-preview-text font-jp" style="font-size: {$fontSizeKanji}rem;">大きい</span>
+				</div>
 			</div>
 		</div>
 
@@ -618,40 +630,75 @@
 		margin: 0.5rem 0 1.5rem 0;
 	}
 
-	/* ---- Preview Card ---- */
-	.preview-card {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 1.5rem 1rem;
-		background-color: var(--color-surface);
-		border-radius: var(--radius-xl);
-		margin-bottom: 1rem;
-		min-height: 100px;
-	}
-
-	.preview-inner {
+	/* ---- Card Preview ---- */
+	.card-preview-wrap {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.15rem;
+		padding: 1.25rem 1.5rem 1.5rem;
+		background-color: var(--color-surface);
+		border-radius: var(--radius-xl);
+		margin-bottom: 1rem;
 		user-select: none;
+		gap: 0.5rem;
 	}
 
-	.preview-label {
-		font-weight: 600;
+	.card-preview-top {
+		display: flex;
+		justify-content: center;
+		width: 100%;
+	}
+
+	.card-preview-category {
+		font-size: 0.65rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		padding: 0.2rem 0.55rem;
+		background: var(--color-bg);
 		color: var(--color-text-secondary);
-		line-height: 1.2;
+		border-radius: var(--radius-full);
 	}
 
-	.preview-title {
-		font-weight: 700;
-		line-height: 1.2;
+	.card-preview-fields {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.75rem;
+		width: 100%;
 	}
 
-	.preview-jp {
+	.card-preview-field {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
+		width: 100%;
+	}
+
+	.card-preview-field + .card-preview-field {
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--color-border);
+	}
+
+	.card-preview-label {
+		font-size: 0.72rem;
 		font-weight: 700;
-		line-height: 1.2;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--color-text-tertiary);
+	}
+
+	.card-preview-text {
+		font-weight: 700;
+		color: var(--color-text);
+		text-align: center;
+		line-height: 1.5;
+		transition: font-size 0.15s ease;
+	}
+
+	.card-preview-text.font-jp {
+		font-family: var(--font-jp);
 	}
 
 	/* ---- Slider ---- */
