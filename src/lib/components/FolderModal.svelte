@@ -38,52 +38,48 @@
 		<button class="close-btn" onclick={onClose}>Annulla</button>
 	</div>
 
-	<div class="modal-content">
-		<div class="field">
-			<label for="modal-folder-name" class="field-label">Nome cartella</label>
-			<ClearableInput bind:value={name} placeholder="es. Viaggi, Cibo..." id="modal-folder-name" />
-		</div>
+	<div class="field">
+		<label for="modal-folder-name" class="field-label">Nome cartella</label>
+		<ClearableInput bind:value={name} placeholder="es. Viaggi, Cibo..." id="modal-folder-name" />
+	</div>
 
-		<div class="field">
-			<label class="field-label">Colore</label>
-			<div class="color-grid">
+	<div class="field">
+		<label class="field-label">Colore</label>
+		<div class="color-grid">
+			<button
+				type="button"
+				class="color-option color-none"
+				class:selected={selectedColor === ''}
+				onclick={() => selectedColor = ''}
+				aria-label="Nessun colore"
+			>
+				<Icon name="close" size={14} strokeWidth={2.5} />
+			</button>
+			{#each colors as color}
 				<button
 					type="button"
-					class="color-option color-none"
-					class:selected={selectedColor === ''}
-					onclick={() => selectedColor = ''}
-					aria-label="Nessun colore"
+					class="color-option"
+					style="background-color: {color}"
+					class:selected={selectedColor === color}
+					onclick={() => selectedColor = color}
 				>
-					<Icon name="close" size={14} strokeWidth={2.5} />
+					{#if selectedColor === color}
+						<Icon name="check" size={14} strokeWidth={4} stroke="white" />
+					{/if}
 				</button>
-				{#each colors as color}
-					<button
-						type="button"
-						class="color-option"
-						style="background-color: {color}"
-						class:selected={selectedColor === color}
-						onclick={() => selectedColor = color}
-					>
-						{#if selectedColor === color}
-							<Icon name="check" size={14} strokeWidth={4} stroke="white" />
-						{/if}
-					</button>
-				{/each}
-			</div>
+			{/each}
 		</div>
 	</div>
 
-	<div class="modal-footer">
-		<button
-			type="button"
-			class="save-btn"
-			class:ready={isValid}
-			disabled={!isValid}
-			onclick={handleSave}
-		>
-			Crea cartella
-		</button>
-	</div>
+	<button
+		type="button"
+		class="save-btn"
+		class:ready={isValid}
+		disabled={!isValid}
+		onclick={handleSave}
+	>
+		Crea cartella
+	</button>
 </div>
 
 <style>
@@ -103,23 +99,27 @@
 		bottom: 0;
 		left: 0;
 		right: 0;
-		height: 75dvh;
+		max-height: 92dvh;
+		overflow-y: auto;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
 		background-color: var(--color-bg);
 		border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 		padding: 1.75rem;
-		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+		padding-bottom: calc(1.75rem + env(safe-area-inset-bottom));
 		z-index: 101;
 		box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
 		display: flex;
 		flex-direction: column;
+		gap: 1.75rem;
 	}
+
+	.sheet::-webkit-scrollbar { display: none; }
 
 	.sheet-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 1.5rem;
-		flex-shrink: 0;
 	}
 
 	.sheet-title {
@@ -136,23 +136,6 @@
 		font-size: 0.95rem;
 		font-weight: 600;
 		cursor: pointer;
-	}
-
-	.modal-content {
-		flex: 1;
-		min-height: 0;
-		overflow-y: auto;
-		display: flex;
-		flex-direction: column;
-		gap: 1.75rem;
-		padding-bottom: 1rem;
-		/* Hide scrollbar but keep functionality */
-		scrollbar-width: none;
-		-ms-overflow-style: none;
-	}
-
-	.modal-content::-webkit-scrollbar {
-		display: none;
 	}
 
 	.field {
@@ -199,12 +182,6 @@
 
 	.color-none.selected {
 		border-color: var(--color-text-primary);
-	}
-
-	.modal-footer {
-		flex-shrink: 0;
-		padding-top: 1rem;
-		background-color: var(--color-bg);
 	}
 
 	.save-btn {
