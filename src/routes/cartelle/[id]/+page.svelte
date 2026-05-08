@@ -294,18 +294,7 @@
 		</PageHeader>
 
 		{#if folder && (subfolders.length > 0 || folderWords.length > 0)}
-			<!-- ① Search — always at top -->
-			<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle e parole..." />
-
-			<!-- ② Controls bar: count + Seleziona/Fine -->
-			<div class="controls-bar">
-				<span class="count-label">{countLabel}</span>
-				<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
-					{selectMode ? 'Fine' : 'Seleziona'}
-				</button>
-			</div>
-
-			<!-- ③ Action row — always visible -->
+			<!-- ① Action row — sticky -->
 			{#if selectMode && totalSelected > 0}
 				<div class="action-row">
 					<button class="study-btn" onclick={studySelected} disabled={selectedWordCount === 0}>
@@ -327,27 +316,40 @@
 				</div>
 			{/if}
 
-			<!-- ④ Sort/reorder + random pills -->
-			<div class="sort-row">
-				{#if subfolders.length > 1 && !selectMode && !reorderSubfoldersMode}
-					<button class="sort-btn" onclick={enterSubfolderReorder}>Riordina</button>
-				{/if}
-				{#if reorderSubfoldersMode}
-					<button class="sort-btn reorder-active" onclick={exitSubfolderReorder}>Fine</button>
-					{#if $folderOrder[folderId]}
-						<button class="sort-btn" onclick={resetSubfolderOrder}>Reimposta</button>
-					{/if}
-				{/if}
-				{#if folderWords.length > 0 || subfolders.length > 0}
-					<button class="sort-btn" onclick={cycleWordSort}>
-						<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
-						{wordSortLabels[wordSortMode]}
-					</button>
-				{/if}
-				<StudyRandomPills />
+			<!-- ② Controls bar: count + Seleziona/Fine -->
+			<div class="controls-bar">
+				<span class="count-label">{countLabel}</span>
+				<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
+					{selectMode ? 'Fine' : 'Seleziona'}
+				</button>
 			</div>
 		{/if}
 	</div>
+
+	{#if folder && (subfolders.length > 0 || folderWords.length > 0)}
+		<!-- ③ Search — scrolls away -->
+		<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle e parole..." />
+
+		<!-- ④ Sort/reorder + random pills — scrolls away -->
+		<div class="sort-row">
+			{#if subfolders.length > 1 && !selectMode && !reorderSubfoldersMode}
+				<button class="sort-btn" onclick={enterSubfolderReorder}>Riordina</button>
+			{/if}
+			{#if reorderSubfoldersMode}
+				<button class="sort-btn reorder-active" onclick={exitSubfolderReorder}>Fine</button>
+				{#if $folderOrder[folderId]}
+					<button class="sort-btn" onclick={resetSubfolderOrder}>Reimposta</button>
+				{/if}
+			{/if}
+			{#if folderWords.length > 0 || subfolders.length > 0}
+				<button class="sort-btn" onclick={cycleWordSort}>
+					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+					{wordSortLabels[wordSortMode]}
+				</button>
+			{/if}
+			<StudyRandomPills />
+		</div>
+	{/if}
 
 	{#if !folder}
 		<div class="empty-state">
@@ -619,8 +621,10 @@
 	.study-btn {
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		gap: 0.4rem;
 		padding: 0.6rem 1rem;
+		width: 100%;
 		background: var(--color-primary);
 		color: white;
 		border: none;
