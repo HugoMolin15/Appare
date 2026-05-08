@@ -266,7 +266,7 @@
 	}
 
 	$effect(() => {
-		if (showOptionsSheet) document.body.style.overflow = 'hidden';
+		if (showOptionsSheet || showMoveSheet) document.body.style.overflow = 'hidden';
 		else document.body.style.overflow = '';
 		return () => { document.body.style.overflow = ''; };
 	});
@@ -294,18 +294,7 @@
 		</PageHeader>
 
 		{#if folder && (subfolders.length > 0 || folderWords.length > 0)}
-			<!-- ① Search — always at top -->
-			<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle e parole..." />
-
-			<!-- ② Controls bar: count + Seleziona/Fine -->
-			<div class="controls-bar">
-				<span class="count-label">{countLabel}</span>
-				<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
-					{selectMode ? 'Fine' : 'Seleziona'}
-				</button>
-			</div>
-
-			<!-- ③ Action row — always visible -->
+			<!-- ① Action row — sticky -->
 			{#if selectMode && totalSelected > 0}
 				<div class="action-row">
 					<button class="study-btn" onclick={studySelected} disabled={selectedWordCount === 0}>
@@ -327,27 +316,40 @@
 				</div>
 			{/if}
 
-			<!-- ④ Sort/reorder + random pills -->
-			<div class="sort-row">
-				{#if subfolders.length > 1 && !selectMode && !reorderSubfoldersMode}
-					<button class="sort-btn" onclick={enterSubfolderReorder}>Riordina</button>
-				{/if}
-				{#if reorderSubfoldersMode}
-					<button class="sort-btn reorder-active" onclick={exitSubfolderReorder}>Fine</button>
-					{#if $folderOrder[folderId]}
-						<button class="sort-btn" onclick={resetSubfolderOrder}>Reimposta</button>
-					{/if}
-				{/if}
-				{#if folderWords.length > 0 || subfolders.length > 0}
-					<button class="sort-btn" onclick={cycleWordSort}>
-						<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
-						{wordSortLabels[wordSortMode]}
-					</button>
-				{/if}
-				<StudyRandomPills />
+			<!-- ② Controls bar: count + Seleziona/Fine -->
+			<div class="controls-bar">
+				<span class="count-label">{countLabel}</span>
+				<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
+					{selectMode ? 'Fine' : 'Seleziona'}
+				</button>
 			</div>
 		{/if}
 	</div>
+
+	{#if folder && (subfolders.length > 0 || folderWords.length > 0)}
+		<!-- ③ Search — scrolls away -->
+		<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle e parole..." />
+
+		<!-- ④ Sort/reorder + random pills — scrolls away -->
+		<div class="sort-row">
+			{#if subfolders.length > 1 && !selectMode && !reorderSubfoldersMode}
+				<button class="sort-btn" onclick={enterSubfolderReorder}>Riordina</button>
+			{/if}
+			{#if reorderSubfoldersMode}
+				<button class="sort-btn reorder-active" onclick={exitSubfolderReorder}>Fine</button>
+				{#if $folderOrder[folderId]}
+					<button class="sort-btn" onclick={resetSubfolderOrder}>Reimposta</button>
+				{/if}
+			{/if}
+			{#if folderWords.length > 0 || subfolders.length > 0}
+				<button class="sort-btn" onclick={cycleWordSort}>
+					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+					{wordSortLabels[wordSortMode]}
+				</button>
+			{/if}
+			<StudyRandomPills />
+		</div>
+	{/if}
 
 	{#if !folder}
 		<div class="empty-state">
@@ -471,40 +473,36 @@
 				<h2 class="sheet-title">Opzioni cartella</h2>
 				<button class="sheet-close" onclick={() => showOptionsSheet = false}>Annulla</button>
 			</div>
-			<div class="sheet-body">
 				{#if !isProtected}
-					<div class="sheet-section">
-						<label class="sheet-label" for="edit-folder-name">Nome</label>
-						<input id="edit-folder-name" type="text" class="sheet-input" bind:value={editName} onkeydown={(e) => e.key === 'Enter' && saveEdits()} />
-					</div>
-				{/if}
 				<div class="sheet-section">
-					<span class="sheet-label">Colore</span>
-					<div class="color-grid">
-						{#each FOLDER_COLORS as color}
-							<button type="button" class="color-swatch" class:selected={editColor === color} style="background-color: {color}" onclick={() => editColor = color} aria-label="Colore {color}">
-								{#if editColor === color}<Icon name="check" size={14} strokeWidth={4} stroke="white" />{/if}
-							</button>
-						{/each}
-						<button type="button" class="color-swatch color-none" class:selected={editColor === ''} onclick={() => editColor = ''} aria-label="Nessun colore">
-							<Icon name="close" size={14} strokeWidth={2.5} />
+					<label class="sheet-label" for="edit-folder-name">Nome</label>
+					<input id="edit-folder-name" type="text" class="sheet-input" bind:value={editName} onkeydown={(e) => e.key === 'Enter' && saveEdits()} />
+				</div>
+			{/if}
+			<div class="sheet-section">
+				<span class="sheet-label">Colore</span>
+				<div class="color-grid">
+					{#each FOLDER_COLORS as color}
+						<button type="button" class="color-swatch" class:selected={editColor === color} style="background-color: {color}" onclick={() => editColor = color} aria-label="Colore {color}">
+							{#if editColor === color}<Icon name="check" size={14} strokeWidth={4} stroke="white" />{/if}
 						</button>
-					</div>
+					{/each}
+					<button type="button" class="color-swatch color-none" class:selected={editColor === ''} onclick={() => editColor = ''} aria-label="Nessun colore">
+						<Icon name="close" size={14} strokeWidth={2.5} />
+					</button>
 				</div>
 			</div>
-			<div class="sheet-footer">
-				<button class="save-btn" onclick={saveEdits} disabled={!isProtected && !editName.trim()}>Salva modifiche</button>
-				{#if !isProtected}
-					<div class="sheet-divider"></div>
-					<button class="sheet-action" onclick={() => { showOptionsSheet = false; showAddWordsModal = true; }}>
-						<Icon name="plus" size={18} /> Aggiungi parole
-					</button>
-					<button class="sheet-action danger" onclick={confirmDeleteFolder}>
-						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-						Elimina cartella
-					</button>
-				{/if}
-			</div>
+			<button class="save-btn" onclick={saveEdits} disabled={!isProtected && !editName.trim()}>Salva modifiche</button>
+			{#if !isProtected}
+				<div class="sheet-divider"></div>
+				<button class="sheet-action" onclick={() => { showOptionsSheet = false; showAddWordsModal = true; }}>
+					<Icon name="plus" size={18} /> Aggiungi parole
+				</button>
+				<button class="sheet-action danger" onclick={confirmDeleteFolder}>
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+					Elimina cartella
+				</button>
+			{/if}
 		</div>
 	{/if}
 
@@ -619,8 +617,10 @@
 	.study-btn {
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		gap: 0.4rem;
 		padding: 0.6rem 1rem;
+		width: 100%;
 		background: var(--color-primary);
 		color: white;
 		border: none;
@@ -827,23 +827,29 @@
 	/* ---- Bottom sheets ---- */
 	.options-sheet {
 		position: fixed; bottom: 0; left: 0; right: 0;
-		height: 90dvh;
+		max-height: 92dvh;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
 		background-color: var(--color-bg);
 		border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 		padding: 1.75rem;
-		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+		padding-bottom: calc(1.75rem + env(safe-area-inset-bottom));
 		z-index: 101;
 		box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
 		display: flex;
 		flex-direction: column;
+		gap: 1.75rem;
 	}
+
+	.options-sheet::-webkit-scrollbar { display: none; }
 
 	.sheet-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: 1.5rem;
-		flex-shrink: 0;
 	}
 
 	.sheet-title { font-size: 1.35rem; font-weight: 800; color: var(--color-text-primary); margin: 0; flex: 1; }
@@ -857,12 +863,6 @@
 		background: none; border: none; padding: 0; cursor: pointer;
 		color: var(--color-text-secondary); display: flex; align-items: center; flex-shrink: 0; margin-right: 0.5rem;
 	}
-
-	.sheet-body {
-		flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1.75rem;
-		scrollbar-width: none; -ms-overflow-style: none;
-	}
-	.sheet-body::-webkit-scrollbar { display: none; }
 
 	.sheet-section { display: flex; flex-direction: column; gap: 0.75rem; }
 
@@ -891,8 +891,6 @@
 	.color-swatch.selected { border-color: var(--color-text-primary); }
 	.color-none { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text-secondary); }
 	.color-none.selected { border-color: var(--color-text-primary); }
-
-	.sheet-footer { flex-shrink: 0; padding-top: 1rem; background-color: var(--color-bg); display: flex; flex-direction: column; gap: 0; }
 
 	.save-btn {
 		width: 100%; padding: 1.1rem; background-color: var(--color-border); color: var(--color-text-tertiary);

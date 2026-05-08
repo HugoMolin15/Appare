@@ -187,19 +187,19 @@
 			{/snippet}
 		</PageHeader>
 
-		<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
-
-		<ScoreFilter
-			value={scoreFilter}
-			onChange={(v) => scoreFilter = v}
-			sortLabel={SORT_LABELS[sortMode]}
-			onSortCycle={cycleSortMode}
-		/>
-
-		<FilterPills pills={activePills} />
-
 		<p class="word-count-label">{filteredWords.length} {typeFilter === 'phrase' ? 'frasi' : filteredWords.length === 1 ? 'parola' : 'parole'}</p>
 	</div>
+
+	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
+
+	<ScoreFilter
+		value={scoreFilter}
+		onChange={(v) => scoreFilter = v}
+		sortLabel={SORT_LABELS[sortMode]}
+		onSortCycle={cycleSortMode}
+	/>
+
+	<FilterPills pills={activePills} />
 
 	<div class="word-list">
 		{#each wordListItems as item (item.type === 'word' ? item.word.id : 'div_' + item.label)}

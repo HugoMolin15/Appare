@@ -144,17 +144,7 @@
 		<PageHeader title="Cartelle" hideBackOnDesktop />
 
 		{#if allFolderCount > 0}
-			<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle..." />
-
-			<!-- ② Controls bar -->
-			<div class="controls-bar">
-				<span class="count-label">{allFolderCount} {allFolderCount === 1 ? 'cartella' : 'cartelle'} · {totalWordCount} parole</span>
-				<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
-					{selectMode ? 'Fine' : 'Seleziona'}
-				</button>
-			</div>
-
-			<!-- ③ Action row — always visible -->
+			<!-- ① Action row — sticky -->
 			{#if selectMode && selectedFolderIds.size > 0}
 				<div class="action-row">
 					<button class="study-btn" onclick={studySelected} disabled={selectedWordCount === 0}>
@@ -172,30 +162,43 @@
 				</div>
 			{/if}
 
-			<!-- ④ Sort / reorder + random pills row -->
-			{#if !selectMode}
-				<div class="sort-row">
-					{#if !reorderMode}
-						<button class="sort-btn" onclick={cycleFolderSort}>
-						<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
-						{folderSortLabels[folderSortMode]}
-					</button>
-					{/if}
-					{#if folderList.length > 1}
-						{#if reorderMode}
-							<button class="sort-btn reorder-active" onclick={exitReorderMode}>Fine</button>
-							{#if $folderOrder['root']}
-								<button class="sort-btn" onclick={resetFolderOrder}>Reimposta</button>
-							{/if}
-						{:else}
-							<button class="sort-btn" onclick={enterReorderMode}>Riordina</button>
-						{/if}
-					{/if}
-					<StudyRandomPills />
-				</div>
-			{/if}
+			<!-- ② Controls bar -->
+			<div class="controls-bar">
+				<span class="count-label">{allFolderCount} {allFolderCount === 1 ? 'cartella' : 'cartelle'} · {totalWordCount} parole</span>
+				<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
+					{selectMode ? 'Fine' : 'Seleziona'}
+				</button>
+			</div>
 		{/if}
 	</div>
+
+	{#if allFolderCount > 0}
+		<!-- ③ Search — scrolls away -->
+		<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle..." />
+
+		<!-- ④ Sort / reorder + random pills row — scrolls away -->
+		{#if !selectMode}
+			<div class="sort-row">
+				{#if !reorderMode}
+					<button class="sort-btn" onclick={cycleFolderSort}>
+					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+					{folderSortLabels[folderSortMode]}
+				</button>
+				{/if}
+				{#if folderList.length > 1}
+					{#if reorderMode}
+						<button class="sort-btn reorder-active" onclick={exitReorderMode}>Fine</button>
+						{#if $folderOrder['root']}
+							<button class="sort-btn" onclick={resetFolderOrder}>Reimposta</button>
+						{/if}
+					{:else}
+						<button class="sort-btn" onclick={enterReorderMode}>Riordina</button>
+					{/if}
+				{/if}
+				<StudyRandomPills />
+			</div>
+		{/if}
+	{/if}
 
 	{#if allFolderCount === 0}
 		<EmptyState
@@ -349,8 +352,10 @@
 	.study-btn {
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		gap: 0.4rem;
 		padding: 0.6rem 1rem;
+		width: 100%;
 		background: var(--color-primary);
 		color: white;
 		border: none;

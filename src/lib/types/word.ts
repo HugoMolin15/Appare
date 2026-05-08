@@ -30,6 +30,7 @@ export interface Word {
 	katakana: string;
 	romaji: string;
 	kanji: string;
+	notes?: string;            // Optional personal note shown on flashcard
 	category?: CategoryValue;  // legacy single category — kept for seed words
 	tags?: string[];           // multi-label support (includes category values + custom)
 	wordType?: 'word' | 'phrase';

@@ -69,13 +69,6 @@
 		</a>
 	</nav>
 
-	<!-- FAB -->
-	<div class="fab-container hide-desktop">
-		<a href="/nuova-parola" class="fab">
-			<Icon name="plus" size={18} strokeWidth={2.5} />
-			Nuova parola
-		</a>
-	</div>
 </div>
 
 <style>
@@ -240,26 +233,5 @@
 		flex-shrink: 0;
 	}
 
-	/* ---- FAB ---- */
-	.fab-container {
-		position: fixed;
-		bottom: calc(var(--bottom-nav-height) + 1rem);
-		right: var(--spacing-page);
-		z-index: 50;
-	}
 
-	.fab {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.875rem 1.5rem;
-		border: none;
-		border-radius: var(--radius-full);
-		font-size: 0.95rem;
-		font-weight: 700;
-		font-family: var(--font-sans);
-		cursor: pointer;
-		white-space: nowrap;
-		text-decoration: none;
-	}
 </style>
