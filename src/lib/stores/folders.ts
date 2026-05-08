@@ -7,7 +7,7 @@ import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
 const STORAGE_KEY = 'appare_folders';
 const SEEDED_KEY = 'appare_folders_seeded';
-const SEED_VERSION = '22';
+const SEED_VERSION = '23';
 
 /** Seed folder IDs */
 export const SEED_FOLDER_ID = 'seed-folder-luoghi';
@@ -38,6 +38,7 @@ export const SEED_FOLDER_FRASI_L10 = 'seed-folder-frasi-l10';
 export const SEED_FOLDER_FRASI_L11 = 'seed-folder-frasi-l11';
 export const SEED_FOLDER_FRASI_L12 = 'seed-folder-frasi-l12';
 export const SEED_FOLDER_AGGETTIVI = 'seed-folder-aggettivi';
+export const SEED_FOLDER_VERBI = 'seed-folder-verbi-definitivo';
 
 const SEED_FOLDERS: Folder[] = [
 	{
@@ -199,6 +200,11 @@ const SEED_FOLDERS: Folder[] = [
 		id: SEED_FOLDER_AGGETTIVI,
 		name: 'Aggettivi',
 		createdAt: 1713830400024
+	},
+	{
+		id: SEED_FOLDER_VERBI,
+		name: 'Verbi',
+		createdAt: 1713830400025
 	}
 ];
 
