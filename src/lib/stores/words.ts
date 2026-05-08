@@ -7,7 +7,7 @@ import { UNCATEGORIZED_TAG } from '$lib/constants';
 
 const STORAGE_KEY = 'appare_words';
 const SEEDED_KEY = 'appare_seeded';
-const SEED_VERSION = '22';
+const SEED_VERSION = '23';
 
 function loadStoredWords(): Word[] {
 	if (!browser) return [];
@@ -54,10 +54,10 @@ async function doSeed(): Promise<void> {
 	words.update((current) => {
 		// Remove words that belong to the deleted sections
 		const pruned = current.filter((w) => !REMOVED_FOLDER_IDS.has(w.folderId ?? ''));
-		// Update categories of remaining seed words
+		// Update fields of remaining seed words
 		const updated = pruned.map((w) => {
 			const seed = seedMap.get(w.id);
-			return seed ? { ...w, category: seed.category } : w;
+			return seed ? { ...w, category: seed.category, romaji: seed.romaji, hiragana: seed.hiragana, folderId: seed.folderId } : w;
 		});
 		const existingIds = new Set(updated.map((w) => w.id));
 		const newSeeds = SEED_WORDS.filter((w) => !existingIds.has(w.id));
