@@ -863,7 +863,7 @@
 	}
 
 	.sheet-body {
-		flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1.75rem;
+		flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 1.75rem;
 		scrollbar-width: none; -ms-overflow-style: none;
 	}
 	.sheet-body::-webkit-scrollbar { display: none; }
