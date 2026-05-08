@@ -17,6 +17,11 @@
 
 	const colors = FOLDER_COLORS;
 
+	$effect(() => {
+		document.body.style.overflow = 'hidden';
+		return () => { document.body.style.overflow = ''; };
+	});
+
 	let isValid = $derived(name.trim().length > 0);
 
 	function handleSave() {
@@ -101,6 +106,8 @@
 		right: 0;
 		max-height: 92dvh;
 		overflow-y: auto;
+		overscroll-behavior: contain;
+		-webkit-overflow-scrolling: touch;
 		scrollbar-width: none;
 		-ms-overflow-style: none;
 		background-color: var(--color-bg);

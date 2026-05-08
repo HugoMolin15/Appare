@@ -266,7 +266,7 @@
 	}
 
 	$effect(() => {
-		if (showOptionsSheet) document.body.style.overflow = 'hidden';
+		if (showOptionsSheet || showMoveSheet) document.body.style.overflow = 'hidden';
 		else document.body.style.overflow = '';
 		return () => { document.body.style.overflow = ''; };
 	});
@@ -829,6 +829,8 @@
 		position: fixed; bottom: 0; left: 0; right: 0;
 		max-height: 92dvh;
 		overflow-y: auto;
+		overscroll-behavior: contain;
+		-webkit-overflow-scrolling: touch;
 		scrollbar-width: none;
 		-ms-overflow-style: none;
 		background-color: var(--color-bg);
