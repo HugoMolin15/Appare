@@ -153,6 +153,14 @@
 		const mainContent = document.querySelector('.main-content') as HTMLElement | null;
 		if (mainContent) mainContent.style.overflowY = 'hidden';
 
+		// iOS ignores overflow:hidden for touch scroll — block touchmove unless inside the
+		// card-fields-scroll element which is the only intended scroll area.
+		function blockScroll(e: TouchEvent) {
+			const target = e.target as Element | null;
+			if (!target?.closest('.card-fields-scroll')) e.preventDefault();
+		}
+		document.addEventListener('touchmove', blockScroll, { passive: false });
+
 		// Push a dummy state so back button/swipe triggers popstate instead of navigating
 		history.pushState(null, '', window.location.href);
 
@@ -167,6 +175,7 @@
 		window.addEventListener('popstate', onPopState);
 		return () => {
 			window.removeEventListener('popstate', onPopState);
+			document.removeEventListener('touchmove', blockScroll);
 			if (mainContent) mainContent.style.overflowY = '';
 		};
 	});
