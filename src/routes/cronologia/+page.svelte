@@ -469,7 +469,7 @@
 </div>
 
 {#if activeSheet !== null}
-	<div class="sheet-backdrop" onclick={() => activeSheet = null} role="presentation"></div>
+	<SheetBackdrop onClose={() => activeSheet = null} />
 	<div class="filter-sheet">
 		<div class="sheet-header">
 			<h2 class="sheet-title">

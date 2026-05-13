@@ -13,6 +13,7 @@
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
 	let showModal = $state(false);
@@ -309,7 +310,7 @@
 	{/if}
 
 	{#if activeSheet !== null}
-		<div class="sheet-backdrop" onclick={() => activeSheet = null} role="presentation"></div>
+		<SheetBackdrop onClose={() => activeSheet = null} />
 		<div class="filter-sheet">
 			<div class="sheet-header">
 				<h2 class="sheet-title">
