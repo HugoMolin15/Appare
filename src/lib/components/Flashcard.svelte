@@ -188,8 +188,7 @@
 		justify-content: center;
 		width: 100%;
 		min-height: 0;
-		overflow-y: auto;
-		overflow-x: hidden;
+		overflow: hidden;
 	}
 
 	/* Stack multiple fields vertically with a divider */
@@ -233,7 +232,9 @@
 		word-break: break-word;
 		transition: font-size 0.15s ease;
 		width: 100%;
-		overflow-x: auto;
+		max-height: 10rem;
+		overflow-y: auto;
+		overflow-x: hidden;
 	}
 
 	.card-text.font-jp {
