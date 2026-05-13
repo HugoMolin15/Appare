@@ -65,7 +65,7 @@
 	});
 
 	let isLoginPage = $derived(path === '/login');
-	let isStudiaPage = $derived(path === '/studia' || path === '/test-studia');
+	let isStudiaPage = $derived(path === '/studia');
 </script>
 
 <div class="app-shell safe-top">

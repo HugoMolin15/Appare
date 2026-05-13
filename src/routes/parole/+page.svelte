@@ -20,7 +20,7 @@
 	let sourceFilter = $state(saved.sourceFilter);
 	let typeFilter = $state(saved.typeFilter);
 	let selectedGroups = $state(new Set<string>(saved.selectedGroups));
-	let showFilterSheet = $state(false);
+	let activeSheet = $state<'sort' | 'score' | 'type' | 'categories' | 'options' | null>(null);
 	let sortMode = $state(saved.sortMode);
 
 	$effect(() => {
@@ -155,7 +155,7 @@
 	});
 
 	$effect(() => {
-		if (showFilterSheet) document.body.style.overflow = 'hidden';
+		if (activeSheet !== null) document.body.style.overflow = 'hidden';
 		else document.body.style.overflow = '';
 		return () => { document.body.style.overflow = ''; };
 	});
@@ -167,37 +167,30 @@
 
 <div class="page page-enter">
 	<div>
-		<PageHeader title="Tutte le parole" hideBack>
-			{#snippet actions()}
-				<button
-					class="filter-btn"
-					class:active={activePills.length > 0}
-					onclick={() => showFilterSheet = true}
-					aria-label="Filtri"
-				>
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<line x1="4" y1="6" x2="20" y2="6" />
-						<line x1="8" y1="12" x2="16" y2="12" />
-						<line x1="12" y1="18" x2="12" y2="18" stroke-width="3" stroke-linecap="round" />
-					</svg>
-					{#if activePills.length > 0}
-						<span class="filter-badge">{activePills.length}</span>
-					{/if}
-				</button>
-			{/snippet}
-		</PageHeader>
+		<PageHeader title="Tutte le parole" hideBack />
 
 		<p class="word-count-label">{filteredWords.length} {typeFilter === 'phrase' ? 'frasi' : filteredWords.length === 1 ? 'parola' : 'parole'}</p>
 	</div>
 
 	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
-	<ScoreFilter
-		value={scoreFilter}
-		onChange={(v) => scoreFilter = v}
-		sortLabel={SORT_LABELS[sortMode]}
-		onSortCycle={cycleSortMode}
-	/>
+	<div class="quick-filter-bar">
+		<button class="quick-pill" class:active={$listDisplayLang !== 'italiano' || sourceFilter !== 'all'} onclick={() => activeSheet = 'options'}>
+			Opzioni <Icon name="chevron-down" size={14} />
+		</button>
+		<button class="quick-pill" class:active={scoreFilter !== 'all'} onclick={() => activeSheet = 'score'}>
+			Stato <Icon name="chevron-down" size={14} />
+		</button>
+		<button class="quick-pill" class:active={selectedGroups.size > 0} onclick={() => activeSheet = 'categories'}>
+			Categorie <Icon name="chevron-down" size={14} />
+		</button>
+		<button class="quick-pill" class:active={typeFilter !== 'all'} onclick={() => activeSheet = 'type'}>
+			Tipo <Icon name="chevron-down" size={14} />
+		</button>
+		<button class="quick-pill" class:active={sortMode !== 'newest'} onclick={() => activeSheet = 'sort'}>
+			Ordina <Icon name="chevron-down" size={14} />
+		</button>
+	</div>
 
 	<FilterPills pills={activePills} />
 
@@ -212,102 +205,95 @@
 	</div>
 </div>
 
-{#if showFilterSheet}
-	<SheetBackdrop onClose={() => showFilterSheet = false} />
+{#if activeSheet !== null}
+	<div class="sheet-backdrop" onclick={() => activeSheet = null} role="presentation"></div>
 	<div class="filter-sheet" transition:fly={{ y: 400, duration: 300 }}>
 		<div class="sheet-header">
-			<h2 class="sheet-title">Filtri</h2>
-			<button class="sheet-close" onclick={() => showFilterSheet = false}>Chiudi</button>
+			<h2 class="sheet-title">
+				{#if activeSheet === 'sort'}Ordina per
+				{:else if activeSheet === 'score'}Stato
+				{:else if activeSheet === 'type'}Tipo
+				{:else if activeSheet === 'categories'}Categorie
+				{:else if activeSheet === 'options'}Opzioni di studio
+				{/if}
+			</h2>
+			<button class="sheet-close" onclick={() => activeSheet = null}>Chiudi</button>
 		</div>
-
 		<div class="sheet-body">
-			<div class="filter-section">
-				<span class="section-label">Lingua visualizzata</span>
+			{#if activeSheet === 'sort'}
 				<div class="option-list">
-					{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
-						<button
-							class="option-row"
-							class:selected={$listDisplayLang === val}
-							onclick={() => listDisplayLang.set(val as ListDisplayLang)}
-						>
-							<span>{label}</span>
-							{#if $listDisplayLang === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					{#each SORT_OPTIONS as val}
+						<button class="option-row" class:selected={sortMode === val} onclick={() => { sortMode = val; activeSheet = null; }}>
+							<span>{SORT_LABELS[val]}</span>
+							{#if sortMode === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
 						</button>
 					{/each}
 				</div>
-			</div>
-
-			<div class="filter-section">
-				<span class="section-label">Origine</span>
+			{:else if activeSheet === 'score'}
 				<div class="option-list">
-					{#each [['all', 'Tutte le parole'], ['app', 'Parole dell\'app'], ['mine', 'Parole mie']] as [val, label]}
-						<button
-							class="option-row"
-							class:selected={sourceFilter === val}
-							onclick={() => sourceFilter = val as 'all' | 'app' | 'mine'}
-						>
-							<span>{label}</span>
-							{#if sourceFilter === val}
-								<Icon name="check" size={18} strokeWidth={3} />
-							{/if}
-						</button>
-					{/each}
+					<button class="option-row" class:selected={scoreFilter === 'all'} onclick={() => { scoreFilter = 'all'; activeSheet = null; }}>
+						<span>Tutte le parole</span>
+						{#if scoreFilter === 'all'}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					</button>
+					<button class="option-row" class:selected={scoreFilter === 'none'} onclick={() => { scoreFilter = 'none'; activeSheet = null; }}>
+						<span>Non valutate</span>
+						{#if scoreFilter === 'none'}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					</button>
+					<button class="option-row" class:selected={scoreFilter === 'unknown'} onclick={() => { scoreFilter = 'unknown'; activeSheet = null; }}>
+						<span>Difficile</span>
+						{#if scoreFilter === 'unknown'}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					</button>
+					<button class="option-row" class:selected={scoreFilter === 'learning'} onclick={() => { scoreFilter = 'learning'; activeSheet = null; }}>
+						<span>Buono</span>
+						{#if scoreFilter === 'learning'}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					</button>
+					<button class="option-row" class:selected={scoreFilter === 'known'} onclick={() => { scoreFilter = 'known'; activeSheet = null; }}>
+						<span>Facile</span>
+						{#if scoreFilter === 'known'}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					</button>
 				</div>
-			</div>
-
-			<div class="filter-section">
-				<span class="section-label">Tipo</span>
+			{:else if activeSheet === 'type'}
 				<div class="option-list">
 					{#each [['all', 'Tutti'], ['word', 'Parole'], ['phrase', 'Frasi']] as [val, label]}
-						<button
-							class="option-row"
-							class:selected={typeFilter === val}
-							onclick={() => typeFilter = val as 'all' | 'word' | 'phrase'}
-						>
+						<button class="option-row" class:selected={typeFilter === val} onclick={() => { typeFilter = val as 'all'|'word'|'phrase'; activeSheet = null; }}>
 							<span>{label}</span>
-							{#if typeFilter === val}
-								<Icon name="check" size={18} strokeWidth={3} />
-							{/if}
+							{#if typeFilter === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
 						</button>
 					{/each}
 				</div>
-			</div>
-
-			<div class="filter-section">
-				<span class="section-label">Ordina</span>
-				<div class="option-list">
-					{#each [['newest', 'Più recenti'], ['oldest', 'Meno recenti'], ['it-az', 'A-Z Italiano'], ['jp-az', 'A-Z Giapponese']] as [val, label]}
-						<button
-							class="option-row"
-							class:selected={sortMode === val}
-							onclick={() => sortMode = val as WordSort}
-						>
-							<span>{label}</span>
-							{#if sortMode === val}
-								<Icon name="check" size={18} strokeWidth={3} />
-							{/if}
-						</button>
-					{/each}
-				</div>
-			</div>
-
-			<div class="filter-section">
-				<span class="section-label">Categoria</span>
+			{:else if activeSheet === 'categories'}
 				<div class="option-list">
 					{#each categoryGroups as [group]}
-						<button
-							class="option-row"
-							class:selected={selectedGroups.has(group)}
-							onclick={() => toggleGroup(group)}
-						>
+						<button class="option-row" class:selected={selectedGroups.has(group)} onclick={() => toggleGroup(group)}>
 							<span>{group}</span>
-							{#if selectedGroups.has(group)}
-								<Icon name="check" size={18} strokeWidth={3} />
-							{/if}
+							{#if selectedGroups.has(group)}<Icon name="check" size={18} strokeWidth={3} />{/if}
 						</button>
 					{/each}
 				</div>
-			</div>
+			{:else if activeSheet === 'options'}
+				<div class="filter-section" style="margin-bottom: 2rem;">
+					<span class="section-label">Lingua visualizzata</span>
+					<div class="option-list">
+						{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
+							<button class="option-row" class:selected={$listDisplayLang === val} onclick={() => listDisplayLang.set(val as ListDisplayLang)}>
+								<span>{label}</span>
+								{#if $listDisplayLang === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+							</button>
+						{/each}
+					</div>
+				</div>
+				<div class="filter-section">
+					<span class="section-label">Origine</span>
+					<div class="option-list">
+						{#each [['all', 'Tutte le parole'], ['app', 'Parole dell\'app'], ['mine', 'Parole mie']] as [val, label]}
+							<button class="option-row" class:selected={sourceFilter === val} onclick={() => sourceFilter = val as 'all'|'app'|'mine'}>
+								<span>{label}</span>
+								{#if sourceFilter === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}
@@ -319,6 +305,58 @@
 		display: flex;
 		flex-direction: column;
 		position: relative;
+	}
+
+	/* ---- Quick Filter Bar ---- */
+	.quick-filter-bar {
+		display: flex;
+		gap: 0.5rem;
+		overflow-x: auto;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+		margin: 0.75rem 0;
+		padding-bottom: 0.1rem;
+		/* Edge-to-edge layout */
+		margin-left: calc(-1 * var(--spacing-page));
+		margin-right: calc(-1 * var(--spacing-page));
+		padding-left: var(--spacing-page);
+	}
+
+	.quick-filter-bar::-webkit-scrollbar { display: none; }
+
+	.quick-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.45rem 0.8rem;
+		background-color: white;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		font-size: 0.85rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		color: var(--color-text-secondary);
+		cursor: pointer;
+		white-space: nowrap;
+		flex-shrink: 0;
+		transition: all 0.15s ease;
+	}
+
+	.quick-pill.active {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+		background-color: #fff0f0;
+	}
+
+	.quick-pill svg { stroke-width: 2.5; }
+
+	.sheet-backdrop {
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.4);
+		backdrop-filter: blur(2px);
+		-webkit-backdrop-filter: blur(2px);
+		z-index: 100;
 	}
 
 	/* ---- Filter button ---- */

@@ -55,7 +55,7 @@
 		const pills: { label: string; remove: () => void }[] = [];
 		if (sortMode !== 'newest') pills.push({ label: SORT_LABELS[sortMode], remove: () => sortMode = 'newest' });
 		if (scoreFilter !== 'all') {
-			const label = scoreFilter === 'none' ? 'Non valutate' : scoreFilter === 'correct' ? 'Corrette' : 'Da ripassare';
+			const label = scoreFilter === 'none' ? 'Non valutate' : scoreFilter === 'unknown' ? 'Difficile' : scoreFilter === 'learning' ? 'Buono' : 'Facile';
 			pills.push({ label, remove: () => scoreFilter = 'all' });
 		}
 		if (typeFilter === 'word') pills.push({ label: 'Parole', remove: removeType });
@@ -219,13 +219,17 @@
 						<span>Non valutate</span>
 						{#if scoreFilter === 'none'}<Icon name="check" size={18} strokeWidth={3} />{/if}
 					</button>
-					<button class="option-row" class:selected={scoreFilter === 'correct'} onclick={() => { scoreFilter = 'correct'; activeSheet = null; }}>
-						<span>Corrette</span>
-						{#if scoreFilter === 'correct'}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					<button class="option-row" class:selected={scoreFilter === 'unknown'} onclick={() => { scoreFilter = 'unknown'; activeSheet = null; }}>
+						<span>Difficile</span>
+						{#if scoreFilter === 'unknown'}<Icon name="check" size={18} strokeWidth={3} />{/if}
 					</button>
-					<button class="option-row" class:selected={scoreFilter === 'incorrect'} onclick={() => { scoreFilter = 'incorrect'; activeSheet = null; }}>
-						<span>Da ripassare</span>
-						{#if scoreFilter === 'incorrect'}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					<button class="option-row" class:selected={scoreFilter === 'learning'} onclick={() => { scoreFilter = 'learning'; activeSheet = null; }}>
+						<span>Buono</span>
+						{#if scoreFilter === 'learning'}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					</button>
+					<button class="option-row" class:selected={scoreFilter === 'known'} onclick={() => { scoreFilter = 'known'; activeSheet = null; }}>
+						<span>Facile</span>
+						{#if scoreFilter === 'known'}<Icon name="check" size={18} strokeWidth={3} />{/if}
 					</button>
 				</div>
 			{:else if activeSheet === 'type'}
