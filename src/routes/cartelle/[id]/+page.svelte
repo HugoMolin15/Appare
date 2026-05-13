@@ -224,7 +224,7 @@
 	function studyAll() {
 		if (allDescendantWordIds.length === 0) return;
 		const ids = get(randomCardOrder) ? shuffle(allDescendantWordIds) : allDescendantWordIds;
-		studyReturnContext.set({ href: `/cartelle/${folderId}`, label: folder?.name ?? 'Torna alla cartella', wordIds: ids, folderId });
+		studyReturnContext.set({ href: `/cartelle/${folderId}`, label: 'Torna alla cartella', wordIds: ids, folderId });
 		setSelectedWords(ids);
 		goto('/studia');
 	}
@@ -241,7 +241,7 @@
 		let ids = [...new Set([...fromFolders, ...fromWords])];
 		if (ids.length === 0) return;
 		if (get(randomCardOrder)) ids = shuffle(ids);
-		studyReturnContext.set({ href: `/cartelle/${folderId}`, label: folder?.name ?? 'Torna alla cartella', wordIds: ids, folderId });
+		studyReturnContext.set({ href: `/cartelle/${folderId}`, label: 'Torna alla cartella', wordIds: ids, folderId });
 		setSelectedWords(ids);
 		goto('/studia');
 	}
