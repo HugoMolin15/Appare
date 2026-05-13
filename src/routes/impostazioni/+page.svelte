@@ -6,6 +6,7 @@
 	import { goto } from '$app/navigation';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Flashcard from '$lib/components/Flashcard.svelte';
+	import { Shuffle, DotsSixVertical, X, Plus, BookOpen, Globe } from 'phosphor-svelte';
 
 	const previewWord: Word = {
 		id: 'preview',
@@ -266,12 +267,7 @@
 		<!-- Random word order toggle -->
 		<div class="order-toggle" onclick={() => randomWordOrder.set(!$randomWordOrder)} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && randomWordOrder.set(!$randomWordOrder)}>
 			<div class="order-toggle-left">
-				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<polyline points="16 3 21 3 21 8" />
-					<line x1="4" y1="20" x2="21" y2="3" />
-					<polyline points="21 16 21 21 16 21" />
-					<line x1="15" y1="15" x2="21" y2="21" />
-				</svg>
+				<Shuffle size={18} weight="bold" />
 				<span class="order-toggle-label">Ordine casuale delle parole</span>
 			</div>
 			<div class="toggle-switch" class:on={$randomWordOrder}>
@@ -282,12 +278,7 @@
 		<!-- Random card order toggle -->
 		<div class="order-toggle" onclick={() => randomCardOrder.set(!$randomCardOrder)} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && randomCardOrder.set(!$randomCardOrder)}>
 			<div class="order-toggle-left">
-				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<polyline points="16 3 21 3 21 8" />
-					<line x1="4" y1="20" x2="21" y2="3" />
-					<polyline points="21 16 21 21 16 21" />
-					<line x1="15" y1="15" x2="21" y2="21" />
-				</svg>
+				<Shuffle size={18} weight="bold" />
 				<span class="order-toggle-label">Ordine casuale delle carte</span>
 			</div>
 			<div class="toggle-switch" class:on={$randomCardOrder}>
@@ -320,20 +311,13 @@
 								onpointerup={(e) => onHandlePointerUp(e, ci)}
 								onpointercancel={cleanupTouchDrag}
 							>
-								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-									<line x1="4" y1="7" x2="20" y2="7" />
-									<line x1="4" y1="12" x2="20" y2="12" />
-									<line x1="4" y1="17" x2="20" y2="17" />
-								</svg>
+								<DotsSixVertical size={15} weight="bold" />
 							</span>
 							<span class="builder-card-title">Carta {ci + 1}</span>
 						</div>
 						{#if $cardLayout.length > 1}
 							<button class="remove-card-btn" onclick={() => removeCard(ci)} aria-label="Rimuovi carta">
-								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-									<line x1="18" y1="6" x2="6" y2="18" />
-									<line x1="6" y1="6" x2="18" y2="18" />
-								</svg>
+								<X size={15} weight="bold" />
 							</button>
 						{/if}
 					</div>
@@ -359,10 +343,7 @@
 									}}
 									aria-label="Rimuovi campo"
 								>
-									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-										<line x1="18" y1="6" x2="6" y2="18" />
-										<line x1="6" y1="6" x2="18" y2="18" />
-									</svg>
+									<X size={14} weight="bold" />
 								</button>
 							</div>
 						{/if}
@@ -394,10 +375,7 @@
 
 			<!-- Add card button -->
 			<button class="add-card-btn" onclick={addCard}>
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-					<line x1="12" y1="5" x2="12" y2="19" />
-					<line x1="5" y1="12" x2="19" y2="12" />
-				</svg>
+				<Plus size={16} weight="bold" />
 				Aggiungi carta
 			</button>
 		</div>
@@ -605,10 +583,7 @@
 	<!-- Archive Count -->
 	<div class="archive-row">
 		<div class="archive-left">
-			<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-				<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-				<path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-			</svg>
+			<BookOpen size={22} weight="fill" />
 			<span class="archive-label">Parole inserite</span>
 		</div>
 		<span class="archive-count">{$manualWordCount}</span>
@@ -622,11 +597,7 @@
 			rel="noopener noreferrer"
 			class="site-link"
 		>
-			<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				<circle cx="12" cy="12" r="10" />
-				<line x1="2" y1="12" x2="22" y2="12" />
-				<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-			</svg>
+			<Globe size={15} weight="fill" />
 			appareassociazione.wixsite.com
 		</a>
 	</div>

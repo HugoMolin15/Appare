@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
+	import { MagnifyingGlass, X } from 'phosphor-svelte';
 
 	interface Props {
 		value: string;
@@ -54,17 +55,11 @@
 
 {#if collapsible && !expanded}
 	<button class="search-icon-btn" onclick={openSearch} aria-label="Cerca">
-		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-			<circle cx="11" cy="11" r="8"></circle>
-			<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-		</svg>
+		<MagnifyingGlass size={20} weight="bold" />
 	</button>
 {:else if collapsible && expanded}
 	<div class="search-overlay" transition:fly={{ y: -8, duration: 200 }}>
-		<svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-			<circle cx="11" cy="11" r="8"></circle>
-			<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-		</svg>
+		<MagnifyingGlass class="search-icon" size={18} weight="bold" />
 		<input
 			bind:this={inputEl}
 			type="text"
@@ -75,18 +70,12 @@
 			onkeydown={handleKeydown}
 		/>
 		<button class="close-btn" onclick={closeSearch} aria-label="Chiudi ricerca">
-			<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-				<line x1="18" y1="6" x2="6" y2="18"></line>
-				<line x1="6" y1="6" x2="18" y2="18"></line>
-			</svg>
+			<X size={12} weight="bold" />
 		</button>
 	</div>
 {:else}
 	<div class="search-container">
-		<svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-			<circle cx="11" cy="11" r="8"></circle>
-			<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-		</svg>
+		<MagnifyingGlass class="search-icon" size={20} weight="bold" />
 		<input
 			type="text"
 			class="search-input"
@@ -97,10 +86,7 @@
 		/>
 		{#if inputValue.length > 0}
 			<button class="clear-btn" onclick={clearInput} aria-label="Cancella ricerca">
-				<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-					<line x1="18" y1="6" x2="6" y2="18"></line>
-					<line x1="6" y1="6" x2="18" y2="18"></line>
-				</svg>
+				<X size={12} weight="bold" />
 			</button>
 		{/if}
 	</div>

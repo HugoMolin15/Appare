@@ -11,6 +11,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { fly } from 'svelte/transition';
+	import { Trash, CaretLeft } from 'phosphor-svelte';
 	import Flashcard from '$lib/components/Flashcard.svelte';
 	import { fontSizeItaliano, fontSizeHiragana, fontSizeRomaji, fontSizeKanji, fontSizeNotes } from '$lib/stores/settings';
 
@@ -195,10 +196,7 @@
 		<PageHeader title="Modifica parola" onback={goBack}>
 			{#snippet actions()}
 				<button class="delete-btn" onclick={handleDelete} aria-label="Elimina parola">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<polyline points="3 6 5 6 21 6"></polyline>
-						<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-					</svg>
+					<Trash size={20} weight="fill" />
 				</button>
 			{/snippet}
 		</PageHeader>
@@ -360,7 +358,7 @@
 		<div class="sheet-header">
 			{#if moveBreadcrumb.length > 0}
 				<button class="sheet-back" onclick={moveSheetBack}>
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+					<CaretLeft size={20} weight="bold" />
 				</button>
 			{/if}
 			<h2 class="sheet-title">

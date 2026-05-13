@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { WordScore } from '$lib/types/word';
+	import { ArrowsDownUp } from 'phosphor-svelte';
 
 	type ScoreFilterValue = 'all' | WordScore;
 
@@ -32,9 +33,7 @@
 
 {#if onSortCycle && sortLabel}
 	<button class="quick-pill" onclick={onSortCycle}>
-		<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-			<path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/>
-		</svg>
+		<ArrowsDownUp size={14} weight="bold" />
 		{sortLabel}
 	</button>
 {/if}

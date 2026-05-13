@@ -14,6 +14,7 @@
 	import FilterPills from '$lib/components/FilterPills.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { filterWords } from '$lib/utils/word-search';
+	import { Play } from 'phosphor-svelte';
 
 	let searchQuery = $state('');
 	let scoreFilter = $state<'all' | WordScore>('all');
@@ -127,7 +128,7 @@
 		<div class="search-row">
 			<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 			<button class="play-btn" onclick={startStudy} disabled={$selectedCount === 0}>
-				<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+				<Play size={15} weight="fill" />
 			</button>
 		</div>
 

@@ -25,6 +25,7 @@
 	import { randomCardOrder, randomWordOrder } from '$lib/stores/settings';
 	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import { wordScores } from '$lib/stores/wordScores';
+	import { Folder, Play, ArrowsDownUp, Shuffle, ClockCounterClockwise } from 'phosphor-svelte';
 
 	const SCORE_COLORS: Record<string, string> = {
 		none: 'var(--color-border)',
@@ -315,31 +316,21 @@
 						onclick={selectMode && selectedKeys.size > 0 ? studySelectedPeriods : studyAllPeriods}
 						disabled={selectMode ? selectedNodeWordCount === 0 : currentLevelWordCount === 0}
 					>
-						<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						<Play size={15} weight="fill" />
 					</button>
 				</div>
 
 				{#if !selectMode}
 					<div class="quick-filter-bar">
 						<button class="quick-pill" onclick={cyclePeriodSort}>
-							<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+							<ArrowsDownUp size={11} weight="bold" />
 							{periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}
 						</button>
 						<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-								<polyline points="16 3 21 3 21 8" />
-								<line x1="4" y1="20" x2="21" y2="3" />
-								<polyline points="21 16 21 21 16 21" />
-								<line x1="15" y1="15" x2="21" y2="21" />
-							</svg> Parole
+							<Shuffle size={14} weight="bold" /> Parole
 						</button>
 						<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-								<polyline points="16 3 21 3 21 8" />
-								<line x1="4" y1="20" x2="21" y2="3" />
-								<polyline points="21 16 21 21 16 21" />
-								<line x1="15" y1="15" x2="21" y2="21" />
-							</svg> Carte
+							<Shuffle size={14} weight="bold" /> Carte
 						</button>
 					</div>
 				{/if}
@@ -372,7 +363,7 @@
 						}}
 						disabled={daySelectMode ? selectedInDayView === 0 : dayWords.length === 0}
 					>
-						<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						<Play size={15} weight="fill" />
 					</button>
 				</div>
 
@@ -385,20 +376,10 @@
 							onSortCycle={cycleWordSort}
 						/>
 						<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-								<polyline points="16 3 21 3 21 8" />
-								<line x1="4" y1="20" x2="21" y2="3" />
-								<polyline points="21 16 21 21 16 21" />
-								<line x1="15" y1="15" x2="21" y2="21" />
-							</svg> Parole
+							<Shuffle size={14} weight="bold" /> Parole
 						</button>
 						<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-								<polyline points="16 3 21 3 21 8" />
-								<line x1="4" y1="20" x2="21" y2="3" />
-								<polyline points="21 16 21 21 16 21" />
-								<line x1="15" y1="15" x2="21" y2="21" />
-							</svg> Carte
+							<Shuffle size={14} weight="bold" /> Carte
 						</button>
 					</div>
 				{/if}
@@ -421,10 +402,7 @@
 	<div class="content">
 		{#if Object.keys(currentItems()).length === 0}
 			<div class="empty-state">
-				<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-					<circle cx="12" cy="12" r="10" />
-					<polyline points="12 6 12 12 16 14" />
-				</svg>
+				<ClockCounterClockwise size={48} weight="fill" />
 				<p>Nessuna sessione di studio trovata.</p>
 			</div>
 		{:else if path.length < 4}
@@ -439,9 +417,7 @@
 							</div>
 						{/if}
 						<div class="folder-icon" style={$dateColors[colorKey(key)] ? `color: ${$dateColors[colorKey(key)]}` : ''}>
-							<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-								<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
-							</svg>
+							<Folder size={26} weight="fill" />
 						</div>
 						<div class="folder-text">
 							<span class="folder-name">

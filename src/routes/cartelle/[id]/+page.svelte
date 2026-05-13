@@ -22,6 +22,7 @@
 	import { shuffle } from '$lib/utils/shuffle';
 	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { fly } from 'svelte/transition';
+	import { Folder as FolderIcon, Play, ArrowsDownUp, Shuffle, DotsThreeVertical, Trash, CaretLeft } from 'phosphor-svelte';
 
 	let folderId = $derived($page.params.id as string);
 	let isProtected = $derived(folderId === MY_WORDS_FOLDER_ID);
@@ -288,11 +289,7 @@
 		>
 			{#snippet actions()}
 				<button class="header-action-btn" onclick={openOptions} aria-label="Opzioni cartella">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<circle cx="12" cy="5" r="1" fill="currentColor" stroke="none" />
-						<circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
-						<circle cx="12" cy="19" r="1" fill="currentColor" stroke="none" />
-					</svg>
+					<DotsThreeVertical size={20} weight="bold" />
 				</button>
 			{/snippet}
 		</PageHeader>
@@ -305,7 +302,7 @@
 					onclick={selectMode && totalSelected > 0 ? studySelected : studyAll}
 					disabled={selectMode ? selectedWordCount === 0 : allDescendantWordIds.length === 0}
 				>
-					<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+					<Play size={15} weight="fill" />
 				</button>
 			</div>
 
@@ -322,25 +319,15 @@
 					{/if}
 					{#if folderWords.length > 0 || subfolders.length > 0}
 						<button class="quick-pill" onclick={cycleWordSort}>
-							<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+							<ArrowsDownUp size={11} weight="bold" />
 							{wordSortLabels[wordSortMode]}
 						</button>
 					{/if}
 					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-							<polyline points="16 3 21 3 21 8" />
-							<line x1="4" y1="20" x2="21" y2="3" />
-							<polyline points="21 16 21 21 16 21" />
-							<line x1="15" y1="15" x2="21" y2="21" />
-						</svg> Parole
+						<Shuffle size={14} weight="bold" /> Parole
 					</button>
 					<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-							<polyline points="16 3 21 3 21 8" />
-							<line x1="4" y1="20" x2="21" y2="3" />
-							<polyline points="21 16 21 21 16 21" />
-							<line x1="15" y1="15" x2="21" y2="21" />
-						</svg> Carte
+						<Shuffle size={14} weight="bold" /> Carte
 					</button>
 				</div>
 			{/if}
@@ -387,7 +374,7 @@
 					{#if reorderSubfoldersMode}
 						<div class="folder-item">
 							<div class="folder-icon" style={subfolder.color ? `color: ${subfolder.color}` : ''}>
-								<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg>
+								<FolderIcon size={26} weight="fill" />
 							</div>
 							<div class="item-text">
 								<span class="item-title">{subfolder.name}</span>
@@ -405,7 +392,7 @@
 								<Icon name="check" strokeWidth={3} />
 							</div>
 							<div class="folder-icon" style={subfolder.color ? `color: ${subfolder.color}` : ''}>
-								<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg>
+								<FolderIcon size={26} weight="fill" />
 							</div>
 							<div class="item-text">
 								<span class="item-title">{subfolder.name}</span>
@@ -415,7 +402,7 @@
 					{:else}
 						<a href="/cartelle/{subfolder.id}" class="folder-item">
 							<div class="folder-icon" style={subfolder.color ? `color: ${subfolder.color}` : ''}>
-								<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg>
+								<FolderIcon size={26} weight="fill" />
 							</div>
 							<div class="item-text">
 								<span class="item-title">{subfolder.name}</span>
@@ -526,7 +513,7 @@
 				<Icon name="plus" size={18} /> Aggiungi parole
 			</button>
 			<button class="sheet-action danger" onclick={confirmDeleteFolder}>
-				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+				<Trash size={18} weight="fill" />
 				Elimina cartella
 			</button>
 		{/if}
@@ -540,7 +527,7 @@
 		<div class="sheet-header">
 			{#if moveBreadcrumb.length > 0}
 				<button class="sheet-back" onclick={moveSheetBack}>
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+					<CaretLeft size={20} weight="bold" />
 				</button>
 			{/if}
 			<h2 class="sheet-title">
