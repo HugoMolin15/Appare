@@ -86,9 +86,11 @@
 	.page {
 		padding: var(--spacing-page);
 		padding-bottom: calc(var(--bottom-nav-height) + 1rem);
-		min-height: 100dvh;
+		height: 100dvh;
+		overflow: hidden;
 		display: flex;
 		flex-direction: column;
+		box-sizing: border-box;
 	}
 
 	/* ---- Header ---- */

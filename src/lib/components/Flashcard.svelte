@@ -235,6 +235,11 @@
 		max-height: 10rem;
 		overflow-y: auto;
 		overflow-x: hidden;
+		scrollbar-width: none;
+	}
+
+	.card-text::-webkit-scrollbar {
+		display: none;
 	}
 
 	.card-text.font-jp {
