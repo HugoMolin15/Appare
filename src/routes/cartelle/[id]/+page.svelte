@@ -619,7 +619,6 @@
 		justify-content: center;
 		cursor: pointer;
 		flex-shrink: 0;
-		padding-left: 2px;
 	}
 
 	.play-btn:disabled { opacity: 0.35; cursor: not-allowed; }

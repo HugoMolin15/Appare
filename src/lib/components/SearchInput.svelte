@@ -75,7 +75,7 @@
 	</div>
 {:else}
 	<div class="search-container">
-		<MagnifyingGlass class="search-icon" size={20} weight="bold" />
+		<span class="search-icon"><MagnifyingGlass size={20} weight="bold" /></span>
 		<input
 			type="text"
 			class="search-input"
