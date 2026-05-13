@@ -65,6 +65,7 @@
 	});
 
 	let isLoginPage = $derived(path === '/login');
+	let isStudiaPage = $derived(path === '/studia' || path.startsWith('/studia/'));
 </script>
 
 <div class="app-shell safe-top">
@@ -108,7 +109,7 @@
 		</div>
 	</aside>
 
-	<main class="main-content" bind:this={mainContent}>
+	<main class="main-content" class:no-scroll={isStudiaPage} bind:this={mainContent}>
 		{@render children()}
 	</main>
 
@@ -121,6 +122,10 @@
 	.main-content { flex: 1; min-width: 0; }
 
 	.hidden { display: none !important; }
+	.no-scroll { 
+		overflow: hidden !important; 
+		padding-bottom: 0 !important;
+	}
 
 	@media (min-width: 768px) {
 		.sidebar {

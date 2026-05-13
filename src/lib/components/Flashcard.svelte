@@ -105,13 +105,13 @@
 	}
 
 	function onTouchEnd(e: TouchEvent) {
-		const dx = e.changedTouches[0].clientX - touchStartX;
-		const dy = e.changedTouches[0].clientY - touchStartY;
-		// Horizontal swipe: must be more horizontal than vertical, and at least 40px
-		if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+		const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+		const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+		// Tap: finger barely moved
+		if (dx < 10 && dy < 10) {
 			flip();
 		}
-		// Vertical gesture: do nothing — browser scroll handles it naturally
+		// Any larger movement is treated as a scroll, so we do nothing
 	}
 
 	// Desktop mouse click flips. Touch-generated synthetic clicks are skipped.
@@ -161,7 +161,7 @@
 	{/if}
 
 	{#if sides.length > 1}
-		<span class="card-hint">← Scorri per girare →</span>
+		<span class="card-hint">Tocca per continuare</span>
 	{/if}
 </div>
 
