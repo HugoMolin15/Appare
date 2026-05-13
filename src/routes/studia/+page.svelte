@@ -149,6 +149,8 @@
 	}
 
 	// Trap browser back button and iOS swipe-back gesture
+	let pageEl = $state<HTMLElement | undefined>(undefined);
+
 	onMount(() => {
 		// Push a dummy state so back button/swipe triggers popstate instead of navigating
 		history.pushState(null, '', window.location.href);
@@ -161,8 +163,19 @@
 			}
 		}
 
+		// Block the PAGE from scrolling vertically, but allow scroll inside .card-fields-scroll.
+		// Must use addEventListener with passive:false so we can call preventDefault.
+		function blockPageScroll(e: TouchEvent) {
+			if (e.target instanceof Element && e.target.closest('.card-fields-scroll')) return;
+			e.preventDefault();
+		}
+
 		window.addEventListener('popstate', onPopState);
-		return () => window.removeEventListener('popstate', onPopState);
+		pageEl?.addEventListener('touchmove', blockPageScroll, { passive: false });
+		return () => {
+			window.removeEventListener('popstate', onPopState);
+			pageEl?.removeEventListener('touchmove', blockPageScroll);
+		};
 	});
 </script>
 
@@ -197,7 +210,7 @@
 	</div>
 {/if}
 
-<div class="page page-enter">
+<div class="page page-enter" bind:this={pageEl}>
 	<PageHeader title="Studia" />
 
 	{#if studySet.length === 0}
