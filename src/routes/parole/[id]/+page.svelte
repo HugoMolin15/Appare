@@ -24,6 +24,14 @@
 	let wordId = $derived($page.params.id);
 	let word = $derived($words.find((w) => w.id === wordId));
 	let backHref = $derived($page.url.searchParams.get('from') ?? '/parole');
+
+	function goBack() {
+		if (window.history.length > 1) {
+			history.back();
+		} else {
+			goto(backHref);
+		}
+	}
 	let createdAtFormatted = $derived(
 		word ? new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(word.createdAt)) : ''
 	);
@@ -143,7 +151,7 @@
 			wordType,
 			folderId: destFolderId
 		});
-		goto(backHref);
+		goBack();
 	}
 
 	let showDeleteModal = $state(false);
@@ -155,7 +163,7 @@
 	function confirmDelete() {
 		if (!wordId) return;
 		removeWord(wordId);
-		goto(backHref);
+		goBack();
 	}
 </script>
 
@@ -183,7 +191,7 @@
 			<p>Questa parola non esiste.</p>
 		</div>
 	{:else}
-		<PageHeader title="Modifica parola" backHref={backHref}>
+		<PageHeader title="Modifica parola" onback={goBack}>
 			{#snippet actions()}
 				<button class="delete-btn" onclick={handleDelete} aria-label="Elimina parola">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
