@@ -305,7 +305,7 @@
 		flex-direction: column;
 		padding-bottom: 2rem;
 		box-sizing: border-box;
-		touch-action: none;
+		/* Do NOT set touch-action: none here — it would kill scroll inside the card */
 	}
 
 	/* ---- Progress ---- */
@@ -341,6 +341,7 @@
 
 	/* ---- Card area ---- */
 	.card-area {
+		touch-action: pan-y; /* allow vertical scroll inside the card on iOS */
 		flex: 1;
 		min-height: 0;
 		display: flex;
