@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 
-	const HIDDEN_ROUTES = ['/login', '/studia'];
+	const HIDDEN_ROUTES = ['/login', '/studia', '/test-studia'];
 
 	let pathname = $derived($page.url.pathname);
 	let hidden = $derived(HIDDEN_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/')));
