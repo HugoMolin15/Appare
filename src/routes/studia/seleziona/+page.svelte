@@ -124,7 +124,12 @@
 	<div class="sticky-header">
 		<PageHeader title="Cosa vuoi studiare?" backHref="/" />
 
-		<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
+		<div class="search-row">
+			<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
+			<button class="play-btn" onclick={startStudy} disabled={$selectedCount === 0}>
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+			</button>
+		</div>
 
 		<div class="quick-filter-bar">
 			<button class="quick-pill" class:active={$randomWordOrder || $randomCardOrder || $listDisplayLang !== 'italiano'} onclick={() => activeSheet = 'options'}>
@@ -173,15 +178,6 @@
 		{/if}
 	</div>
 
-	<div class="bottom-bar">
-		<button class="cta-button" disabled={$selectedCount === 0} onclick={startStudy}>
-			{#if $selectedCount === 0}
-				Seleziona parole
-			{:else}
-				Studia {$selectedCount} {$selectedCount === 1 ? 'parola' : 'parole'}
-			{/if}
-		</button>
-	</div>
 </div>
 
 {#if activeSheet !== null}
@@ -285,7 +281,6 @@
 		display: flex;
 		flex-direction: column;
 		position: relative;
-		padding-bottom: 2rem;
 	}
 
 	.quick-filter-bar {
@@ -373,42 +368,35 @@
 		padding: 2rem 0;
 	}
 
-	.bottom-bar {
-		position: fixed;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		padding: 1rem var(--spacing-page);
-		background: var(--color-bg);
-		padding-bottom: calc(1rem + min(env(safe-area-inset-bottom, 20px), 34px));
-		z-index: 100;
+	.search-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 0.5rem;
 	}
 
-	@media (min-width: 768px) { .bottom-bar { left: 220px; } }
-	@media (min-width: 1280px) { .bottom-bar { left: 260px; } }
+	.search-row :global(.search-container) {
+		flex: 1;
+		min-width: 0;
+		margin-bottom: 0;
+	}
 
-	.cta-button {
-		width: 100%;
-		padding: 1.1rem;
-		background-color: var(--color-primary);
+	.play-btn {
+		width: 44px;
+		height: 44px;
+		border-radius: 50%;
+		background: var(--color-primary);
 		color: white;
 		border: none;
-		border-radius: var(--radius-full);
-		font-size: 1.05rem;
-		font-weight: 700;
-		font-family: var(--font-sans);
-		cursor: pointer;
 		display: flex;
-		justify-content: center;
 		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		flex-shrink: 0;
+		padding-left: 2px;
 	}
 
-	.cta-button:disabled {
-		background-color: var(--color-surface);
-		color: var(--color-text-secondary);
-		cursor: not-allowed;
-		opacity: 0.7;
-	}
+	.play-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 	/* ---- Filter sheet ---- */
 	.sheet-backdrop {

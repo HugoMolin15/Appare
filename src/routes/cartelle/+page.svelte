@@ -144,76 +144,64 @@
 		<PageHeader title="Cartelle" hideBackOnDesktop />
 
 		{#if allFolderCount > 0}
-			<!-- ① Action row — sticky -->
-			{#if selectMode && selectedFolderIds.size > 0}
-				<div class="action-row">
-					<button class="study-btn" onclick={studySelected} disabled={selectedWordCount === 0}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-						Studia {selectedFolderIds.size} {selectedFolderIds.size === 1 ? 'cartella' : 'cartelle'} ({selectedWordCount})
+			<div class="search-row">
+				<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle..." />
+				<button
+					class="play-btn"
+					onclick={selectMode && selectedFolderIds.size > 0 ? studySelected : studyAll}
+					disabled={selectMode ? selectedWordCount === 0 : totalWordCount === 0}
+				>
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+				</button>
+			</div>
+
+			{#if !selectMode}
+				<div class="quick-filter-bar">
+					{#if !reorderMode}
+						<button class="quick-pill" onclick={cycleFolderSort}>
+							<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+							{folderSortLabels[folderSortMode]}
+						</button>
+					{/if}
+					{#if folderList.length > 1}
+						{#if reorderMode}
+							<button class="quick-pill active" onclick={exitReorderMode}>Fine</button>
+							{#if $folderOrder['root']}
+								<button class="quick-pill" onclick={resetFolderOrder}>Reimposta</button>
+							{/if}
+						{:else}
+							<button class="quick-pill" onclick={enterReorderMode}>Riordina</button>
+						{/if}
+					{/if}
+					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<polyline points="16 3 21 3 21 8" />
+							<line x1="4" y1="20" x2="21" y2="3" />
+							<polyline points="21 16 21 21 16 21" />
+							<line x1="15" y1="15" x2="21" y2="21" />
+						</svg> Parole
 					</button>
-					<button class="action-pill muted" onclick={() => selectedFolderIds = new Set()}>Deseleziona</button>
-				</div>
-			{:else}
-				<div class="action-row">
-					<button class="study-btn" onclick={studyAll} disabled={totalWordCount === 0}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-						Studia tutto ({totalWordCount})
+					<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<polyline points="16 3 21 3 21 8" />
+							<line x1="4" y1="20" x2="21" y2="3" />
+							<polyline points="21 16 21 21 16 21" />
+							<line x1="15" y1="15" x2="21" y2="21" />
+						</svg> Carte
 					</button>
 				</div>
 			{/if}
 
-			<!-- ② Controls bar -->
-			<div class="controls-bar">
-<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
+			<div class="below-pills">
+				{#if selectMode && selectedFolderIds.size > 0}
+					<button class="select-toggle muted" onclick={() => selectedFolderIds = new Set()}>Deseleziona</button>
+				{/if}
+				<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
 					{selectMode ? 'Fine' : 'Seleziona'}
 				</button>
 			</div>
 		{/if}
 	</div>
-
-	{#if allFolderCount > 0}
-		<!-- ③ Search — scrolls away -->
-		<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle..." />
-
-		<!-- ④ Sort / reorder + random pills row — scrolls away -->
-		{#if !selectMode}
-			<div class="quick-filter-bar">
-				{#if !reorderMode}
-					<button class="quick-pill" onclick={cycleFolderSort}>
-					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
-					{folderSortLabels[folderSortMode]}
-				</button>
-				{/if}
-				{#if folderList.length > 1}
-					{#if reorderMode}
-						<button class="quick-pill active" onclick={exitReorderMode}>Fine</button>
-						{#if $folderOrder['root']}
-							<button class="quick-pill" onclick={resetFolderOrder}>Reimposta</button>
-						{/if}
-					{:else}
-						<button class="quick-pill" onclick={enterReorderMode}>Riordina</button>
-					{/if}
-				{/if}
-				
-				<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-						<polyline points="16 3 21 3 21 8" />
-						<line x1="4" y1="20" x2="21" y2="3" />
-						<polyline points="21 16 21 21 16 21" />
-						<line x1="15" y1="15" x2="21" y2="21" />
-					</svg> Parole
-				</button>
-				<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-						<polyline points="16 3 21 3 21 8" />
-						<line x1="4" y1="20" x2="21" y2="3" />
-						<polyline points="21 16 21 21 16 21" />
-						<line x1="15" y1="15" x2="21" y2="21" />
-					</svg> Carte
-				</button>
-			</div>
-		{/if}
-	{/if}
 
 	{#if allFolderCount === 0}
 		<EmptyState
@@ -331,18 +319,45 @@
 		position: relative;
 	}
 
-	/* ---- Controls bar ---- */
-	.controls-bar {
+	/* ---- Search row + play button ---- */
+	.search-row {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
-		margin-bottom: 0.65rem;
+		gap: 0.5rem;
+		margin-top: 0.5rem;
 	}
 
-	.count-label {
-		font-size: 0.82rem;
-		font-weight: 500;
-		color: var(--color-text-secondary);
+	.search-row :global(.search-container) {
+		flex: 1;
+		min-width: 0;
+		margin-bottom: 0;
+	}
+
+	.play-btn {
+		width: 44px;
+		height: 44px;
+		border-radius: 50%;
+		background: var(--color-primary);
+		color: white;
+		border: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		flex-shrink: 0;
+		padding-left: 2px;
+	}
+
+	.play-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+	/* ---- Below pills row ---- */
+	.below-pills {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 1rem;
+		margin-top: 0.25rem;
+		margin-bottom: 0.25rem;
 	}
 
 	.select-toggle {
@@ -356,48 +371,7 @@
 		padding: 0.25rem 0;
 	}
 
-	/* ---- Action row ---- */
-	.action-row {
-		display: flex;
-		gap: 0.5rem;
-		flex-wrap: wrap;
-		align-items: center;
-		margin-bottom: 0.65rem;
-	}
-
-	.study-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.4rem;
-		padding: 0.6rem 1rem;
-		width: 100%;
-		background: var(--color-primary);
-		color: white;
-		border: none;
-		border-radius: var(--radius-full);
-		font-size: 0.88rem;
-		font-weight: 700;
-		font-family: var(--font-sans);
-		cursor: pointer;
-		white-space: nowrap;
-	}
-
-	.study-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-	.action-pill {
-		padding: 0.5rem 0.85rem;
-		border-radius: var(--radius-full);
-		border: 1px solid var(--color-border);
-		font-size: 0.82rem;
-		font-weight: 700;
-		font-family: var(--font-sans);
-		cursor: pointer;
-		background: var(--color-surface);
-		color: var(--color-text);
-	}
-
-	.action-pill.muted { color: var(--color-text-secondary); }
+	.select-toggle.muted { color: var(--color-text-secondary); }
 
 		/* ---- Quick Filter Bar ---- */
 	.quick-filter-bar {
