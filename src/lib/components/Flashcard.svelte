@@ -107,17 +107,15 @@
 	{/if}
 
 	<div class="card-center">
-		<div class="card-fields-scroll">
-			<div class="card-fields">
-				{#each activeSide.fields as field}
-					<div class="card-field">
-						<span class="card-label">{field.label}</span>
-						<span class="card-text" class:font-jp={field.japanese} class:phrase-text={isPhrase} style="font-size: {fieldSizes[field.key] ?? '2.5rem'}">
-							{field.text}
-						</span>
-					</div>
-				{/each}
-			</div>
+		<div class="card-fields">
+			{#each activeSide.fields as field}
+				<div class="card-field">
+					<span class="card-label">{field.label}</span>
+					<span class="card-text" class:font-jp={field.japanese} class:phrase-text={isPhrase} style="font-size: {fieldSizes[field.key] ?? '2.5rem'}">
+						{field.text}
+					</span>
+				</div>
+			{/each}
 		</div>
 	</div>
 
@@ -186,19 +184,12 @@
 	.card-center {
 		flex: 1;
 		display: flex;
-		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
 		width: 100%;
-		min-height: 0;
-		overflow: hidden;
-	}
-
-	.card-fields-scroll {
-		flex: 1;
 		min-height: 0;
 		overflow-y: auto;
-		width: 100%;
-		display: flex;
-		flex-direction: column;
+		overflow-x: hidden;
 	}
 
 	/* Stack multiple fields vertically with a divider */
