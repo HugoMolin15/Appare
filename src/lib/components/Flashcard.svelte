@@ -243,6 +243,14 @@
 		display: none;
 	}
 
+	/* Flex spacers to center the content safely without breaking scroll */
+	.card-fields-scroll::before,
+	.card-fields-scroll::after {
+		content: "";
+		flex: 1;
+		min-height: 0;
+	}
+
 	/* Stack multiple fields vertically with a divider */
 	.card-fields {
 		display: flex;
@@ -250,7 +258,7 @@
 		align-items: center;
 		gap: 0.75rem;
 		width: 100%;
-		margin-block: auto;
+		flex-shrink: 0;
 	}
 
 	.card-field {

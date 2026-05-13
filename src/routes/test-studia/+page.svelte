@@ -163,10 +163,10 @@
 			}
 		}
 
-		// Block the PAGE from scrolling vertically, but allow scroll inside .card-fields-scroll.
+		// Block the PAGE from scrolling vertically, but allow scroll inside the card.
 		// Must use addEventListener with passive:false so we can call preventDefault.
 		function blockPageScroll(e: TouchEvent) {
-			if (e.target instanceof Element && e.target.closest('.card-fields-scroll')) return;
+			if (e.target instanceof Element && (e.target.closest('.card') || e.target.closest('.note-area'))) return;
 			e.preventDefault();
 		}
 
