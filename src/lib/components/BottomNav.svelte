@@ -68,9 +68,7 @@
 		align-items: stretch;
 		background: var(--color-bg);
 		border-top: 1px solid var(--color-border);
-		height: var(--bottom-nav-height);
 		padding-bottom: env(safe-area-inset-bottom, 0px);
-		box-sizing: border-box;
 	}
 
 	.nav-tab {
@@ -79,10 +77,10 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		height: 56px;
 		gap: 3px;
 		text-decoration: none;
 		color: var(--color-text-tertiary);
-		padding: 0.25rem 0;
 		transition: color 0.15s ease;
 		-webkit-tap-highlight-color: transparent;
 	}

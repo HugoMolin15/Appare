@@ -311,11 +311,14 @@
 
 <style>
 	.page {
+		position: fixed;
+		top: env(safe-area-inset-top, 0px);
+		bottom: env(safe-area-inset-bottom, 0px);
+		left: 0;
+		right: 0;
+		background: var(--color-bg);
+		z-index: 50; /* over top of layout */
 		padding: var(--spacing-page);
-		/* Lock page to exactly the visible viewport height */
-		height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-		max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-		overflow: hidden;
 		display: flex;
 		flex-direction: column;
 		gap: 0;

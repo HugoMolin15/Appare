@@ -46,7 +46,7 @@
 
 		<Heatmap bind:expanded={heatmapExpanded} jumpDate={heatmapJumpDate} />
 
-		<a href="/test-studia" class="cta-button" style="margin-top: 1rem;">
+		<a href="/studia/seleziona" class="cta-button" style="margin-top: 1rem;">
 			Inizia a studiare
 		</a>
 	</section>
