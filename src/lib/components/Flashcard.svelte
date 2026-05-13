@@ -288,11 +288,19 @@
 		color: var(--color-text);
 		text-align: center;
 		line-height: 1.5;
-		white-space: pre-wrap;
-		word-break: break-word;
 		transition: font-size 0.15s ease;
 		width: 100%;
+		/* Horizontal scroll instead of vertical wrap */
+		white-space: nowrap;
 		overflow-x: auto;
+		overflow-y: hidden;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+		padding-bottom: 2px;
+	}
+
+	.card-text::-webkit-scrollbar {
+		display: none;
 	}
 
 	.card-text.font-jp {
