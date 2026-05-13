@@ -22,7 +22,7 @@
 	import { fly } from 'svelte/transition';
 	import { shuffle } from '$lib/utils/shuffle';
 	import { get } from 'svelte/store';
-	import { randomCardOrder } from '$lib/stores/settings';
+	import { randomCardOrder, randomWordOrder } from '$lib/stores/settings';
 	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import { wordScores } from '$lib/stores/wordScores';
 
@@ -333,12 +333,27 @@
 					</div>
 				{/if}
 
-				<div class="sort-row">
-					<button class="sort-btn" onclick={cyclePeriodSort}>
+				<div class="quick-filter-bar">
+					<button class="quick-pill" onclick={cyclePeriodSort}>
 						<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
 						{periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}
 					</button>
-					<StudyRandomPills />
+					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<polyline points="16 3 21 3 21 8" />
+							<line x1="4" y1="20" x2="21" y2="3" />
+							<polyline points="21 16 21 21 16 21" />
+							<line x1="15" y1="15" x2="21" y2="21" />
+						</svg> Parole
+					</button>
+					<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<polyline points="16 3 21 3 21 8" />
+							<line x1="4" y1="20" x2="21" y2="3" />
+							<polyline points="21 16 21 21 16 21" />
+							<line x1="15" y1="15" x2="21" y2="21" />
+						</svg> Carte
+					</button>
 				</div>
 			{:else}
 				<!-- Day word view controls -->
@@ -376,14 +391,29 @@
 					</div>
 				{/if}
 
-				<div class="sort-row">
+				<div class="quick-filter-bar">
 					<ScoreFilter
 						value={scoreFilter}
 						onChange={(v) => scoreFilter = v}
 						sortLabel={wordSortLabels[wordSortMode]}
 						onSortCycle={cycleWordSort}
 					/>
-					<StudyRandomPills />
+					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<polyline points="16 3 21 3 21 8" />
+							<line x1="4" y1="20" x2="21" y2="3" />
+							<polyline points="21 16 21 21 16 21" />
+							<line x1="15" y1="15" x2="21" y2="21" />
+						</svg> Parole
+					</button>
+					<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<polyline points="16 3 21 3 21 8" />
+							<line x1="4" y1="20" x2="21" y2="3" />
+							<polyline points="21 16 21 21 16 21" />
+							<line x1="15" y1="15" x2="21" y2="21" />
+						</svg> Carte
+					</button>
 				</div>
 			{/if}
 		{/if}
@@ -518,21 +548,48 @@
 		text-align: center;
 	}
 
-	.sort-btn {
+	/* ---- Quick Filter Bar ---- */
+	.quick-filter-bar {
+		display: flex;
+		gap: 0.5rem;
+		overflow-x: auto;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+		margin: 0.75rem 0;
+		padding-bottom: 0.1rem;
+		margin-left: calc(-1 * var(--spacing-page));
+		margin-right: calc(-1 * var(--spacing-page));
+		padding-left: var(--spacing-page);
+	}
+
+	.quick-filter-bar::-webkit-scrollbar { display: none; }
+
+	.quick-pill {
+		background: none;
 		display: inline-flex;
 		align-items: center;
-		gap: 0.3rem;
-		white-space: nowrap;
-		background: none;
+		gap: 0.35rem;
+		padding: 0.45rem 0.8rem;
+		background-color: white;
 		border: 1px solid var(--color-border);
-		border-radius: var(--radius-full);
-		padding: 0.3rem 0.85rem;
-		font-size: 0.78rem;
+		border-radius: var(--radius-md);
+		font-size: 0.85rem;
 		font-weight: 600;
 		font-family: var(--font-sans);
 		color: var(--color-text-secondary);
 		cursor: pointer;
+		white-space: nowrap;
+		flex-shrink: 0;
+		transition: all 0.15s ease;
 	}
+
+	.quick-pill.active {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+		background-color: #fff0f0;
+	}
+
+	.quick-pill svg { stroke-width: 2.5; }
 
 	.folder-checkbox {
 		width: 24px;

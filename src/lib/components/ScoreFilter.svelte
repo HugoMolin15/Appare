@@ -30,66 +30,55 @@
 	};
 </script>
 
-<div class="score-filter-row">
-	{#if onSortCycle && sortLabel}
-		<button class="score-chip sort-chip" onclick={onSortCycle}>
-			<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-				<path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/>
-			</svg>
-			{sortLabel}
-		</button>
-	{/if}
-	{#each OPTIONS as s}
-		<button
-			class="score-chip"
-			class:active={value === s}
-			onclick={() => onChange(s)}
-			style={s !== 'all' ? `--chip-color: ${COLORS[s]}` : ''}
-		>
-			{#if s !== 'all'}
-				<span class="score-chip-dot" style="background:{COLORS[s]}"></span>
-			{/if}
-			{LABELS[s]}
-		</button>
-	{/each}
-</div>
+{#if onSortCycle && sortLabel}
+	<button class="quick-pill" onclick={onSortCycle}>
+		<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/>
+		</svg>
+		{sortLabel}
+	</button>
+{/if}
+{#each OPTIONS as s}
+	<button
+		class="quick-pill"
+		class:active={value === s}
+		onclick={() => onChange(s)}
+		style={s !== 'all' ? `--chip-color: ${COLORS[s]}` : ''}
+	>
+		{#if s !== 'all'}
+			<span class="score-chip-dot" style="background:{COLORS[s]}"></span>
+		{/if}
+		{LABELS[s]}
+	</button>
+{/each}
 
 <style>
-	.score-filter-row {
-		display: flex;
-		flex-wrap: nowrap;
-		gap: 0.4rem;
-		overflow-x: auto;
-		scrollbar-width: none;
-		-ms-overflow-style: none;
-		margin-bottom: 0.75rem;
-		padding-bottom: 0.1rem;
-	}
-
-	.score-filter-row::-webkit-scrollbar { display: none; }
-
-	.score-chip {
+	.quick-pill {
+		background: none;
 		display: inline-flex;
 		align-items: center;
-		gap: 0.3rem;
-		padding: 0.35rem 0.75rem;
-		border-radius: var(--radius-full);
-		border: none;
-		background: #f5f3f7;
-		color: #1A1A1A;
-		font-size: 0.78rem;
+		gap: 0.35rem;
+		padding: 0.45rem 0.8rem;
+		background-color: white;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		font-size: 0.85rem;
 		font-weight: 600;
 		font-family: var(--font-sans);
+		color: var(--color-text-secondary);
 		cursor: pointer;
 		white-space: nowrap;
 		flex-shrink: 0;
-		transition: background 0.15s ease, color 0.15s ease;
+		transition: all 0.15s ease;
 	}
 
-	.score-chip.active {
-		background: #1A1A1A;
-		color: white;
+	.quick-pill.active {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+		background-color: #fff0f0;
 	}
+
+	.quick-pill svg { stroke-width: 2.5; }
 
 	.score-chip-dot {
 		width: 9px;
