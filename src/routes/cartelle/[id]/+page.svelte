@@ -57,6 +57,8 @@
 	let folder = $derived($folders.find((f) => f.id === folderId));
 	let folderDisplayLang = $derived(folder?.displayLang ?? 'italiano');
 
+	let activeSheet = $state<'sort' | 'options' | null>(null);
+
 	// ---- Select mode (words + subfolders) ----
 	let selectMode = $state(false);
 	let selectedSubfolderIds = $state(new Set<string>());
@@ -346,27 +348,12 @@
 				{/if}
 			{/if}
 			{#if folderWords.length > 0 || subfolders.length > 0}
-				<button class="quick-pill" onclick={cycleWordSort}>
-					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
-					{wordSortLabels[wordSortMode]}
+				<button class="quick-pill" class:active={wordSortMode !== 'newest'} onclick={() => activeSheet = 'sort'}>
+					Ordina <Icon name="chevron-down" size={14} />
 				</button>
 			{/if}
-			
-			<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-					<polyline points="16 3 21 3 21 8" />
-					<line x1="4" y1="20" x2="21" y2="3" />
-					<polyline points="21 16 21 21 16 21" />
-					<line x1="15" y1="15" x2="21" y2="21" />
-				</svg> Parole
-			</button>
-			<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-					<polyline points="16 3 21 3 21 8" />
-					<line x1="4" y1="20" x2="21" y2="3" />
-					<polyline points="21 16 21 21 16 21" />
-					<line x1="15" y1="15" x2="21" y2="21" />
-				</svg> Carte
+			<button class="quick-pill" class:active={$randomWordOrder || $randomCardOrder} onclick={() => activeSheet = 'options'}>
+				Opzioni <Icon name="chevron-down" size={14} />
 			</button>
 		</div>
 	{/if}
@@ -484,6 +471,46 @@
 	{#if showFolderModal}
 		<FolderModal parentId={folderId} onClose={() => showFolderModal = false} />
 	{/if}
+
+{#if activeSheet !== null}
+	<div class="sheet-backdrop" onclick={() => activeSheet = null} role="presentation"></div>
+	<div class="filter-sheet">
+		<div class="sheet-header">
+			<h2 class="sheet-title">
+				{#if activeSheet === 'sort'}Ordina per
+				{:else if activeSheet === 'options'}Opzioni di studio
+				{/if}
+			</h2>
+			<button class="sheet-close" onclick={() => activeSheet = null}>Chiudi</button>
+		</div>
+		<div class="sheet-body">
+			{#if activeSheet === 'sort'}
+				<div class="option-list">
+					{#each wordSortCycle as val}
+						<button class="option-row" class:selected={wordSortMode === val} onclick={() => { wordSortMode = val; activeSheet = null; }}>
+							<span>{wordSortLabels[val]}</span>
+							{#if wordSortMode === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+						</button>
+					{/each}
+				</div>
+			{:else if activeSheet === 'options'}
+				<div class="filter-section">
+					<span class="section-label">Impostazioni mazzo</span>
+					<div class="option-list">
+						<button class="option-row" onclick={() => randomWordOrder.update(v => !v)}>
+							<span>Ordine parole casuale</span>
+							{#if $randomWordOrder}<Icon name="check" size={18} strokeWidth={3} />{/if}
+						</button>
+						<button class="option-row" onclick={() => randomCardOrder.update(v => !v)}>
+							<span>Lato iniziale casuale</span>
+							{#if $randomCardOrder}<Icon name="check" size={18} strokeWidth={3} />{/if}
+						</button>
+					</div>
+				</div>
+			{/if}
+		</div>
+	</div>
+{/if}
 
 	<!-- Options sheet -->
 	{#if showOptionsSheet}
@@ -1000,4 +1027,119 @@
 	}
 	.option-row:last-child { border-bottom: none; }
 	.option-row.selected { font-weight: 700; }
+	/* ---- Sheet UI ---- */
+	.sheet-backdrop {
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.4);
+		z-index: 1000;
+		animation: fadeIn 0.2s ease;
+	}
+
+	.filter-sheet {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		background: var(--color-surface);
+		border-top-left-radius: 1.5rem;
+		border-top-right-radius: 1.5rem;
+		padding: 1.5rem;
+		padding-bottom: min(env(safe-area-inset-bottom, 34px) + 1.5rem, 3rem);
+		z-index: 1001;
+		animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+		max-height: 85vh;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	@keyframes slideUp {
+		from { transform: translateY(100%); }
+		to { transform: translateY(0); }
+	}
+	@keyframes fadeIn {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+
+	.sheet-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.sheet-title {
+		font-size: 1.25rem;
+		font-weight: 700;
+		margin: 0;
+	}
+
+	.sheet-close {
+		background: none;
+		border: none;
+		color: var(--color-primary);
+		font-weight: 600;
+		font-size: 1rem;
+		cursor: pointer;
+	}
+
+	.sheet-body {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.filter-section {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.section-label {
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--color-text-tertiary);
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+
+	.option-list {
+		display: flex;
+		flex-direction: column;
+		background: var(--color-bg);
+		border-radius: var(--radius-lg);
+		overflow: hidden;
+		border: 1px solid var(--color-border);
+	}
+
+	.option-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 1rem 1.25rem;
+		background: none;
+		border: none;
+		border-bottom: 1px solid var(--color-border);
+		font-size: 1rem;
+		font-weight: 500;
+		color: var(--color-text-primary);
+		cursor: pointer;
+		text-align: left;
+		transition: background-color 0.15s ease;
+	}
+
+	.option-row:last-child {
+		border-bottom: none;
+	}
+
+	.option-row:active {
+		background-color: var(--color-border);
+	}
+
+	.option-row.selected {
+		color: var(--color-primary);
+		background-color: rgba(var(--color-primary-rgb), 0.05);
+	}
 </style>
