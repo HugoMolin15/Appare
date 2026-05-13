@@ -62,7 +62,9 @@
 	.pill-remove {
 		background: rgba(255,255,255,0.25);
 		border: none;
-		border-radius: 9999px;
+		border-radius: 50% !important;
+		aspect-ratio: 1;
+		box-sizing: border-box;
 		overflow: hidden;
 		width: 18px;
 		height: 18px;

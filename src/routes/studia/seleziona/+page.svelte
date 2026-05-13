@@ -127,7 +127,7 @@
 		<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
 		<div class="quick-filter-bar">
-			<button class="quick-pill" onclick={() => activeSheet = 'options'}>
+			<button class="quick-pill" class:active={$randomWordOrder || $randomCardOrder || $listDisplayLang !== 'italiano'} onclick={() => activeSheet = 'options'}>
 				Opzioni <Icon name="chevron-down" size={14} />
 			</button>
 			<button class="quick-pill" class:active={scoreFilter !== 'all'} onclick={() => activeSheet = 'score'}>
