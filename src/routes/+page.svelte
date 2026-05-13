@@ -201,6 +201,10 @@
 		-webkit-tap-highlight-color: transparent;
 	}
 
+	.nav-card svg {
+		color: var(--color-primary);
+	}
+
 	.nav-card-wide {
 		aspect-ratio: unset;
 		padding: 1.25rem;

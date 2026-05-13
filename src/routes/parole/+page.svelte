@@ -167,7 +167,7 @@
 
 <div class="page page-enter">
 	<div>
-		<PageHeader title="Tutte le parole" hideBack />
+		<PageHeader title="Tutte le parole" />
 
 	</div>
 
@@ -313,7 +313,7 @@
 		overflow-x: auto;
 		scrollbar-width: none;
 		-ms-overflow-style: none;
-		margin: 0.75rem 0;
+		margin: 0.35rem 0;
 		padding-bottom: 0.1rem;
 		/* Edge-to-edge layout */
 		margin-left: calc(-1 * var(--spacing-page));
