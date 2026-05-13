@@ -13,7 +13,6 @@
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
-	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
 	let showModal = $state(false);
@@ -79,8 +78,6 @@
 	function enterReorderMode() { snapshotFolderOrder('root', folderList.map(f => f.id)); reorderMode = true; }
 	function exitReorderMode() { reorderMode = false; }
 	function resetFolderOrder() { clearFolderOrder('root'); reorderMode = false; }
-
-	let activeSheet = $state<'sort' | 'options' | null>(null);
 
 	// ---- Select mode ----
 	function toggleFolderSelect(id: string) {
@@ -183,9 +180,10 @@
 		{#if !selectMode}
 			<div class="quick-filter-bar">
 				{#if !reorderMode}
-					<button class="quick-pill" class:active={folderSortMode !== 'newest'} onclick={() => activeSheet = 'sort'}>
-						Ordina <Icon name="chevron-down" size={14} />
-					</button>
+					<button class="quick-pill" onclick={cycleFolderSort}>
+					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+					{folderSortLabels[folderSortMode]}
+				</button>
 				{/if}
 				{#if folderList.length > 1}
 					{#if reorderMode}
@@ -197,8 +195,22 @@
 						<button class="quick-pill" onclick={enterReorderMode}>Riordina</button>
 					{/if}
 				{/if}
-				<button class="quick-pill" class:active={$randomWordOrder || $randomCardOrder} onclick={() => activeSheet = 'options'}>
-					Opzioni <Icon name="chevron-down" size={14} />
+				
+				<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						<polyline points="16 3 21 3 21 8" />
+						<line x1="4" y1="20" x2="21" y2="3" />
+						<polyline points="21 16 21 21 16 21" />
+						<line x1="15" y1="15" x2="21" y2="21" />
+					</svg> Parole
+				</button>
+				<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						<polyline points="16 3 21 3 21 8" />
+						<line x1="4" y1="20" x2="21" y2="3" />
+						<polyline points="21 16 21 21 16 21" />
+						<line x1="15" y1="15" x2="21" y2="21" />
+					</svg> Carte
 				</button>
 			</div>
 		{/if}
@@ -307,46 +319,6 @@
 
 	{#if showModal}
 		<FolderModal onClose={() => showModal = false} />
-	{/if}
-
-	{#if activeSheet !== null}
-		<SheetBackdrop onClose={() => activeSheet = null} />
-		<div class="filter-sheet">
-			<div class="sheet-header">
-				<h2 class="sheet-title">
-					{#if activeSheet === 'sort'}Ordina per
-					{:else if activeSheet === 'options'}Opzioni di studio
-					{/if}
-				</h2>
-				<button class="sheet-close" onclick={() => activeSheet = null}>Chiudi</button>
-			</div>
-			<div class="sheet-body">
-				{#if activeSheet === 'sort'}
-					<div class="option-list">
-						{#each ['newest', 'oldest', 'name-az'] as val}
-						<button class="option-row" class:selected={folderSortMode === val} onclick={() => { folderSortMode = val as FolderSort; activeSheet = null; }}>
-							<span>{folderSortLabels[val as FolderSort]}</span>
-								{#if folderSortMode === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
-							</button>
-						{/each}
-					</div>
-				{:else if activeSheet === 'options'}
-					<div class="filter-section">
-						<span class="section-label">Impostazioni mazzo</span>
-						<div class="option-list">
-							<button class="option-row" onclick={() => randomWordOrder.update(v => !v)}>
-								<span>Ordine parole casuale</span>
-								{#if $randomWordOrder}<Icon name="check" size={18} strokeWidth={3} />{/if}
-							</button>
-							<button class="option-row" onclick={() => randomCardOrder.update(v => !v)}>
-								<span>Lato iniziale casuale</span>
-								{#if $randomCardOrder}<Icon name="check" size={18} strokeWidth={3} />{/if}
-							</button>
-						</div>
-					</div>
-				{/if}
-			</div>
-		</div>
 	{/if}
 </div>
 

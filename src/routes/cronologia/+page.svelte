@@ -141,8 +141,6 @@
 	let searchQuery = $state('');
 	let periodSearchQuery = $state('');
 	let scoreFilter = $state<'all' | WordScore>('all');
-	
-	let activeSheet = $state<'sort-period' | 'sort' | 'score' | 'options' | null>(null);
 
 	type WordSort = 'newest' | 'oldest' | 'it-az' | 'jp-az';
 	let wordSortMode = $state<WordSort>('newest');
@@ -336,11 +334,25 @@
 				{/if}
 
 				<div class="quick-filter-bar">
-					<button class="quick-pill" class:active={periodSortMode !== 'newest'} onclick={() => activeSheet = 'sort-period'}>
-						Ordina <Icon name="chevron-down" size={14} />
+					<button class="quick-pill" onclick={cyclePeriodSort}>
+						<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+						{periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}
 					</button>
-					<button class="quick-pill" class:active={$randomWordOrder || $randomCardOrder} onclick={() => activeSheet = 'options'}>
-						Opzioni <Icon name="chevron-down" size={14} />
+					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<polyline points="16 3 21 3 21 8" />
+							<line x1="4" y1="20" x2="21" y2="3" />
+							<polyline points="21 16 21 21 16 21" />
+							<line x1="15" y1="15" x2="21" y2="21" />
+						</svg> Parole
+					</button>
+					<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<polyline points="16 3 21 3 21 8" />
+							<line x1="4" y1="20" x2="21" y2="3" />
+							<polyline points="21 16 21 21 16 21" />
+							<line x1="15" y1="15" x2="21" y2="21" />
+						</svg> Carte
 					</button>
 				</div>
 			{:else}
@@ -380,14 +392,27 @@
 				{/if}
 
 				<div class="quick-filter-bar">
-					<button class="quick-pill" class:active={scoreFilter !== 'all'} onclick={() => activeSheet = 'score'}>
-						Stato <Icon name="chevron-down" size={14} />
+					<ScoreFilter
+						value={scoreFilter}
+						onChange={(v) => scoreFilter = v}
+						sortLabel={wordSortLabels[wordSortMode]}
+						onSortCycle={cycleWordSort}
+					/>
+					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<polyline points="16 3 21 3 21 8" />
+							<line x1="4" y1="20" x2="21" y2="3" />
+							<polyline points="21 16 21 21 16 21" />
+							<line x1="15" y1="15" x2="21" y2="21" />
+						</svg> Parole
 					</button>
-					<button class="quick-pill" class:active={wordSortMode !== 'newest'} onclick={() => activeSheet = 'sort'}>
-						Ordina <Icon name="chevron-down" size={14} />
-					</button>
-					<button class="quick-pill" class:active={$randomWordOrder || $randomCardOrder} onclick={() => activeSheet = 'options'}>
-						Opzioni <Icon name="chevron-down" size={14} />
+					<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<polyline points="16 3 21 3 21 8" />
+							<line x1="4" y1="20" x2="21" y2="3" />
+							<polyline points="21 16 21 21 16 21" />
+							<line x1="15" y1="15" x2="21" y2="21" />
+						</svg> Carte
 					</button>
 				</div>
 			{/if}
@@ -467,82 +492,6 @@
 		{/if}
 	</div>
 </div>
-
-{#if activeSheet !== null}
-	<SheetBackdrop onClose={() => activeSheet = null} />
-	<div class="filter-sheet">
-		<div class="sheet-header">
-			<h2 class="sheet-title">
-				{#if activeSheet === 'sort-period'}Ordina periodi
-				{:else if activeSheet === 'sort'}Ordina parole
-				{:else if activeSheet === 'score'}Stato
-				{:else if activeSheet === 'options'}Opzioni di studio
-				{/if}
-			</h2>
-			<button class="sheet-close" onclick={() => activeSheet = null}>Chiudi</button>
-		</div>
-		<div class="sheet-body">
-			{#if activeSheet === 'sort-period'}
-				<div class="option-list">
-					<button class="option-row" class:selected={periodSortMode === 'newest'} onclick={() => { periodSortMode = 'newest'; activeSheet = null; }}>
-						<span>Più recenti</span>
-						{#if periodSortMode === 'newest'}<Icon name="check" size={18} strokeWidth={3} />{/if}
-					</button>
-					<button class="option-row" class:selected={periodSortMode === 'oldest'} onclick={() => { periodSortMode = 'oldest'; activeSheet = null; }}>
-						<span>Meno recenti</span>
-						{#if periodSortMode === 'oldest'}<Icon name="check" size={18} strokeWidth={3} />{/if}
-					</button>
-				</div>
-			{:else if activeSheet === 'sort'}
-				<div class="option-list">
-					{#each wordSortCycle as val}
-						<button class="option-row" class:selected={wordSortMode === val} onclick={() => { wordSortMode = val; activeSheet = null; }}>
-							<span>{wordSortLabels[val]}</span>
-							{#if wordSortMode === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
-						</button>
-					{/each}
-				</div>
-			{:else if activeSheet === 'score'}
-				<div class="option-list">
-					<button class="option-row" class:selected={scoreFilter === 'all'} onclick={() => { scoreFilter = 'all'; activeSheet = null; }}>
-						<span>Tutte le parole</span>
-						{#if scoreFilter === 'all'}<Icon name="check" size={18} strokeWidth={3} />{/if}
-					</button>
-					<button class="option-row" class:selected={scoreFilter === 'none'} onclick={() => { scoreFilter = 'none'; activeSheet = null; }}>
-						<span>Non valutate</span>
-						{#if scoreFilter === 'none'}<Icon name="check" size={18} strokeWidth={3} />{/if}
-					</button>
-					<button class="option-row" class:selected={scoreFilter === 'unknown'} onclick={() => { scoreFilter = 'unknown'; activeSheet = null; }}>
-						<span>Difficile</span>
-						{#if scoreFilter === 'unknown'}<Icon name="check" size={18} strokeWidth={3} />{/if}
-					</button>
-					<button class="option-row" class:selected={scoreFilter === 'learning'} onclick={() => { scoreFilter = 'learning'; activeSheet = null; }}>
-						<span>Buono</span>
-						{#if scoreFilter === 'learning'}<Icon name="check" size={18} strokeWidth={3} />{/if}
-					</button>
-					<button class="option-row" class:selected={scoreFilter === 'known'} onclick={() => { scoreFilter = 'known'; activeSheet = null; }}>
-						<span>Facile</span>
-						{#if scoreFilter === 'known'}<Icon name="check" size={18} strokeWidth={3} />{/if}
-					</button>
-				</div>
-			{:else if activeSheet === 'options'}
-				<div class="filter-section">
-					<span class="section-label">Impostazioni mazzo</span>
-					<div class="option-list">
-						<button class="option-row" onclick={() => randomWordOrder.update(v => !v)}>
-							<span>Ordine parole casuale</span>
-							{#if $randomWordOrder}<Icon name="check" size={18} strokeWidth={3} />{/if}
-						</button>
-						<button class="option-row" onclick={() => randomCardOrder.update(v => !v)}>
-							<span>Lato iniziale casuale</span>
-							{#if $randomCardOrder}<Icon name="check" size={18} strokeWidth={3} />{/if}
-						</button>
-					</div>
-				</div>
-			{/if}
-		</div>
-	</div>
-{/if}
 
 {#if editingColorKey}
 	<SheetBackdrop onClose={() => editingColorKey = null} />
@@ -880,6 +829,13 @@
 	}
 
 	.action-pill.muted { color: var(--color-text-secondary); }
+
+	.sort-row {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		margin-bottom: 0.75rem;
+	}
 
 	/* Word list styles */
 

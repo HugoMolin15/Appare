@@ -57,8 +57,6 @@
 	let folder = $derived($folders.find((f) => f.id === folderId));
 	let folderDisplayLang = $derived(folder?.displayLang ?? 'italiano');
 
-	let activeSheet = $state<'sort' | 'options' | null>(null);
-
 	// ---- Select mode (words + subfolders) ----
 	let selectMode = $state(false);
 	let selectedSubfolderIds = $state(new Set<string>());
@@ -86,7 +84,7 @@
 		editName = folder?.name ?? '';
 		editColor = folder?.color ?? '';
 		editDisplayLang = folder?.displayLang;
-		activeSheet = 'options';
+		showOptionsSheet = true;
 	}
 
 	function saveEdits() {
@@ -348,12 +346,27 @@
 				{/if}
 			{/if}
 			{#if folderWords.length > 0 || subfolders.length > 0}
-				<button class="quick-pill" class:active={wordSortMode !== 'newest'} onclick={() => activeSheet = 'sort'}>
-					Ordina <Icon name="chevron-down" size={14} />
+				<button class="quick-pill" onclick={cycleWordSort}>
+					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+					{wordSortLabels[wordSortMode]}
 				</button>
 			{/if}
-			<button class="quick-pill" class:active={$randomWordOrder || $randomCardOrder} onclick={() => activeSheet = 'options'}>
-				Opzioni <Icon name="chevron-down" size={14} />
+			
+			<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="16 3 21 3 21 8" />
+					<line x1="4" y1="20" x2="21" y2="3" />
+					<polyline points="21 16 21 21 16 21" />
+					<line x1="15" y1="15" x2="21" y2="21" />
+				</svg> Parole
+			</button>
+			<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="16 3 21 3 21 8" />
+					<line x1="4" y1="20" x2="21" y2="3" />
+					<polyline points="21 16 21 21 16 21" />
+					<line x1="15" y1="15" x2="21" y2="21" />
+				</svg> Carte
 			</button>
 		</div>
 	{/if}
@@ -472,96 +485,61 @@
 		<FolderModal parentId={folderId} onClose={() => showFolderModal = false} />
 	{/if}
 
-{#if activeSheet !== null}
-	<SheetBackdrop onClose={() => activeSheet = null} />
-	<div class="filter-sheet">
-		<div class="sheet-header">
-			<h2 class="sheet-title">
-				{#if activeSheet === 'sort'}Ordina per
-				{:else if activeSheet === 'options'}Opzioni
-				{/if}
-			</h2>
-			<button class="sheet-close" onclick={() => activeSheet = null}>Chiudi</button>
-		</div>
-		<div class="sheet-body">
-			{#if activeSheet === 'sort'}
+	<!-- Options sheet -->
+	{#if showOptionsSheet}
+		<SheetBackdrop onClose={() => showOptionsSheet = false} />
+		<div class="options-sheet" transition:fly={{ y: 300, duration: 300 }}>
+			<div class="sheet-header">
+				<h2 class="sheet-title">Opzioni cartella</h2>
+				<button class="sheet-close" onclick={() => showOptionsSheet = false}>Annulla</button>
+			</div>
+				{#if !isProtected}
+				<div class="sheet-section">
+					<label class="sheet-label" for="edit-folder-name">Nome</label>
+					<input id="edit-folder-name" type="text" class="sheet-input" bind:value={editName} onkeydown={(e) => e.key === 'Enter' && saveEdits()} />
+				</div>
+			{/if}
+			<div class="sheet-section">
+				<span class="sheet-label">Colore</span>
+				<div class="color-grid">
+					{#each FOLDER_COLORS as color}
+						<button type="button" class="color-swatch" class:selected={editColor === color} style="background-color: {color}" onclick={() => editColor = color} aria-label="Colore {color}">
+							{#if editColor === color}<Icon name="check" size={14} strokeWidth={4} stroke="white" />{/if}
+						</button>
+					{/each}
+					<button type="button" class="color-swatch color-none" class:selected={editColor === ''} onclick={() => editColor = ''} aria-label="Nessun colore">
+						<Icon name="close" size={14} strokeWidth={2.5} />
+					</button>
+				</div>
+			</div>
+			<div class="sheet-section">
+				<span class="sheet-label">Lingua visualizzata</span>
 				<div class="option-list">
-					{#each wordSortCycle as val}
-						<button class="option-row" class:selected={wordSortMode === val} onclick={() => { wordSortMode = val; activeSheet = null; }}>
-							<span>{wordSortLabels[val]}</span>
-							{#if wordSortMode === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
+						<button
+							class="option-row"
+							class:selected={editDisplayLang === val || (!editDisplayLang && val === 'italiano')}
+							onclick={() => editDisplayLang = val === 'italiano' ? undefined : val as Folder['displayLang']}
+						>
+							<span>{label}</span>
+							{#if editDisplayLang === val || (!editDisplayLang && val === 'italiano')}<Icon name="check" size={18} strokeWidth={3} />{/if}
 						</button>
 					{/each}
 				</div>
-			{:else if activeSheet === 'options'}
-				{#if !isProtected}
-					<div class="filter-section">
-						<span class="section-label">Nome cartella</span>
-						<input type="text" class="sheet-input" bind:value={editName} onkeydown={(e) => e.key === 'Enter' && saveEdits()} />
-					</div>
-				{/if}
-				
-				<div class="filter-section">
-					<span class="section-label">Colore</span>
-					<div class="color-grid">
-						{#each FOLDER_COLORS as color}
-							<button type="button" class="color-swatch" class:selected={editColor === color} style="background-color: {color}" onclick={() => editColor = color} aria-label="Colore {color}">
-								{#if editColor === color}<Icon name="check" size={14} strokeWidth={4} stroke="white" />{/if}
-							</button>
-						{/each}
-						<button type="button" class="color-swatch color-none" class:selected={editColor === ''} onclick={() => editColor = ''} aria-label="Nessun colore">
-							<Icon name="close" size={14} strokeWidth={2.5} />
-						</button>
-					</div>
-				</div>
-
-				<div class="filter-section">
-					<span class="section-label">Lingua visualizzata</span>
-					<div class="option-list">
-						{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
-							<button
-								class="option-row"
-								class:selected={editDisplayLang === val || (!editDisplayLang && val === 'italiano')}
-								onclick={() => editDisplayLang = val === 'italiano' ? undefined : val as Folder['displayLang']}
-							>
-								<span>{label}</span>
-								{#if editDisplayLang === val || (!editDisplayLang && val === 'italiano')}<Icon name="check" size={18} strokeWidth={3} />{/if}
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<div class="filter-section">
-					<span class="section-label">Impostazioni studio</span>
-					<div class="option-list">
-						<button class="option-row" onclick={() => randomWordOrder.update(v => !v)}>
-							<span>Ordine parole casuale</span>
-							{#if $randomWordOrder}<Icon name="check" size={18} strokeWidth={3} />{/if}
-						</button>
-						<button class="option-row" onclick={() => randomCardOrder.update(v => !v)}>
-							<span>Lato iniziale casuale</span>
-							{#if $randomCardOrder}<Icon name="check" size={18} strokeWidth={3} />{/if}
-						</button>
-					</div>
-				</div>
-
-				<button class="save-btn" onclick={saveEdits} disabled={!isProtected && !editName.trim()}>Salva modifiche</button>
-				
-				{#if !isProtected}
-					<div class="sheet-divider"></div>
-					<button class="sheet-action" onclick={() => { activeSheet = null; showAddWordsModal = true; }}>
-						<Icon name="plus" size={18} /> Aggiungi parole esistenti
-					</button>
-					<button class="sheet-action danger" onclick={confirmDeleteFolder}>
-						<Icon name="trash" size={18} /> Elimina cartella
-					</button>
-				{/if}
+			</div>
+			<button class="save-btn" onclick={saveEdits} disabled={!isProtected && !editName.trim()}>Salva modifiche</button>
+			{#if !isProtected}
+				<div class="sheet-divider"></div>
+				<button class="sheet-action" onclick={() => { showOptionsSheet = false; showAddWordsModal = true; }}>
+					<Icon name="plus" size={18} /> Aggiungi parole
+				</button>
+				<button class="sheet-action danger" onclick={confirmDeleteFolder}>
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+					Elimina cartella
+				</button>
 			{/if}
 		</div>
-	</div>
-{/if}
-
-
+	{/if}
 
 	<!-- Move sheet — Finder style -->
 	{#if showMoveSheet}
@@ -903,7 +881,6 @@
 	}
 
 	/* ---- Bottom sheets ---- */
-	/* ---- Move sheet — Finder style ---- */
 	.options-sheet {
 		position: fixed; bottom: 0; left: 0; right: 0;
 		max-height: 92dvh;
@@ -925,6 +902,71 @@
 
 	.options-sheet::-webkit-scrollbar { display: none; }
 
+	.sheet-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.sheet-title { font-size: 1.35rem; font-weight: 800; color: var(--color-text-primary); margin: 0; flex: 1; }
+
+	.sheet-close {
+		background: none; border: none; cursor: pointer;
+		color: var(--color-text-secondary); font-size: 0.95rem; font-weight: 600; font-family: inherit;
+	}
+
+	.sheet-back {
+		background: none; border: none; padding: 0; cursor: pointer;
+		color: var(--color-text-secondary); display: flex; align-items: center; flex-shrink: 0; margin-right: 0.5rem;
+	}
+
+	.sheet-section { display: flex; flex-direction: column; gap: 0.75rem; }
+
+	.sheet-label {
+		font-size: 0.82rem; font-weight: 700; text-transform: uppercase;
+		letter-spacing: 0.05em; color: var(--color-text-tertiary);
+	}
+
+	.sheet-input {
+		width: 100%; padding: 0.75rem 1rem; border-radius: var(--radius-md);
+		background: var(--color-surface); border: 1px solid var(--color-border);
+		font-family: inherit; font-size: 1rem; color: var(--color-text); outline: none; box-sizing: border-box;
+	}
+	.sheet-input:focus { border-color: #e0dce6; box-shadow: none; }
+
+	.color-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; }
+
+	@media (min-width: 640px) {
+		.color-grid { grid-template-columns: repeat(8, 1fr); gap: 0.6rem; }
+	}
+
+	.color-swatch {
+		aspect-ratio: 1; border-radius: var(--radius-lg); border: 3px solid transparent;
+		cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;
+	}
+	.color-swatch.selected { border-color: var(--color-text-primary); }
+	.color-none { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text-secondary); }
+	.color-none.selected { border-color: var(--color-text-primary); }
+
+	.save-btn {
+		width: 100%; padding: 1.1rem; background-color: var(--color-border); color: var(--color-text-tertiary);
+		border: none; border-radius: var(--radius-xl); font-size: 1.05rem; font-weight: 700; font-family: inherit;
+		cursor: not-allowed; margin-bottom: 0.5rem;
+	}
+	.save-btn:not(:disabled) { background-color: var(--color-primary); color: white; cursor: pointer; }
+	.save-btn:not(:disabled):active { transform: scale(0.98); }
+
+	.sheet-divider { height: 1px; background: var(--color-border); margin: 0.75rem 0; }
+
+	.sheet-action {
+		display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.875rem 0;
+		background: none; border: none; border-bottom: 1px solid var(--color-border);
+		font-family: inherit; font-size: 0.95rem; font-weight: 600; color: var(--color-text); cursor: pointer; text-align: left;
+	}
+	.sheet-action:last-child { border-bottom: none; }
+	.sheet-action.danger { color: #C5221F; }
+
+	/* ---- Move sheet ---- */
 	.move-folder-list { display: flex; flex-direction: column; overflow-y: auto; flex: 1; padding: 0.5rem 0; }
 
 	.move-folder-entry {
@@ -958,186 +1000,4 @@
 	}
 	.option-row:last-child { border-bottom: none; }
 	.option-row.selected { font-weight: 700; }
-	/* ---- Sheet UI ---- */
-
-
-	.filter-sheet {
-		position: fixed;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		background: var(--color-surface);
-		border-top-left-radius: 1.5rem;
-		border-top-right-radius: 1.5rem;
-		padding: 1.5rem;
-		padding-bottom: min(env(safe-area-inset-bottom, 34px) + 1.5rem, 3rem);
-		z-index: 1001;
-		animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-		max-height: 85vh;
-		overflow-y: auto;
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
-	}
-
-	@keyframes slideUp {
-		from { transform: translateY(100%); }
-		to { transform: translateY(0); }
-	}
-
-	.sheet-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-
-	.sheet-title {
-		font-size: 1.25rem;
-		font-weight: 700;
-		margin: 0;
-	}
-
-	.sheet-close {
-		background: none;
-		border: none;
-		color: var(--color-primary);
-		font-weight: 600;
-		font-size: 1rem;
-		cursor: pointer;
-	}
-
-	.sheet-body {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-	}
-
-	.filter-section {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-
-	.section-label {
-		font-size: 0.85rem;
-		font-weight: 600;
-		color: var(--color-text-tertiary);
-		text-transform: uppercase;
-		letter-spacing: 0.5px;
-	}
-
-	.option-list {
-		display: flex;
-		flex-direction: column;
-		background: var(--color-bg);
-		border-radius: var(--radius-lg);
-		overflow: hidden;
-		border: 1px solid var(--color-border);
-	}
-
-	.option-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 1rem 1.25rem;
-		background: none;
-		border: none;
-		border-bottom: 1px solid var(--color-border);
-		font-size: 1rem;
-		font-weight: 500;
-		color: var(--color-text-primary);
-		cursor: pointer;
-		text-align: left;
-		transition: background-color 0.15s ease;
-	}
-
-	.option-row:last-child {
-		border-bottom: none;
-	}
-
-	.option-row:active {
-		background-color: var(--color-border);
-	}
-
-	.option-row.selected {
-		color: var(--color-primary);
-		background-color: rgba(var(--color-primary-rgb), 0.05);
-	}
-
-	.sheet-input {
-		width: 100%;
-		padding: 0.85rem 1rem;
-		background: var(--color-bg);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		font-family: inherit;
-		font-size: 1rem;
-		color: var(--color-text-primary);
-	}
-
-	.color-swatch {
-		aspect-ratio: 1;
-		border-radius: var(--radius-full);
-		border: 2px solid transparent;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: transform 0.1s ease;
-	}
-
-	.color-swatch.selected {
-		border-color: var(--color-primary);
-		transform: scale(1.1);
-	}
-
-	.color-none {
-		background: var(--color-bg);
-		border: 1px dashed var(--color-border);
-		color: var(--color-text-tertiary);
-	}
-
-	.save-btn {
-		width: 100%;
-		padding: 1rem;
-		background: var(--color-primary);
-		color: white;
-		border: none;
-		border-radius: var(--radius-lg);
-		font-weight: 700;
-		font-size: 1rem;
-		margin-top: 1rem;
-		cursor: pointer;
-	}
-
-	.save-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.sheet-divider {
-		height: 1px;
-		background: var(--color-border);
-		margin: 0.5rem 0;
-	}
-
-	.sheet-action {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		width: 100%;
-		padding: 0.85rem 0;
-		background: none;
-		border: none;
-		font-family: inherit;
-		font-size: 1rem;
-		font-weight: 600;
-		color: var(--color-text-primary);
-		cursor: pointer;
-		text-align: left;
-	}
-
-	.sheet-action.danger {
-		color: var(--color-danger);
-	}
 </style>
