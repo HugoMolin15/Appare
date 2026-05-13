@@ -183,7 +183,6 @@
 		font-family: var(--font-sans);
 		box-sizing: border-box;
 		overflow: hidden; /* clip contents */
-		touch-action: pan-y; /* allow vertical scroll, pass horizontal to our swipe handler */
 	}
 
 	.card.fade-out {

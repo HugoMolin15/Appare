@@ -363,7 +363,6 @@
 
 	/* ---- Card area ---- */
 	.card-area {
-		touch-action: pan-y; /* allow vertical scroll inside the card on iOS */
 		flex: 1;
 		min-height: 0;        /* allow shrinking below content size */
 		display: flex;
