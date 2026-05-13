@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { folderCount } from '$lib/stores/folders';
 	import Heatmap from '$lib/components/Heatmap.svelte';
 	import Icon from '$lib/components/Icon.svelte';
@@ -7,6 +8,15 @@
 
 	let heatmapExpanded = $state(false);
 	let heatmapJumpDate = $state<string | null>(null);
+
+	onMount(() => {
+		document.documentElement.style.overflow = 'hidden';
+		document.body.style.overflow = 'hidden';
+		return () => {
+			document.documentElement.style.overflow = '';
+			document.body.style.overflow = '';
+		};
+	});
 
 	afterNavigate(() => {
 		const date = consumeHeatmapReturnDate();

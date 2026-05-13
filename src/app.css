@@ -85,10 +85,9 @@ html, body {
   overscroll-behavior-x: none !important;
 }
 
-/* Scrollbars: thin and subtle globally */
+/* Hide scrollbars globally */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
+  scrollbar-width: none;
 }
 
 * {
@@ -253,16 +252,9 @@ body {
 }
 
 
-/* Custom scrollbar (thin, subtle) */
+/* Hide webkit scrollbars globally */
 ::-webkit-scrollbar {
-  width: 3px;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: var(--radius-full);
-}
-::-webkit-scrollbar-track {
-  background: transparent;
+  display: none;
 }
 
 /* ========================================
