@@ -169,7 +169,6 @@
 	<div>
 		<PageHeader title="Tutte le parole" hideBack />
 
-		<p class="word-count-label">{filteredWords.length} {typeFilter === 'phrase' ? 'frasi' : filteredWords.length === 1 ? 'parola' : 'parole'}</p>
 	</div>
 
 	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />

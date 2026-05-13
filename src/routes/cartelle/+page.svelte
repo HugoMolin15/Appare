@@ -164,8 +164,7 @@
 
 			<!-- ② Controls bar -->
 			<div class="controls-bar">
-				<span class="count-label">{allFolderCount} {allFolderCount === 1 ? 'cartella' : 'cartelle'} · {totalWordCount} parole</span>
-				<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
+<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
 					{selectMode ? 'Fine' : 'Seleziona'}
 				</button>
 			</div>

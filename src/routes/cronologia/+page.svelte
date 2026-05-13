@@ -310,8 +310,7 @@
 				<!-- Period view controls -->
 				<SearchInput bind:value={periodSearchQuery} placeholder="Cerca..." />
 				<div class="controls-bar">
-					<span class="count-label">{filteredPeriodKeys.length} {filteredPeriodKeys.length === 1 ? 'periodo' : 'periodi'}</span>
-					<button class="select-toggle" onclick={() => selectMode ? exitSelectMode() : selectMode = true}>
+<button class="select-toggle" onclick={() => selectMode ? exitSelectMode() : selectMode = true}>
 						{selectMode ? 'Fine' : 'Seleziona'}
 					</button>
 				</div>
@@ -360,8 +359,7 @@
 				<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
 				<div class="controls-bar">
-					<span class="count-label">{dayWords.length} {dayWords.length === 1 ? 'parola' : 'parole'}</span>
-					<button class="select-toggle" onclick={() => { daySelectMode = !daySelectMode; if (!daySelectMode) clearSelection(); }}>
+<button class="select-toggle" onclick={() => { daySelectMode = !daySelectMode; if (!daySelectMode) clearSelection(); }}>
 						{daySelectMode ? 'Fine' : 'Seleziona'}
 					</button>
 				</div>

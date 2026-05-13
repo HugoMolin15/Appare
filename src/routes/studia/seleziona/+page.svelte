@@ -146,7 +146,6 @@
 
 		<FilterPills pills={activePills} />
 
-		<p class="word-count-label">{filteredWords.length} {typeFilter === 'phrase' ? 'frasi' : filteredWords.length === 1 ? 'parola' : 'parole'} da studiare</p>
 	</div>
 
 	<div class="word-list">
