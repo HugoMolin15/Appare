@@ -93,46 +93,11 @@
 	});
 
 	let notesInLayout = $derived($cardLayout.some(card => card.fields.includes('notes')));
-
-	let touchStartX = 0;
-	let touchStartY = 0;
-	let lastWasTouch = false;
-
-	function onTouchStart(e: TouchEvent) {
-		touchStartX = e.touches[0].clientX;
-		touchStartY = e.touches[0].clientY;
-		lastWasTouch = true;
-	}
-
-	function onTouchEnd(e: TouchEvent) {
-		const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
-		const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
-		// Tap: finger barely moved
-		if (dx < 10 && dy < 10) {
-			flip();
-		} 
-		// Horizontal swipe: finger moved significantly horizontally, but not much vertically
-		else if (dx > 30 && dy < 40) {
-			flip();
-		}
-	}
-
-	// Desktop mouse click flips. Touch-generated synthetic clicks are skipped.
-	function onClick() {
-		if (lastWasTouch) { lastWasTouch = false; return; }
-		flip();
-	}
 </script>
 
 <div
-	role="button"
-	tabindex="0"
 	class="card"
 	class:fade-out={animating}
-	onclick={onClick}
-	ontouchstart={onTouchStart}
-	ontouchend={onTouchEnd}
-	onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') flip(); }}
 >
 	{#if sideIndicator}
 		<span class="card-indicator">{sideIndicator}</span>
@@ -164,7 +129,11 @@
 	{/if}
 
 	{#if sides.length > 1}
-		<span class="card-hint">Tocca per continuare</span>
+		<div class="card-bottom-actions">
+			<button class="flip-btn" onclick={flip}>
+				Gira la carta
+			</button>
+		</div>
 	{/if}
 </div>
 
@@ -180,7 +149,6 @@
 		background: transparent;
 		border: none;
 		border-radius: var(--radius-xl);
-		cursor: pointer;
 		position: relative;
 		transition: opacity 0.18s ease, transform 0.18s ease;
 		font-family: var(--font-sans);
@@ -316,9 +284,29 @@
 		word-break: break-word;
 	}
 
-	.card-hint {
-		font-size: 0.7rem;
-		color: var(--color-text-tertiary);
-		margin-top: 0.25rem;
+	.card-bottom-actions {
+		margin-top: 1.5rem;
+		width: 100%;
+		display: flex;
+		justify-content: center;
+	}
+
+	.flip-btn {
+		background: var(--color-surface);
+		border: 1.5px solid var(--color-border);
+		color: var(--color-text);
+		font-weight: 700;
+		font-family: var(--font-sans);
+		font-size: 0.9rem;
+		padding: 0.75rem 1.5rem;
+		border-radius: var(--radius-full);
+		cursor: pointer;
+		transition: background 0.15s ease, transform 0.1s ease;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	.flip-btn:active {
+		background: var(--color-border);
+		transform: scale(0.97);
 	}
 </style>
