@@ -135,6 +135,11 @@
 		pendingUrl = null;
 	}
 
+	function exitToOrigin() {
+		showExitModal = false;
+		returnToOrigin();
+	}
+
 	// Intercept browser refresh/close
 	function handleBeforeUnload(e: BeforeUnloadEvent) {
 		if (!finished && studySet.length > 0 && studiedCount < studySet.length) {
@@ -177,8 +182,16 @@
 				Solo i progressi completati verranno salvati.
 			</p>
 			<div class="modal-actions">
-				<button class="modal-btn btn-secondary" onclick={cancelExit}>Rimani</button>
-				<button class="modal-btn btn-primary" onclick={confirmExit}>Esci</button>
+				{#if $studyReturnContext}
+					<button class="modal-btn btn-folder" onclick={exitToOrigin}>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+						{$studyReturnContext.label}
+					</button>
+				{/if}
+				<div class="modal-row">
+					<button class="modal-btn btn-secondary" onclick={cancelExit}>Rimani</button>
+					<button class="modal-btn btn-primary" onclick={confirmExit}>Esci</button>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -547,6 +560,12 @@
 
 	.modal-actions {
 		display: flex;
+		flex-direction: column;
+		gap: 0.65rem;
+	}
+
+	.modal-row {
+		display: flex;
 		gap: 0.75rem;
 	}
 
@@ -558,6 +577,11 @@
 		font-weight: 600;
 		cursor: pointer;
 		border: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		font-family: var(--font-sans);
 	}
 
 	.btn-secondary {
@@ -568,5 +592,11 @@
 	.btn-primary {
 		background: var(--color-primary);
 		color: white;
+	}
+
+	.btn-folder {
+		background: var(--color-surface);
+		color: var(--color-text);
+		border: 1.5px solid var(--color-border);
 	}
 </style>
