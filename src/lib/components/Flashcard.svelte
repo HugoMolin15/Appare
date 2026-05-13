@@ -182,6 +182,7 @@
 		transition: opacity 0.18s ease, transform 0.18s ease;
 		font-family: var(--font-sans);
 		box-sizing: border-box;
+		overflow: hidden; /* clip contents */
 		touch-action: pan-y; /* allow vertical scroll, pass horizontal to our swipe handler */
 	}
 
@@ -236,7 +237,7 @@
 		display: flex;
 		flex-direction: column;
 		scrollbar-width: none;
-		touch-action: pan-y;
+		-webkit-overflow-scrolling: touch; /* required for smooth momentum scroll on iOS */
 	}
 
 	.card-fields-scroll::-webkit-scrollbar {

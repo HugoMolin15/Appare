@@ -312,13 +312,21 @@
 <style>
 	.page {
 		padding: var(--spacing-page);
-		height: 100%;
+		/* Lock page to exactly the visible viewport height */
+		height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+		max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
-		padding-bottom: 2rem;
+		gap: 0;
 		box-sizing: border-box;
-		/* Do NOT set touch-action: none here — it would kill scroll inside the card */
+		padding-bottom: var(--spacing-page);
+	}
+
+	/* Reduce PageHeader margin so more height goes to the card */
+	.page :global(.page-header) {
+		margin-bottom: 0.75rem;
+		flex-shrink: 0;
 	}
 
 	/* ---- Progress ---- */
@@ -326,7 +334,8 @@
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-		margin-bottom: 1rem;
+		margin-bottom: 0.75rem;
+		flex-shrink: 0;
 	}
 
 	.progress-label {
@@ -356,17 +365,19 @@
 	.card-area {
 		touch-action: pan-y; /* allow vertical scroll inside the card on iOS */
 		flex: 1;
-		min-height: 0;
+		min-height: 0;        /* allow shrinking below content size */
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
 		justify-content: center;
-		padding: 0.75rem 0 0;
+		padding: 0.5rem 0 0;
+		overflow: hidden;     /* clip, inner Flashcard handles its own scroll */
 	}
 
 	/* ---- Note textarea ---- */
 	.note-area {
-		padding: 0.75rem 0 0;
+		padding: 0.65rem 0 0;
+		flex-shrink: 0;
 	}
 
 	.note-input {
@@ -399,6 +410,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
+		flex-shrink: 0;  /* never compress — always fully visible */
 	}
 
 	.assess-row {
