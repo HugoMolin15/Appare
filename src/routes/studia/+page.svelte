@@ -106,7 +106,6 @@
 	}
 
 	let showExitModal = $state(false);
-	let pageEl = $state<HTMLElement | null>(null);
 	let pendingUrl = $state<string | null>(null);
 	let bypassGuard = false;
 
@@ -151,17 +150,6 @@
 
 	// Trap browser back button and iOS swipe-back gesture
 	onMount(() => {
-		const mainContent = document.querySelector('.main-content') as HTMLElement | null;
-		if (mainContent) mainContent.style.overflowY = 'hidden';
-
-		// iOS ignores overflow:hidden for touch scroll — block touchmove on the page element
-		// unless the touch target is inside .card-fields-scroll (the only intended scroll area).
-		function blockScroll(e: TouchEvent) {
-			const target = e.target as Element | null;
-			if (!target?.closest('.card-fields-scroll')) e.preventDefault();
-		}
-		pageEl?.addEventListener('touchmove', blockScroll, { passive: false });
-
 		// Push a dummy state so back button/swipe triggers popstate instead of navigating
 		history.pushState(null, '', window.location.href);
 
@@ -174,11 +162,7 @@
 		}
 
 		window.addEventListener('popstate', onPopState);
-		return () => {
-			window.removeEventListener('popstate', onPopState);
-			pageEl?.removeEventListener('touchmove', blockScroll);
-			if (mainContent) mainContent.style.overflowY = '';
-		};
+		return () => window.removeEventListener('popstate', onPopState);
 	});
 </script>
 
@@ -213,7 +197,7 @@
 	</div>
 {/if}
 
-<div class="page page-enter" bind:this={pageEl}>
+<div class="page page-enter">
 	<PageHeader title="Studia" />
 
 	{#if studySet.length === 0}
@@ -321,6 +305,7 @@
 		flex-direction: column;
 		padding-bottom: 2rem;
 		box-sizing: border-box;
+		touch-action: none;
 	}
 
 	/* ---- Progress ---- */

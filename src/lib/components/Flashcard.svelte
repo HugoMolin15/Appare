@@ -200,6 +200,7 @@
 		display: flex;
 		flex-direction: column;
 		scrollbar-width: none;
+		touch-action: pan-y;
 	}
 
 	.card-fields-scroll::-webkit-scrollbar {
