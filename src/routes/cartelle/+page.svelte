@@ -193,12 +193,15 @@
 			{/if}
 
 			<div class="below-pills">
-				{#if selectMode && selectedFolderIds.size > 0}
-					<button class="select-toggle muted" onclick={() => selectedFolderIds = new Set()}>Deseleziona</button>
-				{/if}
 				<button class="select-toggle" onclick={selectMode ? exitSelectMode : enterSelectMode}>
 					{selectMode ? 'Fine' : 'Seleziona'}
 				</button>
+				{#if selectMode && selectedFolderIds.size > 0}
+					<button class="select-toggle muted" onclick={() => selectedFolderIds = new Set()}>Deseleziona</button>
+				{/if}
+				<span class="word-count-right">
+					{selectMode && selectedFolderIds.size > 0 ? selectedWordCount : totalWordCount} parole
+				</span>
 			</div>
 		{/if}
 	</div>
@@ -372,6 +375,14 @@
 	}
 
 	.select-toggle.muted { color: var(--color-text-secondary); }
+
+	.word-count-right {
+		font-size: 0.82rem;
+		font-weight: 500;
+		color: var(--color-text-secondary);
+		margin-left: auto;
+		white-space: nowrap;
+	}
 
 		/* ---- Quick Filter Bar ---- */
 	.quick-filter-bar {
