@@ -12,7 +12,7 @@
 	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { fly } from 'svelte/transition';
 	import Flashcard from '$lib/components/Flashcard.svelte';
-	import { fontSizeItaliano, fontSizeHiragana, fontSizeRomaji, fontSizeKanji } from '$lib/stores/settings';
+	import { fontSizeItaliano, fontSizeHiragana, fontSizeRomaji, fontSizeKanji, fontSizeNotes } from '$lib/stores/settings';
 
 	const FS_MIN = 0.5, FS_MAX = 5;
 	function fsProgress(v: number) { return Math.round(((v - FS_MIN) / (FS_MAX - FS_MIN)) * 100); }
@@ -20,6 +20,7 @@
 	let fsProgHi = $derived(fsProgress($fontSizeHiragana));
 	let fsProgRo = $derived(fsProgress($fontSizeRomaji));
 	let fsProgKa = $derived(fsProgress($fontSizeKanji));
+	let fsProgNo = $derived(fsProgress($fontSizeNotes));
 
 	let wordId = $derived($page.params.id);
 	let word = $derived($words.find((w) => w.id === wordId));
@@ -296,6 +297,13 @@
 					autocomplete="off"
 					autocapitalize="off"
 				></textarea>
+				<div class="fs-row">
+					<span class="fs-a-sm">A</span>
+					<input type="range" min={FS_MIN} max={FS_MAX} step="0.1" value={$fontSizeNotes}
+						oninput={(e) => fontSizeNotes.set(+(e.target as HTMLInputElement).value)}
+						class="fs-slider" style="--progress: {fsProgNo}%" />
+					<span class="fs-a-lg">A</span>
+				</div>
 			</div>
 
 			<div class="field">
