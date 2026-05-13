@@ -94,24 +94,27 @@
 
 	let notesInLayout = $derived($cardLayout.some(card => card.fields.includes('notes')));
 
-	let touchStartY = 0;
 	let touchStartX = 0;
+	let touchStartY = 0;
 	let lastWasTouch = false;
 
 	function onTouchStart(e: TouchEvent) {
-		touchStartY = e.touches[0].clientY;
 		touchStartX = e.touches[0].clientX;
+		touchStartY = e.touches[0].clientY;
 		lastWasTouch = true;
 	}
 
-	// Only flip if the finger barely moved (tap, not scroll/swipe)
 	function onTouchEnd(e: TouchEvent) {
-		const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
-		const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
-		if (dy < 8 && dx < 8) flip();
+		const dx = e.changedTouches[0].clientX - touchStartX;
+		const dy = e.changedTouches[0].clientY - touchStartY;
+		// Horizontal swipe: must be more horizontal than vertical, and at least 40px
+		if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+			flip();
+		}
+		// Vertical gesture: do nothing — browser scroll handles it naturally
 	}
 
-	// Prevent the synthetic click that follows touchend from double-flipping
+	// Desktop mouse click flips. Touch-generated synthetic clicks are skipped.
 	function onClick() {
 		if (lastWasTouch) { lastWasTouch = false; return; }
 		flip();
@@ -158,7 +161,7 @@
 	{/if}
 
 	{#if sides.length > 1}
-		<span class="card-hint">Tocca per continuare</span>
+		<span class="card-hint">← Scorri per girare →</span>
 	{/if}
 </div>
 
@@ -179,6 +182,7 @@
 		transition: opacity 0.18s ease, transform 0.18s ease;
 		font-family: var(--font-sans);
 		box-sizing: border-box;
+		touch-action: pan-y; /* allow vertical scroll, pass horizontal to our swipe handler */
 	}
 
 	.card.fade-out {
