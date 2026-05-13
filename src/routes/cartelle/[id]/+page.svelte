@@ -7,7 +7,8 @@
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
 	import { words, removeWord, moveWordsToFolder } from '$lib/stores/words';
 	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, studyReturnContext } from '$lib/stores/studySession';
-	import { randomCardOrder, listDisplayLang } from '$lib/stores/settings';
+	import { randomCardOrder } from '$lib/stores/settings';
+	import type { Folder } from '$lib/types/word';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import FolderModal from '$lib/components/FolderModal.svelte';
@@ -50,9 +51,11 @@
 	let showMoveSheet = $state(false);
 	let editName = $state('');
 	let editColor = $state('');
+	let editDisplayLang = $state<Folder['displayLang']>(undefined);
 	let itemToDelete = $state<{ type: 'word' | 'folder' | 'selection', id?: string, name?: string, ids?: string[] } | null>(null);
 
 	let folder = $derived($folders.find((f) => f.id === folderId));
+	let folderDisplayLang = $derived(folder?.displayLang ?? 'italiano');
 
 	// ---- Select mode (words + subfolders) ----
 	let selectMode = $state(false);
@@ -80,16 +83,17 @@
 	function openOptions() {
 		editName = folder?.name ?? '';
 		editColor = folder?.color ?? '';
+		editDisplayLang = folder?.displayLang;
 		showOptionsSheet = true;
 	}
 
 	function saveEdits() {
 		if (!folderId) return;
 		if (isProtected) {
-			updateFolder(folderId, folder?.name ?? '', editColor || undefined);
+			updateFolder(folderId, folder?.name ?? '', editColor || undefined, editDisplayLang);
 			showOptionsSheet = false;
 		} else if (editName.trim()) {
-			updateFolder(folderId, editName.trim(), editColor || undefined);
+			updateFolder(folderId, editName.trim(), editColor || undefined, editDisplayLang);
 			showOptionsSheet = false;
 		}
 	}
@@ -427,7 +431,7 @@
 							role="checkbox"
 							ariaChecked={$selectedWordIds.has(word.id)}
 							onclick={() => toggleWordSelection(word.id)}
-						displayLang={$listDisplayLang}
+						displayLang={folderDisplayLang}
 						>
 							{#snippet leading()}
 								<div class="item-checkbox" class:checked={$selectedWordIds.has(word.id)}>
@@ -437,7 +441,7 @@
 						</WordRow>
 					{:else}
 						<div id="word-{word.id}" class:word-highlight={highlightWordId === word.id}>
-							<WordRow {word} href="/parole/{word.id}?from=/cartelle/{folderId}" displayLang={$listDisplayLang} />
+							<WordRow {word} href="/parole/{word.id}?from=/cartelle/{folderId}" displayLang={folderDisplayLang} />
 						</div>
 					{/if}
 				{/each}
@@ -490,6 +494,21 @@
 					<button type="button" class="color-swatch color-none" class:selected={editColor === ''} onclick={() => editColor = ''} aria-label="Nessun colore">
 						<Icon name="close" size={14} strokeWidth={2.5} />
 					</button>
+				</div>
+			</div>
+			<div class="sheet-section">
+				<span class="sheet-label">Lingua visualizzata</span>
+				<div class="option-list">
+					{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
+						<button
+							class="option-row"
+							class:selected={editDisplayLang === val || (!editDisplayLang && val === 'italiano')}
+							onclick={() => editDisplayLang = val === 'italiano' ? undefined : val as Folder['displayLang']}
+						>
+							<span>{label}</span>
+							{#if editDisplayLang === val || (!editDisplayLang && val === 'italiano')}<Icon name="check" size={18} strokeWidth={3} />{/if}
+						</button>
+					{/each}
 				</div>
 			</div>
 			<button class="save-btn" onclick={saveEdits} disabled={!isProtected && !editName.trim()}>Salva modifiche</button>
@@ -932,4 +951,16 @@
 
 	.move-folder-name { flex: 1; font-size: 1rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 	.move-empty { font-size: 0.9rem; color: var(--color-text-secondary); padding: 1.5rem 0; text-align: center; }
+
+	/* ---- Language option list ---- */
+	.option-list { display: flex; flex-direction: column; border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+
+	.option-row {
+		display: flex; align-items: center; justify-content: space-between;
+		padding: 0.85rem 1rem; background: none; border: none; border-bottom: 1px solid var(--color-border);
+		font-family: inherit; font-size: 0.95rem; font-weight: 500; color: var(--color-text);
+		cursor: pointer; text-align: left;
+	}
+	.option-row:last-child { border-bottom: none; }
+	.option-row.selected { font-weight: 700; }
 </style>
