@@ -125,20 +125,20 @@
 		<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
 		<div class="quick-filter-bar">
-			<button class="quick-pill" class:active={sortMode !== 'newest'} onclick={() => activeSheet = 'sort'}>
-				Ordina <Icon name="chevron-down" size={14} />
+			<button class="quick-pill" onclick={() => activeSheet = 'options'}>
+				Opzioni <Icon name="chevron-down" size={14} />
 			</button>
 			<button class="quick-pill" class:active={scoreFilter !== 'all'} onclick={() => activeSheet = 'score'}>
 				Stato <Icon name="chevron-down" size={14} />
 			</button>
-			<button class="quick-pill" class:active={typeFilter !== 'all'} onclick={() => activeSheet = 'type'}>
-				Tipo <Icon name="chevron-down" size={14} />
-			</button>
 			<button class="quick-pill" class:active={selectedGroups.size > 0} onclick={() => activeSheet = 'categories'}>
 				Categorie {#if selectedGroups.size > 0}<span class="quick-badge">{selectedGroups.size}</span>{/if} <Icon name="chevron-down" size={14} />
 			</button>
-			<button class="quick-pill" onclick={() => activeSheet = 'options'}>
-				Opzioni <Icon name="chevron-down" size={14} />
+			<button class="quick-pill" class:active={typeFilter !== 'all'} onclick={() => activeSheet = 'type'}>
+				Tipo <Icon name="chevron-down" size={14} />
+			</button>
+			<button class="quick-pill" class:active={sortMode !== 'newest'} onclick={() => activeSheet = 'sort'}>
+				Ordina <Icon name="chevron-down" size={14} />
 			</button>
 		</div>
 

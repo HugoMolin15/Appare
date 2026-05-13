@@ -70,6 +70,8 @@
 		border-radius: 50%;
 		width: 18px;
 		height: 18px;
+		min-width: 18px;
+		min-height: 18px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -77,5 +79,7 @@
 		color: white;
 		padding: 0;
 		flex-shrink: 0;
+		-webkit-appearance: none;
+		appearance: none;
 	}
 </style>
