@@ -10,12 +10,8 @@
 	let heatmapJumpDate = $state<string | null>(null);
 
 	onMount(() => {
-		document.documentElement.style.overflow = 'hidden';
 		document.body.style.overflow = 'hidden';
-		return () => {
-			document.documentElement.style.overflow = '';
-			document.body.style.overflow = '';
-		};
+		return () => { document.body.style.overflow = ''; };
 	});
 
 	afterNavigate(() => {

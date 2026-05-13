@@ -150,7 +150,6 @@
 
 	// Trap browser back button and iOS swipe-back gesture
 	onMount(() => {
-		document.documentElement.style.overflow = 'hidden';
 		document.body.style.overflow = 'hidden';
 
 		// Push a dummy state so back button/swipe triggers popstate instead of navigating
@@ -167,7 +166,6 @@
 		window.addEventListener('popstate', onPopState);
 		return () => {
 			window.removeEventListener('popstate', onPopState);
-			document.documentElement.style.overflow = '';
 			document.body.style.overflow = '';
 		};
 	});
