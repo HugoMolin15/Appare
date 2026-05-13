@@ -23,8 +23,14 @@
 			.filter((w): w is (typeof allWordsData)[number] => w !== undefined);
 		clearSelection();
 	} else {
-		// Global study mode (from Home): draw up to 10 random words from the full library
-		studySet = shuffle(allWordsData).slice(0, 10);
+		// Test mode: draw the 10 absolutely longest phrases/words in the DB to test layout
+		studySet = [...allWordsData]
+			.sort((a, b) => {
+				const lenA = a.italiano.length + a.hiragana.length + (a.romaji?.length || 0);
+				const lenB = b.italiano.length + b.hiragana.length + (b.romaji?.length || 0);
+				return lenB - lenA;
+			})
+			.slice(0, 10);
 	}
 
 	let currentIndex = $state(0);
