@@ -336,7 +336,7 @@
 	.play-btn {
 		width: 44px;
 		height: 44px;
-		border-radius: 50%;
+		border-radius: 50% !important;
 		background: var(--color-primary);
 		color: white;
 		border: none;
@@ -354,7 +354,7 @@
 	.below-pills {
 		display: flex;
 		align-items: center;
-		justify-content: flex-end;
+		justify-content: flex-start;
 		gap: 1rem;
 		margin-top: 0.25rem;
 		margin-bottom: 0.25rem;

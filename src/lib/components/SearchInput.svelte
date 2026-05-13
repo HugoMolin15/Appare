@@ -203,7 +203,7 @@
 		transform: translateY(-50%);
 		background: #e0dce6;
 		border: none;
-		border-radius: var(--radius-full);
+		border-radius: 50% !important;
 		cursor: pointer;
 		color: var(--color-text-secondary);
 		display: flex;
