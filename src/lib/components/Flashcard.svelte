@@ -233,6 +233,7 @@
 		word-break: break-word;
 		transition: font-size 0.15s ease;
 		width: 100%;
+		overflow-x: auto;
 	}
 
 	.card-text.font-jp {
