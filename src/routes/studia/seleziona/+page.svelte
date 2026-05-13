@@ -5,14 +5,12 @@
 	import { goto } from '$app/navigation';
 	import { get } from 'svelte/store';
 	import { shuffle } from '$lib/utils/shuffle';
-	import { randomCardOrder, listDisplayLang, type ListDisplayLang } from '$lib/stores/settings';
-	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
+	import { randomCardOrder, randomWordOrder, listDisplayLang, type ListDisplayLang } from '$lib/stores/settings';
 	import { CATEGORIES } from '$lib/types/word';
 	import type { WordScore } from '$lib/types/word';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import WordRow from '$lib/components/WordRow.svelte';
 	import SearchInput from '$lib/components/SearchInput.svelte';
-	import ScoreFilter from '$lib/components/ScoreFilter.svelte';
 	import FilterPills from '$lib/components/FilterPills.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { filterWords } from '$lib/utils/word-search';
@@ -32,11 +30,6 @@
 		'it-az': 'A-Z Italiano',
 		'jp-az': 'A-Z Giapponese',
 	};
-
-	function cycleSortMode() {
-		const idx = SORT_OPTIONS.indexOf(sortMode);
-		sortMode = SORT_OPTIONS[(idx + 1) % SORT_OPTIONS.length];
-	}
 
 	function removeType() { typeFilter = 'all'; }
 	function removeGroup(group: string) {
@@ -60,6 +53,11 @@
 
 	let activePills = $derived.by(() => {
 		const pills: { label: string; remove: () => void }[] = [];
+		if (sortMode !== 'newest') pills.push({ label: SORT_LABELS[sortMode], remove: () => sortMode = 'newest' });
+		if (scoreFilter !== 'all') {
+			const label = scoreFilter === 'none' ? 'Non valutate' : scoreFilter === 'correct' ? 'Corrette' : 'Da ripassare';
+			pills.push({ label, remove: () => scoreFilter = 'all' });
+		}
 		if (typeFilter === 'word') pills.push({ label: 'Parole', remove: removeType });
 		if (typeFilter === 'phrase') pills.push({ label: 'Frasi', remove: removeType });
 		for (const g of selectedGroups) pills.push({ label: g, remove: () => removeGroup(g) });
@@ -98,10 +96,10 @@
 		return result.sort((a, b) => b.createdAt - a.createdAt);
 	});
 
-	let showFilterSheet = $state(false);
+	let activeSheet = $state<'sort' | 'score' | 'type' | 'categories' | 'options' | null>(null);
 
 	$effect(() => {
-		if (showFilterSheet) document.body.style.overflow = 'hidden';
+		if (activeSheet !== null) document.body.style.overflow = 'hidden';
 		else document.body.style.overflow = '';
 		return () => { document.body.style.overflow = ''; };
 	});
@@ -122,36 +120,26 @@
 
 <div class="page page-enter">
 	<div class="sticky-header">
-		<PageHeader title="Cosa vuoi studiare?" backHref="/">
-			{#snippet actions()}
-				<button
-					class="filter-btn"
-					class:active={activePills.length > 0}
-					onclick={() => showFilterSheet = true}
-					aria-label="Filtri"
-				>
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<line x1="4" y1="6" x2="20" y2="6" />
-						<line x1="8" y1="12" x2="16" y2="12" />
-						<line x1="12" y1="18" x2="12" y2="18" stroke-width="3" stroke-linecap="round" />
-					</svg>
-					{#if activePills.length > 0}
-						<span class="filter-badge">{activePills.length}</span>
-					{/if}
-				</button>
-			{/snippet}
-		</PageHeader>
+		<PageHeader title="Cosa vuoi studiare?" backHref="/" />
 
 		<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
-		<div class="filter-sort-row">
-			<ScoreFilter
-				value={scoreFilter}
-				onChange={(v) => scoreFilter = v}
-				sortLabel={SORT_LABELS[sortMode]}
-				onSortCycle={cycleSortMode}
-			/>
-			<StudyRandomPills />
+		<div class="quick-filter-bar">
+			<button class="quick-pill" class:active={sortMode !== 'newest'} onclick={() => activeSheet = 'sort'}>
+				Ordina <Icon name="chevron-down" size={14} />
+			</button>
+			<button class="quick-pill" class:active={scoreFilter !== 'all'} onclick={() => activeSheet = 'score'}>
+				Stato <Icon name="chevron-down" size={14} />
+			</button>
+			<button class="quick-pill" class:active={typeFilter !== 'all'} onclick={() => activeSheet = 'type'}>
+				Tipo <Icon name="chevron-down" size={14} />
+			</button>
+			<button class="quick-pill" class:active={selectedGroups.size > 0} onclick={() => activeSheet = 'categories'}>
+				Categorie {#if selectedGroups.size > 0}<span class="quick-badge">{selectedGroups.size}</span>{/if} <Icon name="chevron-down" size={14} />
+			</button>
+			<button class="quick-pill" onclick={() => activeSheet = 'options'}>
+				Opzioni <Icon name="chevron-down" size={14} />
+			</button>
 		</div>
 
 		<FilterPills pills={activePills} />
@@ -195,59 +183,93 @@
 	</div>
 </div>
 
-{#if showFilterSheet}
-	<div class="sheet-backdrop" onclick={() => showFilterSheet = false} role="presentation"></div>
+{#if activeSheet !== null}
+	<div class="sheet-backdrop" onclick={() => activeSheet = null} role="presentation"></div>
 	<div class="filter-sheet">
 		<div class="sheet-header">
-			<h2 class="sheet-title">Filtri</h2>
-			<button class="sheet-close" onclick={() => showFilterSheet = false}>Chiudi</button>
+			<h2 class="sheet-title">
+				{#if activeSheet === 'sort'}Ordina per
+				{:else if activeSheet === 'score'}Stato
+				{:else if activeSheet === 'type'}Tipo
+				{:else if activeSheet === 'categories'}Categorie
+				{:else if activeSheet === 'options'}Opzioni di studio
+				{/if}
+			</h2>
+			<button class="sheet-close" onclick={() => activeSheet = null}>Chiudi</button>
 		</div>
 		<div class="sheet-body">
-			<div class="filter-section">
-				<span class="section-label">Lingua visualizzata</span>
+			{#if activeSheet === 'sort'}
 				<div class="option-list">
-					{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
-						<button
-							class="option-row"
-							class:selected={$listDisplayLang === val}
-							onclick={() => listDisplayLang.set(val as ListDisplayLang)}
-						>
-							<span>{label}</span>
-							{#if $listDisplayLang === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					{#each SORT_OPTIONS as val}
+						<button class="option-row" class:selected={sortMode === val} onclick={() => { sortMode = val; activeSheet = null; }}>
+							<span>{SORT_LABELS[val]}</span>
+							{#if sortMode === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
 						</button>
 					{/each}
 				</div>
-			</div>
-			<div class="filter-section">
-				<span class="section-label">Tipo</span>
+			{:else if activeSheet === 'score'}
+				<div class="option-list">
+					<button class="option-row" class:selected={scoreFilter === 'all'} onclick={() => { scoreFilter = 'all'; activeSheet = null; }}>
+						<span>Tutte le parole</span>
+						{#if scoreFilter === 'all'}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					</button>
+					<button class="option-row" class:selected={scoreFilter === 'none'} onclick={() => { scoreFilter = 'none'; activeSheet = null; }}>
+						<span>Non valutate</span>
+						{#if scoreFilter === 'none'}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					</button>
+					<button class="option-row" class:selected={scoreFilter === 'correct'} onclick={() => { scoreFilter = 'correct'; activeSheet = null; }}>
+						<span>Corrette</span>
+						{#if scoreFilter === 'correct'}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					</button>
+					<button class="option-row" class:selected={scoreFilter === 'incorrect'} onclick={() => { scoreFilter = 'incorrect'; activeSheet = null; }}>
+						<span>Da ripassare</span>
+						{#if scoreFilter === 'incorrect'}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					</button>
+				</div>
+			{:else if activeSheet === 'type'}
 				<div class="option-list">
 					{#each [['all', 'Tutti'], ['word', 'Parole'], ['phrase', 'Frasi']] as [val, label]}
-						<button
-							class="option-row"
-							class:selected={typeFilter === val}
-							onclick={() => typeFilter = val as 'all' | 'word' | 'phrase'}
-						>
+						<button class="option-row" class:selected={typeFilter === val} onclick={() => { typeFilter = val as 'all'|'word'|'phrase'; activeSheet = null; }}>
 							<span>{label}</span>
 							{#if typeFilter === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
 						</button>
 					{/each}
 				</div>
-			</div>
-			<div class="filter-section">
-				<span class="section-label">Categoria</span>
+			{:else if activeSheet === 'categories'}
 				<div class="option-list">
 					{#each categoryGroups as [group]}
-						<button
-							class="option-row"
-							class:selected={selectedGroups.has(group)}
-							onclick={() => toggleGroup(group)}
-						>
+						<button class="option-row" class:selected={selectedGroups.has(group)} onclick={() => toggleGroup(group)}>
 							<span>{group}</span>
 							{#if selectedGroups.has(group)}<Icon name="check" size={18} strokeWidth={3} />{/if}
 						</button>
 					{/each}
 				</div>
-			</div>
+			{:else if activeSheet === 'options'}
+				<div class="filter-section">
+					<span class="section-label">Lingua visualizzata in lista</span>
+					<div class="option-list">
+						{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
+							<button class="option-row" class:selected={$listDisplayLang === val} onclick={() => listDisplayLang.set(val as ListDisplayLang)}>
+								<span>{label}</span>
+								{#if $listDisplayLang === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+							</button>
+						{/each}
+					</div>
+				</div>
+				<div class="filter-section" style="margin-top: 1.5rem;">
+					<span class="section-label">Impostazioni mazzo</span>
+					<div class="option-list">
+						<button class="option-row" onclick={() => randomWordOrder.update(v => !v)}>
+							<span>Ordine parole casuale</span>
+							{#if $randomWordOrder}<Icon name="check" size={18} strokeWidth={3} />{/if}
+						</button>
+						<button class="option-row" onclick={() => randomCardOrder.update(v => !v)}>
+							<span>Lato iniziale casuale</span>
+							{#if $randomCardOrder}<Icon name="check" size={18} strokeWidth={3} />{/if}
+						</button>
+					</div>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}
@@ -261,12 +283,58 @@
 		padding-bottom: 2rem;
 	}
 
-	.filter-sort-row {
+	.quick-filter-bar {
 		display: flex;
-		align-items: center;
-		justify-content: space-between;
 		gap: 0.5rem;
-		flex-wrap: wrap;
+		overflow-x: auto;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+		margin: 0.75rem 0;
+		padding-bottom: 0.1rem;
+		/* Edge-to-edge layout */
+		margin-left: calc(-1 * var(--spacing-page));
+		margin-right: calc(-1 * var(--spacing-page));
+		padding-left: var(--spacing-page);
+	}
+
+	.quick-filter-bar::after {
+		content: "";
+		display: block;
+		min-width: calc(var(--spacing-page) - 0.5rem);
+		flex-shrink: 0;
+	}
+	.quick-filter-bar::-webkit-scrollbar { display: none; }
+
+	.quick-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.45rem 0.8rem;
+		background: var(--color-surface);
+		border: 1.5px solid var(--color-border);
+		border-radius: var(--radius-full);
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--color-text-secondary);
+		white-space: nowrap;
+		cursor: pointer;
+		transition: all 0.15s ease;
+		flex-shrink: 0;
+	}
+
+	.quick-pill.active {
+		background: #fff0f0;
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+	}
+
+	.quick-badge {
+		background: var(--color-primary);
+		color: white;
+		font-size: 0.65rem;
+		padding: 0.1rem 0.35rem;
+		border-radius: 99px;
+		line-height: 1;
 	}
 
 	.word-count-label {
@@ -341,38 +409,6 @@
 		color: var(--color-text-secondary);
 		cursor: not-allowed;
 		opacity: 0.7;
-	}
-
-	/* ---- Filter button ---- */
-	.filter-btn {
-		position: relative;
-		background: none;
-		border: none;
-		color: var(--color-text);
-		cursor: pointer;
-		padding: 0.5rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border-radius: var(--radius-full);
-	}
-
-	.filter-btn.active { color: #1A1A1A; }
-
-	.filter-badge {
-		position: absolute;
-		top: 2px;
-		right: 2px;
-		width: 16px;
-		height: 16px;
-		border-radius: 50%;
-		background: #1A1A1A;
-		color: white;
-		font-size: 0.6rem;
-		font-weight: 700;
-		display: flex;
-		align-items: center;
-		justify-content: center;
 	}
 
 	/* ---- Filter sheet ---- */
