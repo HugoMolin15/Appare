@@ -109,7 +109,7 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<PageHeader title="Nuova parola" />
+	<PageHeader title="Nuova parola" hideBack />
 
 	<div class="word-preview">
 		<Flashcard word={previewWord} />
