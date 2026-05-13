@@ -248,7 +248,7 @@ const raw: SeedEntry[] = [
 	{ italiano: 'patata', hiragana: 'じゃがいも', katakana: '', romaji: '', kanji: '', category: 'Sostantivo', folderId: SEED_FOLDER_L15 },
 	{ italiano: 'carota', hiragana: 'にんじん', katakana: '', romaji: '', kanji: '', category: 'Sostantivo', folderId: SEED_FOLDER_L15 },
 	{ italiano: 'cartolina', hiragana: 'はがき', katakana: '', romaji: '', kanji: '', category: 'Sostantivo', folderId: SEED_FOLDER_L15 },
-	{ italiano: 'staghetti', hiragana: '', katakana: 'スパゲッティ', romaji: '', kanji: '', category: 'Sostantivo', folderId: SEED_FOLDER_L15 },
+	{ italiano: 'spaghetti', hiragana: '', katakana: 'スパゲッティ', romaji: '', kanji: '', category: 'Sostantivo', folderId: SEED_FOLDER_L15 },
 	{ italiano: 'lettera', hiragana: 'てがみ', katakana: '', romaji: '', kanji: '', category: 'Sostantivo', folderId: SEED_FOLDER_L15 },
 	{ italiano: 'busta da lettera', hiragana: 'ふうとう', katakana: '', romaji: '', kanji: '', category: 'Sostantivo', folderId: SEED_FOLDER_L15 },
 	{ italiano: 'bambino maschio', hiragana: 'おとこのこ', katakana: '', romaji: '', kanji: '', category: 'Sostantivo', folderId: SEED_FOLDER_L15 },

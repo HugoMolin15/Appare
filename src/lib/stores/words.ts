@@ -7,7 +7,7 @@ import { UNCATEGORIZED_TAG } from '$lib/constants';
 
 const STORAGE_KEY = 'appare_words';
 const SEEDED_KEY = 'appare_seeded';
-const SEED_VERSION = '23';
+const SEED_VERSION = '24';
 
 function loadStoredWords(): Word[] {
 	if (!browser) return [];
