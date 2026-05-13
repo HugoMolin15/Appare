@@ -35,6 +35,17 @@
 		-ms-overflow-style: none;
 		margin-bottom: 0.75rem;
 		padding-bottom: 0.1rem;
+
+		margin-left: calc(-1 * var(--spacing-page));
+		margin-right: calc(-1 * var(--spacing-page));
+		padding-left: var(--spacing-page);
+	}
+
+	.pills-row::after {
+		content: "";
+		display: block;
+		min-width: calc(var(--spacing-page) - 0.4rem); /* subtract gap */
+		flex-shrink: 0;
 	}
 
 	.pills-row::-webkit-scrollbar { display: none; }

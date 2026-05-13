@@ -313,7 +313,7 @@
 		right: 0;
 		padding: 1rem var(--spacing-page);
 		background: var(--color-bg);
-		padding-bottom: calc(1rem + env(safe-area-inset-bottom, 20px));
+		padding-bottom: calc(1rem + min(env(safe-area-inset-bottom, 20px), 34px));
 		z-index: 100;
 	}
 
