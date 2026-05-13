@@ -467,11 +467,6 @@
 		{/if}
 	{/if}
 
-	<!-- Modals & sheets -->
-	{#if showAddWordsModal && folderId}
-		<WordSelectionModal currentFolderId={folderId} onAdd={handleAddExistingWords} onClose={() => showAddWordsModal = false} />
-	{/if}
-
 	{#if subfolders.length === 0 && folderWords.length === 0 && folder && !isProtected}
 		<div class="fab-container">
 			<button class="fab" onclick={() => showFolderModal = true}>
@@ -480,14 +475,18 @@
 			</button>
 		</div>
 	{/if}
-
-	{#if showFolderModal}
-		<FolderModal parentId={folderId} onClose={() => showFolderModal = false} />
-	{/if}
 </div>
 
-<!-- Sheets rendered outside .page so the page-enter animation stacking context
+<!-- Modals & sheets rendered outside .page so the page-enter animation stacking context
      doesn't trap them below the BottomNav (z-index: 40). -->
+
+{#if showAddWordsModal && folderId}
+	<WordSelectionModal currentFolderId={folderId} onAdd={handleAddExistingWords} onClose={() => showAddWordsModal = false} />
+{/if}
+
+{#if showFolderModal}
+	<FolderModal parentId={folderId} onClose={() => showFolderModal = false} />
+{/if}
 
 <!-- Options sheet -->
 {#if showOptionsSheet}
@@ -986,10 +985,9 @@
 
 	.sheet-action {
 		display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.875rem 0;
-		background: none; border: none; border-bottom: 1px solid var(--color-border);
+		background: none; border: none;
 		font-family: inherit; font-size: 0.95rem; font-weight: 600; color: var(--color-text); cursor: pointer; text-align: left;
 	}
-	.sheet-action:last-child { border-bottom: none; }
 	.sheet-action.danger { color: #C5221F; }
 
 	/* ---- Move sheet ---- */
