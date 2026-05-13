@@ -62,6 +62,8 @@
 		if (typeFilter === 'phrase') pills.push({ label: 'Frasi', remove: removeType });
 		for (const g of selectedGroups) pills.push({ label: g, remove: () => removeGroup(g) });
 		if ($listDisplayLang !== 'italiano') pills.push({ label: LANG_LABELS[$listDisplayLang], remove: () => listDisplayLang.set('italiano') });
+		if ($randomWordOrder) pills.push({ label: 'Parole casuali', remove: () => randomWordOrder.set(false) });
+		if ($randomCardOrder) pills.push({ label: 'Lato casuale', remove: () => randomCardOrder.set(false) });
 		return pills;
 	});
 
@@ -132,7 +134,7 @@
 				Stato <Icon name="chevron-down" size={14} />
 			</button>
 			<button class="quick-pill" class:active={selectedGroups.size > 0} onclick={() => activeSheet = 'categories'}>
-				Categorie {#if selectedGroups.size > 0}<span class="quick-badge">{selectedGroups.size}</span>{/if} <Icon name="chevron-down" size={14} />
+				Categorie <Icon name="chevron-down" size={14} />
 			</button>
 			<button class="quick-pill" class:active={typeFilter !== 'all'} onclick={() => activeSheet = 'type'}>
 				Tipo <Icon name="chevron-down" size={14} />
@@ -297,12 +299,6 @@
 		padding-left: var(--spacing-page);
 	}
 
-	.quick-filter-bar::after {
-		content: "";
-		display: block;
-		min-width: calc(var(--spacing-page) - 0.5rem);
-		flex-shrink: 0;
-	}
 	.quick-filter-bar::-webkit-scrollbar { display: none; }
 
 	.quick-pill {

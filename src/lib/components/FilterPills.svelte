@@ -41,12 +41,7 @@
 		padding-left: var(--spacing-page);
 	}
 
-	.pills-row::after {
-		content: "";
-		display: block;
-		min-width: calc(var(--spacing-page) - 0.4rem); /* subtract gap */
-		flex-shrink: 0;
-	}
+
 
 	.pills-row::-webkit-scrollbar { display: none; }
 
@@ -67,7 +62,8 @@
 	.pill-remove {
 		background: rgba(255,255,255,0.25);
 		border: none;
-		border-radius: 50%;
+		border-radius: 9999px;
+		overflow: hidden;
 		width: 18px;
 		height: 18px;
 		min-width: 18px;
