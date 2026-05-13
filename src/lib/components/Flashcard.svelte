@@ -120,7 +120,7 @@
 	</div>
 
 	{#if word.notes && !notesInLayout}
-		<p class="card-notes">{word.notes}</p>
+		<p class="card-notes" style="font-size: {$fontSizeNotes}rem">{word.notes}</p>
 	{/if}
 
 	{#if sides.length > 1}
