@@ -467,11 +467,6 @@
 		{/if}
 	{/if}
 
-	<!-- Modals & sheets -->
-	{#if showAddWordsModal && folderId}
-		<WordSelectionModal currentFolderId={folderId} onAdd={handleAddExistingWords} onClose={() => showAddWordsModal = false} />
-	{/if}
-
 	{#if subfolders.length === 0 && folderWords.length === 0 && folder && !isProtected}
 		<div class="fab-container">
 			<button class="fab" onclick={() => showFolderModal = true}>
@@ -480,120 +475,124 @@
 			</button>
 		</div>
 	{/if}
-
-	{#if showFolderModal}
-		<FolderModal parentId={folderId} onClose={() => showFolderModal = false} />
-	{/if}
-
-	<!-- Options sheet -->
-	{#if showOptionsSheet}
-		<SheetBackdrop onClose={() => showOptionsSheet = false} />
-		<div class="options-sheet" transition:fly={{ y: 300, duration: 300 }}>
-			<div class="sheet-header">
-				<h2 class="sheet-title">Opzioni cartella</h2>
-				<button class="sheet-close" onclick={() => showOptionsSheet = false}>Annulla</button>
-			</div>
-				{#if !isProtected}
-				<div class="sheet-section">
-					<label class="sheet-label" for="edit-folder-name">Nome</label>
-					<input id="edit-folder-name" type="text" class="sheet-input" bind:value={editName} onkeydown={(e) => e.key === 'Enter' && saveEdits()} />
-				</div>
-			{/if}
-			<div class="sheet-section">
-				<span class="sheet-label">Colore</span>
-				<div class="color-grid">
-					{#each FOLDER_COLORS as color}
-						<button type="button" class="color-swatch" class:selected={editColor === color} style="background-color: {color}" onclick={() => editColor = color} aria-label="Colore {color}">
-							{#if editColor === color}<Icon name="check" size={14} strokeWidth={4} stroke="white" />{/if}
-						</button>
-					{/each}
-					<button type="button" class="color-swatch color-none" class:selected={editColor === ''} onclick={() => editColor = ''} aria-label="Nessun colore">
-						<Icon name="close" size={14} strokeWidth={2.5} />
-					</button>
-				</div>
-			</div>
-			<div class="sheet-section">
-				<span class="sheet-label">Lingua visualizzata</span>
-				<div class="option-list">
-					{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
-						<button
-							class="option-row"
-							class:selected={editDisplayLang === val || (!editDisplayLang && val === 'italiano')}
-							onclick={() => editDisplayLang = val === 'italiano' ? undefined : val as Folder['displayLang']}
-						>
-							<span>{label}</span>
-							{#if editDisplayLang === val || (!editDisplayLang && val === 'italiano')}<Icon name="check" size={18} strokeWidth={3} />{/if}
-						</button>
-					{/each}
-				</div>
-			</div>
-			<button class="save-btn" onclick={saveEdits} disabled={!isProtected && !editName.trim()}>Salva modifiche</button>
-			{#if !isProtected}
-				<div class="sheet-divider"></div>
-				<button class="sheet-action" onclick={() => { showOptionsSheet = false; showAddWordsModal = true; }}>
-					<Icon name="plus" size={18} /> Aggiungi parole
-				</button>
-				<button class="sheet-action danger" onclick={confirmDeleteFolder}>
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-					Elimina cartella
-				</button>
-			{/if}
-		</div>
-	{/if}
-
-	<!-- Move sheet — Finder style -->
-	{#if showMoveSheet}
-		<SheetBackdrop onClose={() => showMoveSheet = false} />
-		<div class="options-sheet" transition:fly={{ y: 300, duration: 300 }}>
-			<div class="sheet-header">
-				{#if moveBreadcrumb.length > 0}
-					<button class="sheet-back" onclick={moveSheetBack}>
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-					</button>
-				{/if}
-				<h2 class="sheet-title">
-					{moveBreadcrumb.length > 0 ? ($folders.find(f => f.id === moveCurrentParent)?.name ?? 'Cartella') : 'Sposta in cartella'}
-				</h2>
-				<button class="sheet-close" onclick={() => showMoveSheet = false}>Annulla</button>
-			</div>
-			<div class="move-folder-list">
-				{#if moveBreadcrumb.length > 0}
-					<div class="move-folder-entry">
-						<button class="move-folder-select metti-qui" onclick={() => moveSelected(moveCurrentParent!)}>Sposta qui</button>
-					</div>
-				{/if}
-				{#each moveFoldersAtLevel as f}
-					<div class="move-folder-entry">
-						<button class="move-folder-select" onclick={() => moveSelected(f.id)}>
-							<span class="move-folder-name">{f.name}</span>
-						</button>
-						{#if folderHasChildren(f.id)}
-							<button class="move-folder-drill" onclick={() => moveSheetDrillInto(f.id)} aria-label="Apri {f.name}">
-								<Icon name="chevron-right" size={18} />
-							</button>
-						{/if}
-					</div>
-				{/each}
-				{#if moveFoldersAtLevel.length === 0 && moveBreadcrumb.length === 0}
-					<p class="move-empty">Nessuna cartella disponibile.</p>
-				{/if}
-			</div>
-		</div>
-	{/if}
-
-	{#if itemToDelete}
-		<ConfirmationModal
-			title={itemToDelete.type === 'folder' ? 'Elimina cartella' : 'Elimina parole'}
-			message={itemToDelete.type === 'folder'
-				? `Vuoi davvero eliminare la cartella "${itemToDelete.name}" e tutto il suo contenuto?`
-				: `Vuoi davvero eliminare le ${itemToDelete.ids?.length} parole selezionate?`}
-			confirmLabel="Elimina"
-			isDanger={true}
-			onConfirm={handleDeleteConfirm}
-			onCancel={() => itemToDelete = null}
-		/>
-	{/if}
 </div>
+
+<!-- Modals & sheets — outside .page for correct stacking over navbar -->
+{#if showAddWordsModal && folderId}
+	<WordSelectionModal currentFolderId={folderId} onAdd={handleAddExistingWords} onClose={() => showAddWordsModal = false} />
+{/if}
+
+{#if showFolderModal}
+	<FolderModal parentId={folderId} onClose={() => showFolderModal = false} />
+{/if}
+
+<!-- Options sheet -->
+{#if showOptionsSheet}
+	<SheetBackdrop onClose={() => showOptionsSheet = false} />
+	<div class="options-sheet" transition:fly={{ y: 300, duration: 300 }}>
+		<div class="sheet-header">
+			<h2 class="sheet-title">Opzioni cartella</h2>
+			<button class="sheet-close" onclick={() => showOptionsSheet = false}>Annulla</button>
+		</div>
+			{#if !isProtected}
+			<div class="sheet-section">
+				<label class="sheet-label" for="edit-folder-name">Nome</label>
+				<input id="edit-folder-name" type="text" class="sheet-input" bind:value={editName} onkeydown={(e) => e.key === 'Enter' && saveEdits()} />
+			</div>
+		{/if}
+		<div class="sheet-section">
+			<span class="sheet-label">Colore</span>
+			<div class="color-grid">
+				{#each FOLDER_COLORS as color}
+					<button type="button" class="color-swatch" class:selected={editColor === color} style="background-color: {color}" onclick={() => editColor = color} aria-label="Colore {color}">
+						{#if editColor === color}<Icon name="check" size={14} strokeWidth={4} stroke="white" />{/if}
+					</button>
+				{/each}
+				<button type="button" class="color-swatch color-none" class:selected={editColor === ''} onclick={() => editColor = ''} aria-label="Nessun colore">
+					<Icon name="close" size={14} strokeWidth={2.5} />
+				</button>
+			</div>
+		</div>
+		<div class="sheet-section">
+			<span class="sheet-label">Lingua visualizzata</span>
+			<div class="option-list">
+				{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
+					<button
+						class="option-row"
+						class:selected={editDisplayLang === val || (!editDisplayLang && val === 'italiano')}
+						onclick={() => editDisplayLang = val === 'italiano' ? undefined : val as Folder['displayLang']}
+					>
+						<span>{label}</span>
+						{#if editDisplayLang === val || (!editDisplayLang && val === 'italiano')}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					</button>
+				{/each}
+			</div>
+		</div>
+		<button class="save-btn" onclick={saveEdits} disabled={!isProtected && !editName.trim()}>Salva modifiche</button>
+		{#if !isProtected}
+			<button class="sheet-action" onclick={() => { showOptionsSheet = false; showAddWordsModal = true; }}>
+				<Icon name="plus" size={18} /> Aggiungi parole
+			</button>
+			<button class="sheet-action danger" onclick={confirmDeleteFolder}>
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+				Elimina cartella
+			</button>
+		{/if}
+	</div>
+{/if}
+
+<!-- Move sheet — Finder style -->
+{#if showMoveSheet}
+	<SheetBackdrop onClose={() => showMoveSheet = false} />
+	<div class="options-sheet" transition:fly={{ y: 300, duration: 300 }}>
+		<div class="sheet-header">
+			{#if moveBreadcrumb.length > 0}
+				<button class="sheet-back" onclick={moveSheetBack}>
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+				</button>
+			{/if}
+			<h2 class="sheet-title">
+				{moveBreadcrumb.length > 0 ? ($folders.find(f => f.id === moveCurrentParent)?.name ?? 'Cartella') : 'Sposta in cartella'}
+			</h2>
+			<button class="sheet-close" onclick={() => showMoveSheet = false}>Annulla</button>
+		</div>
+		<div class="move-folder-list">
+			{#if moveBreadcrumb.length > 0}
+				<div class="move-folder-entry">
+					<button class="move-folder-select metti-qui" onclick={() => moveSelected(moveCurrentParent!)}>Sposta qui</button>
+				</div>
+			{/if}
+			{#each moveFoldersAtLevel as f}
+				<div class="move-folder-entry">
+					<button class="move-folder-select" onclick={() => moveSelected(f.id)}>
+						<span class="move-folder-name">{f.name}</span>
+					</button>
+					{#if folderHasChildren(f.id)}
+						<button class="move-folder-drill" onclick={() => moveSheetDrillInto(f.id)} aria-label="Apri {f.name}">
+							<Icon name="chevron-right" size={18} />
+						</button>
+					{/if}
+				</div>
+			{/each}
+			{#if moveFoldersAtLevel.length === 0 && moveBreadcrumb.length === 0}
+				<p class="move-empty">Nessuna cartella disponibile.</p>
+			{/if}
+		</div>
+	</div>
+{/if}
+
+{#if itemToDelete}
+	<ConfirmationModal
+		title={itemToDelete.type === 'folder' ? 'Elimina cartella' : 'Elimina parole'}
+		message={itemToDelete.type === 'folder'
+			? `Vuoi davvero eliminare la cartella "${itemToDelete.name}" e tutto il suo contenuto?`
+			: `Vuoi davvero eliminare le ${itemToDelete.ids?.length} parole selezionate?`}
+		confirmLabel="Elimina"
+		isDanger={true}
+		onConfirm={handleDeleteConfirm}
+		onCancel={() => itemToDelete = null}
+	/>
+{/if}
 
 <style>
 	.page {
