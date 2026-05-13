@@ -308,110 +308,111 @@
 		{#if Object.keys(currentItems()).length > 0}
 			{#if path.length < 4}
 				<!-- Period view controls -->
-				<SearchInput bind:value={periodSearchQuery} placeholder="Cerca..." />
-				<div class="controls-bar">
-<button class="select-toggle" onclick={() => selectMode ? exitSelectMode() : selectMode = true}>
-						{selectMode ? 'Fine' : 'Seleziona'}
+				<div class="search-row">
+					<SearchInput bind:value={periodSearchQuery} placeholder="Cerca..." />
+					<button
+						class="play-btn"
+						onclick={selectMode && selectedKeys.size > 0 ? studySelectedPeriods : studyAllPeriods}
+						disabled={selectMode ? selectedNodeWordCount === 0 : currentLevelWordCount === 0}
+					>
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
 					</button>
 				</div>
 
-				{#if selectMode && selectedKeys.size > 0}
-					<div class="action-row">
-						<button class="study-btn" onclick={studySelectedPeriods} disabled={selectedNodeWordCount === 0}>
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-							Studia {selectedNodeWordCount} {selectedNodeWordCount === 1 ? 'parola' : 'parole'}
+				{#if !selectMode}
+					<div class="quick-filter-bar">
+						<button class="quick-pill" onclick={cyclePeriodSort}>
+							<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
+							{periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}
 						</button>
-						<button class="action-pill muted" onclick={exitSelectMode}>Deseleziona</button>
-					</div>
-				{:else if currentLevelWordCount > 0}
-					<div class="action-row">
-						<button class="study-btn" onclick={studyAllPeriods}>
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-							Studia tutto ({currentLevelWordCount})
+						<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<polyline points="16 3 21 3 21 8" />
+								<line x1="4" y1="20" x2="21" y2="3" />
+								<polyline points="21 16 21 21 16 21" />
+								<line x1="15" y1="15" x2="21" y2="21" />
+							</svg> Parole
+						</button>
+						<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<polyline points="16 3 21 3 21 8" />
+								<line x1="4" y1="20" x2="21" y2="3" />
+								<polyline points="21 16 21 21 16 21" />
+								<line x1="15" y1="15" x2="21" y2="21" />
+							</svg> Carte
 						</button>
 					</div>
 				{/if}
 
-				<div class="quick-filter-bar">
-					<button class="quick-pill" onclick={cyclePeriodSort}>
-						<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
-						{periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}
+				<div class="below-pills">
+					<button class="select-toggle" onclick={() => selectMode ? exitSelectMode() : selectMode = true}>
+						{selectMode ? 'Fine' : 'Seleziona'}
 					</button>
-					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-							<polyline points="16 3 21 3 21 8" />
-							<line x1="4" y1="20" x2="21" y2="3" />
-							<polyline points="21 16 21 21 16 21" />
-							<line x1="15" y1="15" x2="21" y2="21" />
-						</svg> Parole
-					</button>
-					<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-							<polyline points="16 3 21 3 21 8" />
-							<line x1="4" y1="20" x2="21" y2="3" />
-							<polyline points="21 16 21 21 16 21" />
-							<line x1="15" y1="15" x2="21" y2="21" />
-						</svg> Carte
-					</button>
+					{#if selectMode && selectedKeys.size > 0}
+						<button class="select-toggle muted" onclick={exitSelectMode}>Deseleziona</button>
+					{/if}
+					<span class="word-count-right">
+						{selectMode && selectedKeys.size > 0 ? selectedNodeWordCount : currentLevelWordCount} parole
+					</span>
 				</div>
 			{:else}
 				<!-- Day word view controls -->
-				<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
-
-				<div class="controls-bar">
-<button class="select-toggle" onclick={() => { daySelectMode = !daySelectMode; if (!daySelectMode) clearSelection(); }}>
-						{daySelectMode ? 'Fine' : 'Seleziona'}
+				<div class="search-row">
+					<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
+					<button
+						class="play-btn"
+						onclick={() => {
+							const ids = daySelectMode && selectedInDayView > 0
+								? dayWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id)
+								: dayWords.map(w => w.id);
+							const shuffled = get(randomCardOrder) ? shuffle([...ids]) : ids;
+							studyReturnContext.set({ href: '/cronologia', label: 'Torna alla cronologia', wordIds: shuffled });
+							setSelectedWords(shuffled);
+							goto('/studia');
+						}}
+						disabled={daySelectMode ? selectedInDayView === 0 : dayWords.length === 0}
+					>
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
 					</button>
 				</div>
 
-				{#if daySelectMode && selectedInDayView > 0}
-					<div class="action-row">
-						<button class="study-btn" onclick={() => {
-							let ids = dayWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id);
-							if (get(randomCardOrder)) ids = shuffle(ids);
-							studyReturnContext.set({ href: '/cronologia', label: 'Torna alla cronologia', wordIds: ids }); setSelectedWords(ids); goto('/studia');
-						}}>
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-							Studia {selectedInDayView} {selectedInDayView === 1 ? 'parola' : 'parole'}
+				{#if !daySelectMode}
+					<div class="quick-filter-bar">
+						<ScoreFilter
+							value={scoreFilter}
+							onChange={(v) => scoreFilter = v}
+							sortLabel={wordSortLabels[wordSortMode]}
+							onSortCycle={cycleWordSort}
+						/>
+						<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<polyline points="16 3 21 3 21 8" />
+								<line x1="4" y1="20" x2="21" y2="3" />
+								<polyline points="21 16 21 21 16 21" />
+								<line x1="15" y1="15" x2="21" y2="21" />
+							</svg> Parole
 						</button>
-						<button class="action-pill muted" onclick={clearSelection}>Deseleziona</button>
-					</div>
-				{:else if dayWords.length > 0}
-					<div class="action-row">
-						<button class="study-btn" onclick={() => {
-							let ids = dayWords.map(w => w.id);
-							if (get(randomCardOrder)) ids = shuffle(ids);
-							studyReturnContext.set({ href: '/cronologia', label: 'Torna alla cronologia', wordIds: ids }); setSelectedWords(ids); goto('/studia');
-						}}>
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-							Studia tutto ({dayWords.length})
+						<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<polyline points="16 3 21 3 21 8" />
+								<line x1="4" y1="20" x2="21" y2="3" />
+								<polyline points="21 16 21 21 16 21" />
+								<line x1="15" y1="15" x2="21" y2="21" />
+							</svg> Carte
 						</button>
 					</div>
 				{/if}
 
-				<div class="quick-filter-bar">
-					<ScoreFilter
-						value={scoreFilter}
-						onChange={(v) => scoreFilter = v}
-						sortLabel={wordSortLabels[wordSortMode]}
-						onSortCycle={cycleWordSort}
-					/>
-					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-							<polyline points="16 3 21 3 21 8" />
-							<line x1="4" y1="20" x2="21" y2="3" />
-							<polyline points="21 16 21 21 16 21" />
-							<line x1="15" y1="15" x2="21" y2="21" />
-						</svg> Parole
+				<div class="below-pills">
+					<button class="select-toggle" onclick={() => { daySelectMode = !daySelectMode; if (!daySelectMode) clearSelection(); }}>
+						{daySelectMode ? 'Fine' : 'Seleziona'}
 					</button>
-					<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-							<polyline points="16 3 21 3 21 8" />
-							<line x1="4" y1="20" x2="21" y2="3" />
-							<polyline points="21 16 21 21 16 21" />
-							<line x1="15" y1="15" x2="21" y2="21" />
-						</svg> Carte
-					</button>
+					{#if daySelectMode && selectedInDayView > 0}
+						<button class="select-toggle muted" onclick={clearSelection}>Deseleziona</button>
+					{/if}
+					<span class="word-count-right">
+						{daySelectMode && selectedInDayView > 0 ? selectedInDayView : dayWords.length} parole
+					</span>
 				</div>
 			{/if}
 		{/if}
@@ -765,18 +766,44 @@
 		cursor: pointer;
 	}
 
-	/* ---- Day view controls ---- */
-	.controls-bar {
+	/* ---- Search row + play button ---- */
+	.search-row {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
+		gap: 0.5rem;
 		margin-bottom: 0.65rem;
 	}
 
-	.count-label {
-		font-size: 0.82rem;
-		font-weight: 500;
-		color: var(--color-text-secondary);
+	.search-row :global(.search-container) {
+		flex: 1;
+		margin-bottom: 0;
+	}
+
+	.play-btn {
+		width: 44px;
+		height: 44px;
+		border-radius: 50% !important;
+		background: var(--color-primary);
+		color: white;
+		border: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		flex-shrink: 0;
+	}
+
+	.play-btn:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+
+	/* ---- Below-pills row ---- */
+	.below-pills {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 0.65rem;
 	}
 
 	.select-toggle {
@@ -790,43 +817,16 @@
 		padding: 0.25rem 0;
 	}
 
-	.action-row {
-		display: flex;
-		gap: 0.5rem;
-		flex-wrap: wrap;
-		align-items: center;
-		margin-bottom: 0.65rem;
+	.select-toggle.muted {
+		color: var(--color-text-secondary);
 	}
 
-	.study-btn {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		padding: 0.6rem 1rem;
-		background: var(--color-primary);
-		color: white;
-		border: none;
-		border-radius: var(--radius-full);
-		font-size: 0.88rem;
-		font-weight: 700;
-		font-family: var(--font-sans);
-		cursor: pointer;
-		white-space: nowrap;
-	}
-
-	.action-pill {
-		padding: 0.5rem 0.85rem;
-		border-radius: var(--radius-full);
-		border: 1px solid var(--color-border);
+	.word-count-right {
+		margin-left: auto;
 		font-size: 0.82rem;
-		font-weight: 700;
-		font-family: var(--font-sans);
-		cursor: pointer;
-		background: var(--color-surface);
-		color: var(--color-text);
+		font-weight: 500;
+		color: var(--color-text-secondary);
 	}
-
-	.action-pill.muted { color: var(--color-text-secondary); }
 
 	.sort-row {
 		display: flex;

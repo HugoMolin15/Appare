@@ -211,7 +211,7 @@
 {/if}
 
 <div class="page page-enter" bind:this={pageEl}>
-	<PageHeader title="Studia" />
+	<PageHeader title="Studia" hideBack />
 
 	{#if studySet.length === 0}
 		<EmptyState
