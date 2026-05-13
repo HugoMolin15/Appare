@@ -49,6 +49,7 @@
 	let showAddWordsModal = $state(false);
 	let showOptionsSheet = $state(false);
 	let showMoveSheet = $state(false);
+	let activeSheet = $state<'sort' | null>(null);
 	let editName = $state('');
 	let editColor = $state('');
 	let editDisplayLang = $state<Folder['displayLang']>(undefined);
@@ -270,7 +271,7 @@
 	}
 
 	$effect(() => {
-		if (showOptionsSheet || showMoveSheet) document.body.style.overflow = 'hidden';
+		if (showOptionsSheet || showMoveSheet || activeSheet !== null) document.body.style.overflow = 'hidden';
 		else document.body.style.overflow = '';
 		return () => { document.body.style.overflow = ''; };
 	});
@@ -346,9 +347,8 @@
 				{/if}
 			{/if}
 			{#if folderWords.length > 0 || subfolders.length > 0}
-				<button class="quick-pill" onclick={cycleWordSort}>
-					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M7 3L3 7M7 3l4 4M17 21V3M17 21l-4-4M17 21l4-4"/></svg>
-					{wordSortLabels[wordSortMode]}
+				<button class="quick-pill" class:active={wordSortMode !== 'newest'} onclick={() => activeSheet = 'sort'}>
+					{wordSortLabels[wordSortMode]} <Icon name="chevron-down" size={14} />
 				</button>
 			{/if}
 			
@@ -484,9 +484,13 @@
 	{#if showFolderModal}
 		<FolderModal parentId={folderId} onClose={() => showFolderModal = false} />
 	{/if}
+</div>
 
-	<!-- Options sheet -->
-	{#if showOptionsSheet}
+<!-- Sheets rendered outside .page so the page-enter animation stacking context
+     doesn't trap them below the BottomNav (z-index: 40). -->
+
+<!-- Options sheet -->
+{#if showOptionsSheet}
 		<SheetBackdrop onClose={() => showOptionsSheet = false} />
 		<div class="options-sheet" transition:fly={{ y: 300, duration: 300 }}>
 			<div class="sheet-header">
@@ -581,19 +585,41 @@
 		</div>
 	{/if}
 
-	{#if itemToDelete}
-		<ConfirmationModal
-			title={itemToDelete.type === 'folder' ? 'Elimina cartella' : 'Elimina parole'}
-			message={itemToDelete.type === 'folder'
-				? `Vuoi davvero eliminare la cartella "${itemToDelete.name}" e tutto il suo contenuto?`
-				: `Vuoi davvero eliminare le ${itemToDelete.ids?.length} parole selezionate?`}
-			confirmLabel="Elimina"
-			isDanger={true}
-			onConfirm={handleDeleteConfirm}
-			onCancel={() => itemToDelete = null}
-		/>
-	{/if}
-</div>
+{#if itemToDelete}
+	<ConfirmationModal
+		title={itemToDelete.type === 'folder' ? 'Elimina cartella' : 'Elimina parole'}
+		message={itemToDelete.type === 'folder'
+			? `Vuoi davvero eliminare la cartella "${itemToDelete.name}" e tutto il suo contenuto?`
+			: `Vuoi davvero eliminare le ${itemToDelete.ids?.length} parole selezionate?`}
+		confirmLabel="Elimina"
+		isDanger={true}
+		onConfirm={handleDeleteConfirm}
+		onCancel={() => itemToDelete = null}
+	/>
+{/if}
+
+<!-- Sort sheet -->
+{#if activeSheet !== null}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="sheet-backdrop" onclick={() => activeSheet = null}></div>
+	<div class="filter-sheet" transition:fly={{ y: 400, duration: 300 }}>
+		<div class="sheet-header">
+			<h2 class="sheet-title">Ordina per</h2>
+			<button class="sheet-close" onclick={() => activeSheet = null}>Chiudi</button>
+		</div>
+		<div class="sheet-body">
+			<div class="sort-option-list">
+				{#each wordSortCycle as val}
+					<button class="option-row" class:selected={wordSortMode === val} onclick={() => { wordSortMode = val; activeSheet = null; }}>
+						<span>{wordSortLabels[val]}</span>
+						{#if wordSortMode === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+					</button>
+				{/each}
+			</div>
+		</div>
+	</div>
+{/if}
 
 <style>
 	.page {
@@ -989,7 +1015,7 @@
 	.move-folder-name { flex: 1; font-size: 1rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 	.move-empty { font-size: 0.9rem; color: var(--color-text-secondary); padding: 1.5rem 0; text-align: center; }
 
-	/* ---- Language option list ---- */
+	/* ---- Language option list (options sheet) ---- */
 	.option-list { display: flex; flex-direction: column; border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
 
 	.option-row {
@@ -1000,4 +1026,44 @@
 	}
 	.option-row:last-child { border-bottom: none; }
 	.option-row.selected { font-weight: 700; }
+
+	/* ---- Sort sheet ---- */
+	.sheet-backdrop {
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.4);
+		backdrop-filter: blur(2px);
+		z-index: 100;
+	}
+
+	.filter-sheet {
+		position: fixed;
+		bottom: 0; left: 0; right: 0;
+		max-height: 60dvh;
+		background: var(--color-bg);
+		border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+		padding: 1.75rem;
+		padding-bottom: calc(1.75rem + env(safe-area-inset-bottom));
+		z-index: 101;
+		box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
+		display: flex;
+		flex-direction: column;
+	}
+
+	.sheet-body {
+		flex: 1;
+		overflow-y: auto;
+		scrollbar-width: none;
+	}
+
+	.sort-option-list { display: flex; flex-direction: column; }
+
+	.sort-option-list .option-row {
+		border: none;
+		border-bottom: 1px solid var(--color-border);
+		padding: 0.9rem 0;
+	}
+	.sort-option-list .option-row:last-child { border-bottom: none; }
+	.sort-option-list .option-row.selected { color: #1A1A1A; font-weight: 700; }
+	.sort-option-list .option-row.selected :global(svg) { stroke: #1A1A1A; }
 </style>
