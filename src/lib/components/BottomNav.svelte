@@ -63,12 +63,14 @@
 		bottom: 0;
 		left: 0;
 		right: 0;
-		z-index: 40;
+		z-index: 100;
 		display: flex;
 		align-items: stretch;
 		background: var(--color-bg);
 		border-top: 1px solid var(--color-border);
 		padding-bottom: min(env(safe-area-inset-bottom, 0px), 34px);
+		max-height: 90px;
+		overflow: hidden;
 	}
 
 	.nav-tab {
