@@ -62,10 +62,11 @@
 		kanji: 'Kanji',
 	};
 
-	// ---- Drag state ----
+	// ---- Drag state (shared by mouse HTML5 drag and touch pointer drag) ----
 	let draggingIdx: number | null = $state(null);
 	let dropTargetIdx: number | null = $state(null);
 
+	// ---- HTML5 drag (mouse / desktop) ----
 	function onDragStart(e: DragEvent, ci: number) {
 		draggingIdx = ci;
 		if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
@@ -92,6 +93,81 @@
 	}
 
 	function onDragEnd() {
+		draggingIdx = null;
+		dropTargetIdx = null;
+	}
+
+	// ---- Touch / pointer drag (iOS + Android) ----
+	let touchDragClone: HTMLElement | null = null;
+	let touchDragOffsetY = 0;
+
+	function onHandlePointerDown(e: PointerEvent, ci: number) {
+		if (e.pointerType === 'mouse') return; // mouse handled by HTML5 drag above
+		e.preventDefault();
+		const handle = e.currentTarget as HTMLElement;
+		const card = handle.closest('.builder-card') as HTMLElement;
+		if (!card) return;
+
+		const rect = card.getBoundingClientRect();
+		touchDragOffsetY = e.clientY - rect.top;
+
+		touchDragClone = card.cloneNode(true) as HTMLElement;
+		Object.assign(touchDragClone.style, {
+			position: 'fixed',
+			width: rect.width + 'px',
+			left: rect.left + 'px',
+			top: (e.clientY - touchDragOffsetY) + 'px',
+			margin: '0',
+			opacity: '0.9',
+			pointerEvents: 'none',
+			zIndex: '9999',
+			boxShadow: '0 8px 28px rgba(0,0,0,0.22)',
+			transform: 'scale(1.02)',
+			borderRadius: '12px',
+			transition: 'none',
+		});
+		document.body.appendChild(touchDragClone);
+
+		handle.setPointerCapture(e.pointerId);
+		draggingIdx = ci;
+	}
+
+	function onHandlePointerMove(e: PointerEvent, ci: number) {
+		if (draggingIdx !== ci || !touchDragClone) return;
+		e.preventDefault();
+
+		touchDragClone.style.top = (e.clientY - touchDragOffsetY) + 'px';
+
+		// Find which card's centre is closest to the pointer
+		const cards = document.querySelectorAll<HTMLElement>('.builder-card');
+		let closest = ci;
+		let minDist = Infinity;
+		cards.forEach((cardEl, i) => {
+			if (i === ci) return;
+			const r = cardEl.getBoundingClientRect();
+			const dist = Math.abs(e.clientY - (r.top + r.height / 2));
+			if (dist < minDist) { minDist = dist; closest = i; }
+		});
+		dropTargetIdx = closest;
+	}
+
+	function onHandlePointerUp(e: PointerEvent, ci: number) {
+		if (draggingIdx !== null && dropTargetIdx !== null && draggingIdx !== dropTargetIdx) {
+			const from = draggingIdx;
+			const to = dropTargetIdx;
+			cardLayout.update(l => {
+				const next = [...l];
+				const [item] = next.splice(from, 1);
+				next.splice(to, 0, item);
+				return next;
+			});
+		}
+		cleanupTouchDrag();
+	}
+
+	function cleanupTouchDrag() {
+		touchDragClone?.remove();
+		touchDragClone = null;
 		draggingIdx = null;
 		dropTargetIdx = null;
 	}
@@ -234,7 +310,14 @@
 					<!-- Card header -->
 					<div class="builder-card-header">
 						<div class="builder-card-header-left">
-							<span class="drag-handle" aria-label="Trascina per riordinare">
+							<span
+								class="drag-handle"
+								aria-label="Trascina per riordinare"
+								onpointerdown={(e) => onHandlePointerDown(e, ci)}
+								onpointermove={(e) => onHandlePointerMove(e, ci)}
+								onpointerup={(e) => onHandlePointerUp(e, ci)}
+								onpointercancel={cleanupTouchDrag}
+							>
 								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 									<line x1="4" y1="7" x2="20" y2="7" />
 									<line x1="4" y1="12" x2="20" y2="12" />
@@ -850,6 +933,9 @@
 		color: var(--color-text-tertiary);
 		cursor: grab;
 		padding: 0.2rem;
+		touch-action: none;
+		user-select: none;
+		-webkit-user-select: none;
 	}
 
 	.drag-handle:active {
