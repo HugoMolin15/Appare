@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { studyGoal, appFontScale, cardLayout, randomCardOrder, randomWordOrder, fontSizeItaliano, fontSizeHiragana, fontSizeRomaji, fontSizeKanji } from '$lib/stores/settings';
+	import { studyGoal, appFontScale, cardLayout, randomCardOrder, randomWordOrder, fontSizeItaliano, fontSizeHiragana, fontSizeRomaji, fontSizeKanji, fontSizeNotes } from '$lib/stores/settings';
 	import type { CardField, Word } from '$lib/types/word';
 	import { manualWordCount } from '$lib/stores/words';
 	import { currentUser, signOut } from '$lib/stores/auth';
@@ -38,12 +38,13 @@
 	let fsProgressHi  = $derived(fsProgress($fontSizeHiragana));
 	let fsProgressRo  = $derived(fsProgress($fontSizeRomaji));
 	let fsProgressKa  = $derived(fsProgress($fontSizeKanji));
+	let fsProgressNo  = $derived(fsProgress($fontSizeNotes));
 
 	function handleFsInput(store: { set: (v: number) => void }, e: Event) {
 		store.set(Number((e.target as HTMLInputElement).value));
 	}
 
-	const FS_DEFAULTS = { italiano: 3.0, hiragana: 3.0, romaji: 2.5, kanji: 3.0 };
+	const FS_DEFAULTS = { italiano: 3.0, hiragana: 3.0, romaji: 2.5, kanji: 3.0, notes: 1.2 };
 
 	function handleGoalInput(e: Event) {
 		const target = e.target as HTMLInputElement;
@@ -53,13 +54,14 @@
 		studyGoal.set(value);
 	}
 
-	const SINGLE_FIELDS: CardField[] = ['italiano', 'romaji', 'kanji'];
+	const SINGLE_FIELDS: CardField[] = ['italiano', 'romaji', 'kanji', 'notes'];
 	const FIELD_LABELS: Record<CardField, string> = {
 		italiano: 'Italiano',
 		hiragana: 'Hiragana',
 		katakana: 'Katakana',
 		romaji: 'Romaji',
 		kanji: 'Kanji',
+		notes: 'Note',
 	};
 
 	// ---- Drag state (shared by mouse HTML5 drag and touch pointer drag) ----
@@ -527,6 +529,27 @@
 				</div>
 				{#if $fontSizeKanji !== FS_DEFAULTS.kanji}
 					<button class="reset-btn" onclick={() => fontSizeKanji.set(FS_DEFAULTS.kanji)}>Ripristina</button>
+				{/if}
+			</div>
+
+			<!-- Note -->
+			<div class="fs-field-row">
+				<span class="fs-field-label">Note</span>
+				<div class="fs-slider-wrap">
+					<span class="slider-label-sm">A</span>
+					<div class="slider-container">
+						<input type="range" min={FS_MIN} max={FS_MAX} step="0.1"
+							value={$fontSizeNotes}
+							oninput={(e) => handleFsInput(fontSizeNotes, e)}
+							class="font-slider"
+							style="--progress: {fsProgressNo}%"
+						/>
+					</div>
+					<span class="slider-label-lg">A</span>
+					<span class="fs-value">{$fontSizeNotes.toFixed(1)}</span>
+				</div>
+				{#if $fontSizeNotes !== FS_DEFAULTS.notes}
+					<button class="reset-btn" onclick={() => fontSizeNotes.set(FS_DEFAULTS.notes)}>Ripristina</button>
 				{/if}
 			</div>
 		</div>

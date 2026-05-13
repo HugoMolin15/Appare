@@ -37,6 +37,7 @@ export const fontSizeItaliano  = persisted<number>('appare_fs_italiano',  3.0, {
 export const fontSizeHiragana  = persisted<number>('appare_fs_hiragana',  3.0, { onChange: syncToCloud });
 export const fontSizeRomaji    = persisted<number>('appare_fs_romaji',    2.5, { onChange: syncToCloud });
 export const fontSizeKanji     = persisted<number>('appare_fs_kanji',     3.0, { onChange: syncToCloud });
+export const fontSizeNotes     = persisted<number>('appare_fs_notes',     1.2, { onChange: syncToCloud });
 
 /** Clear settings (used on logout) */
 export function clearSettings() {
@@ -51,6 +52,7 @@ export function clearSettings() {
 	fontSizeHiragana.set(3.0);
 	fontSizeRomaji.set(2.5);
 	fontSizeKanji.set(3.0);
+	fontSizeNotes.set(1.2);
 
 	if (browser) {
 		localStorage.removeItem('appare_font_scale');
@@ -66,5 +68,6 @@ export function clearSettings() {
 		localStorage.removeItem('appare_fs_hiragana');
 		localStorage.removeItem('appare_fs_romaji');
 		localStorage.removeItem('appare_fs_kanji');
+		localStorage.removeItem('appare_fs_notes');
 	}
 }

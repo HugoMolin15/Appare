@@ -11,7 +11,7 @@ export type CategoryValue =
 	(typeof CATEGORIES)[keyof typeof CATEGORIES][number];
 
 // ---- Flashcard layout ----
-export type CardField = 'italiano' | 'hiragana' | 'katakana' | 'romaji' | 'kanji';
+export type CardField = 'italiano' | 'hiragana' | 'katakana' | 'romaji' | 'kanji' | 'notes';
 export interface CardDefinition { fields: CardField[]; }
 export type CardLayout = CardDefinition[];
 

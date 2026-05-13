@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
 	import type { Word } from '$lib/types/word';
-	import { cardLayout, randomWordOrder, fontSizeItaliano, fontSizeHiragana, fontSizeRomaji, fontSizeKanji } from '$lib/stores/settings';
+	import { cardLayout, randomWordOrder, fontSizeItaliano, fontSizeHiragana, fontSizeRomaji, fontSizeKanji, fontSizeNotes } from '$lib/stores/settings';
 	import { shuffle } from '$lib/utils/shuffle';
 
 	interface FieldSide {
@@ -30,6 +30,7 @@
 		katakana: { label: 'Katakana', japanese: true },
 		romaji:   { label: 'Romaji',   japanese: false },
 		kanji:    { label: 'Kanji',    japanese: true },
+		notes:    { label: 'Note',     japanese: false },
 	};
 
 	// Build cards: each entry in cardLayout becomes one card side.
@@ -42,6 +43,7 @@
 			katakana: word.katakana,
 			romaji:   word.romaji,
 			kanji:    word.kanji,
+			notes:    word.notes ?? '',
 		};
 		const layout = $randomWordOrder ? shuffle([...$cardLayout]) : $cardLayout;
 		return layout
@@ -87,7 +89,10 @@
 		katakana: `${$fontSizeHiragana}rem`,
 		romaji:   `${$fontSizeRomaji}rem`,
 		kanji:    `${$fontSizeKanji}rem`,
+		notes:    `${$fontSizeNotes}rem`,
 	});
+
+	let notesInLayout = $derived($cardLayout.some(card => card.fields.includes('notes')));
 </script>
 
 <button type="button" class="card" class:fade-out={animating} onclick={flip}>
@@ -114,7 +119,7 @@
 		</div>
 	</div>
 
-	{#if word.notes}
+	{#if word.notes && !notesInLayout}
 		<p class="card-notes">{word.notes}</p>
 	{/if}
 
