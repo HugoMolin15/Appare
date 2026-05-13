@@ -107,15 +107,17 @@
 	{/if}
 
 	<div class="card-center">
-		<div class="card-fields">
-			{#each activeSide.fields as field}
-				<div class="card-field">
-					<span class="card-label">{field.label}</span>
-					<span class="card-text" class:font-jp={field.japanese} class:phrase-text={isPhrase} style="font-size: {fieldSizes[field.key] ?? '2.5rem'}">
-						{field.text}
-					</span>
-				</div>
-			{/each}
+		<div class="card-fields-scroll">
+			<div class="card-fields">
+				{#each activeSide.fields as field}
+					<div class="card-field">
+						<span class="card-label">{field.label}</span>
+						<span class="card-text" class:font-jp={field.japanese} class:phrase-text={isPhrase} style="font-size: {fieldSizes[field.key] ?? '2.5rem'}">
+							{field.text}
+						</span>
+					</div>
+				{/each}
+			</div>
 		</div>
 	</div>
 
@@ -133,7 +135,6 @@
 		width: 100%;
 		flex: 1;
 		min-height: 0;
-		max-height: 460px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -184,12 +185,25 @@
 	.card-center {
 		flex: 1;
 		display: flex;
-		align-items: flex-start;
-		justify-content: center;
+		flex-direction: column;
 		width: 100%;
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	.card-fields-scroll {
+		flex: 1;
 		min-height: 0;
 		overflow-y: auto;
 		overflow-x: hidden;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		scrollbar-width: none;
+	}
+
+	.card-fields-scroll::-webkit-scrollbar {
+		display: none;
 	}
 
 	/* Stack multiple fields vertically with a divider */

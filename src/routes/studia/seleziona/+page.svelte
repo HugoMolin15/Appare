@@ -255,11 +255,10 @@
 <style>
 	.page {
 		padding: var(--spacing-page);
-		min-height: 100dvh;
 		display: flex;
 		flex-direction: column;
 		position: relative;
-		padding-bottom: 120px;
+		padding-bottom: 2rem;
 	}
 
 	.filter-sort-row {

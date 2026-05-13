@@ -85,8 +85,7 @@
 <style>
 	.page {
 		padding: var(--spacing-page);
-		padding-bottom: calc(var(--bottom-nav-height) + 1rem);
-		min-height: 100dvh;
+		padding-bottom: 1rem;
 		display: flex;
 		flex-direction: column;
 	}

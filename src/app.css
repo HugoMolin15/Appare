@@ -85,10 +85,9 @@ html, body {
   overscroll-behavior-x: none !important;
 }
 
-/* Scrollbars: thin and subtle globally */
+/* Scrollbars: hidden globally */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
+  scrollbar-width: none;
 }
 
 * {
@@ -197,7 +196,8 @@ body {
 .app-shell {
   width: 100%;
   margin: 0 auto;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   position: relative;
   background-color: var(--color-bg);
 }
@@ -225,7 +225,10 @@ body {
 }
 
 @media (max-width: 767px) {
+  body { height: 100dvh; overflow: hidden; }
   .main-content {
+    height: 100%;
+    overflow-y: auto;
     padding-bottom: var(--bottom-nav-height);
   }
 }
@@ -253,16 +256,8 @@ body {
 }
 
 
-/* Custom scrollbar (thin, subtle) */
 ::-webkit-scrollbar {
-  width: 3px;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: var(--radius-full);
-}
-::-webkit-scrollbar-track {
-  background: transparent;
+  display: none;
 }
 
 /* ========================================

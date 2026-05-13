@@ -166,7 +166,7 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<div class="sticky-header">
+	<div>
 		<PageHeader title="Tutte le parole" hideBack>
 			{#snippet actions()}
 				<button

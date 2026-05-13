@@ -299,8 +299,7 @@
 <style>
 	.page {
 		padding: var(--spacing-page);
-		height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-		max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+		height: 100%;
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
