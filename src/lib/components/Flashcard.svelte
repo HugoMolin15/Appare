@@ -110,8 +110,11 @@
 		// Tap: finger barely moved
 		if (dx < 10 && dy < 10) {
 			flip();
+		} 
+		// Horizontal swipe: finger moved significantly horizontally, but not much vertically
+		else if (dx > 30 && dy < 40) {
+			flip();
 		}
-		// Any larger movement is treated as a scroll, so we do nothing
 	}
 
 	// Desktop mouse click flips. Touch-generated synthetic clicks are skipped.
@@ -230,25 +233,10 @@
 	.card-fields-scroll {
 		flex: 1;
 		min-height: 0;
-		overflow-y: auto;
-		overflow-x: hidden;
 		width: 100%;
 		display: flex;
 		flex-direction: column;
-		scrollbar-width: none;
-		-webkit-overflow-scrolling: touch; /* required for smooth momentum scroll on iOS */
-	}
-
-	.card-fields-scroll::-webkit-scrollbar {
-		display: none;
-	}
-
-	/* Flex spacers to center the content safely without breaking scroll */
-	.card-fields-scroll::before,
-	.card-fields-scroll::after {
-		content: "";
-		flex: 1;
-		min-height: 0;
+		justify-content: center; /* Center naturally without scroll hacks */
 	}
 
 	/* Stack multiple fields vertically with a divider */
@@ -290,17 +278,8 @@
 		line-height: 1.5;
 		transition: font-size 0.15s ease;
 		width: 100%;
-		/* Horizontal scroll instead of vertical wrap */
-		white-space: nowrap;
-		overflow-x: auto;
-		overflow-y: hidden;
-		-webkit-overflow-scrolling: touch;
-		scrollbar-width: none;
-		padding-bottom: 2px;
-	}
-
-	.card-text::-webkit-scrollbar {
-		display: none;
+		white-space: pre-wrap;
+		word-break: break-word;
 	}
 
 	.card-text.font-jp {
