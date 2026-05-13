@@ -304,7 +304,7 @@
 		align-items: center;
 		gap: 0.35rem;
 		padding: 0.45rem 0.8rem;
-		background: var(--color-surface);
+		background: white;
 		border: 1.5px solid var(--color-border);
 		border-radius: var(--radius-full);
 		font-size: 0.85rem;

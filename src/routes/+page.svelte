@@ -201,9 +201,10 @@
 		-webkit-tap-highlight-color: transparent;
 	}
 
-	.nav-card svg {
-		color: var(--color-primary);
-	}
+	/* Individual icon colors */
+	.nav-grid .nav-card:nth-child(1) svg { color: var(--color-primary); }  /* Cartelle – red */
+	.nav-grid .nav-card:nth-child(2) svg { color: #42A5F5; }               /* Cronologia – blue */
+	.nav-card-wide svg { color: #66BB6A; }                                  /* Tutte le parole – green */
 
 	.nav-card-wide {
 		aspect-ratio: unset;

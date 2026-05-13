@@ -166,14 +166,12 @@
 </svelte:head>
 
 <div class="page page-enter">
-	<div>
+	<div class="sticky-header">
 		<PageHeader title="Tutte le parole" />
 
-	</div>
+		<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
-	<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
-
-	<div class="quick-filter-bar">
+		<div class="quick-filter-bar">
 		<button class="quick-pill" class:active={$listDisplayLang !== 'italiano' || sourceFilter !== 'all'} onclick={() => activeSheet = 'options'}>
 			Opzioni <Icon name="chevron-down" size={14} />
 		</button>
@@ -191,7 +189,8 @@
 		</button>
 	</div>
 
-	<FilterPills pills={activePills} />
+		<FilterPills pills={activePills} />
+	</div>
 
 	<div class="word-list">
 		{#each wordListItems as item (item.type === 'word' ? item.word.id : 'div_' + item.label)}
@@ -306,6 +305,11 @@
 		position: relative;
 	}
 
+	/* Kill the SearchInput component's own bottom margin inside sticky header */
+	.sticky-header :global(.search-container) {
+		margin-bottom: 0;
+	}
+
 	/* ---- Quick Filter Bar ---- */
 	.quick-filter-bar {
 		display: flex;
@@ -313,7 +317,7 @@
 		overflow-x: auto;
 		scrollbar-width: none;
 		-ms-overflow-style: none;
-		margin: 0.35rem 0;
+		margin: 0.75rem 0;
 		padding-bottom: 0.1rem;
 		/* Edge-to-edge layout */
 		margin-left: calc(-1 * var(--spacing-page));
