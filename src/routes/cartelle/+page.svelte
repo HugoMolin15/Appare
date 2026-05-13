@@ -316,10 +316,11 @@
 		</div>
 	{/if}
 
-	{#if showModal}
-		<FolderModal onClose={() => showModal = false} />
-	{/if}
 </div>
+
+{#if showModal}
+	<FolderModal onClose={() => showModal = false} />
+{/if}
 
 <style>
 	.page {
