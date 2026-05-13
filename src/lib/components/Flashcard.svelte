@@ -93,9 +93,41 @@
 	});
 
 	let notesInLayout = $derived($cardLayout.some(card => card.fields.includes('notes')));
+
+	let touchStartY = 0;
+	let touchStartX = 0;
+	let lastWasTouch = false;
+
+	function onTouchStart(e: TouchEvent) {
+		touchStartY = e.touches[0].clientY;
+		touchStartX = e.touches[0].clientX;
+		lastWasTouch = true;
+	}
+
+	// Only flip if the finger barely moved (tap, not scroll/swipe)
+	function onTouchEnd(e: TouchEvent) {
+		const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+		const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+		if (dy < 8 && dx < 8) flip();
+	}
+
+	// Prevent the synthetic click that follows touchend from double-flipping
+	function onClick() {
+		if (lastWasTouch) { lastWasTouch = false; return; }
+		flip();
+	}
 </script>
 
-<button type="button" class="card" class:fade-out={animating} onclick={flip}>
+<div
+	role="button"
+	tabindex="0"
+	class="card"
+	class:fade-out={animating}
+	onclick={onClick}
+	ontouchstart={onTouchStart}
+	ontouchend={onTouchEnd}
+	onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') flip(); }}
+>
 	{#if sideIndicator}
 		<span class="card-indicator">{sideIndicator}</span>
 	{/if}
@@ -128,7 +160,7 @@
 	{#if sides.length > 1}
 		<span class="card-hint">Tocca per continuare</span>
 	{/if}
-</button>
+</div>
 
 <style>
 	.card {
