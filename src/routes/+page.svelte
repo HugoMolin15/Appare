@@ -2,8 +2,19 @@
 	import { folderCount } from '$lib/stores/folders';
 	import Heatmap from '$lib/components/Heatmap.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import { afterNavigate } from '$app/navigation';
+	import { consumeHeatmapReturnDate } from '$lib/stores/cronologiaNav';
 
 	let heatmapExpanded = $state(false);
+	let heatmapJumpDate = $state<string | null>(null);
+
+	afterNavigate(() => {
+		const date = consumeHeatmapReturnDate();
+		if (date) {
+			heatmapJumpDate = date;
+			heatmapExpanded = true;
+		}
+	});
 </script>
 
 <svelte:head>
@@ -33,7 +44,7 @@
 			</button>
 		</div>
 
-		<Heatmap bind:expanded={heatmapExpanded} />
+		<Heatmap bind:expanded={heatmapExpanded} jumpDate={heatmapJumpDate} />
 
 		<a href="/studia/seleziona" class="cta-button" style="margin-top: 1rem;">
 			Inizia a studiare

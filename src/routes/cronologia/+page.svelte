@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		consumeCronologiaJumpDate,
+		consumeFromHeatmap,
 		getCronologiaPath,
 		setCronologiaPath
 	} from '$lib/stores/cronologiaNav';
@@ -36,6 +37,9 @@
 		'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
 		'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
 	];
+
+	// Track whether this session was opened from the home heatmap.
+	let fromHeatmap = consumeFromHeatmap();
 
 	// Path state: [Year, Month, Week, Date] — persisted across navigation in cronologiaNav.
 	const _jumpDate = consumeCronologiaJumpDate();
@@ -293,7 +297,11 @@
 	<div class="sticky-header">
 		<PageHeader
 			title={getTitle()}
-			onback={path.length > 0 ? navigateUp : () => window.history.back()}
+			onback={
+				path.length === 0 ? () => window.history.back() :
+				(fromHeatmap && path.length === 4) ? () => { fromHeatmap = false; window.history.back(); } :
+				navigateUp
+			}
 			hideBackOnDesktop={path.length === 0}
 		/>
 

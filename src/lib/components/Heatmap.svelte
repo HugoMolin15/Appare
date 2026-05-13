@@ -6,7 +6,7 @@
 	import { studyHistory } from '$lib/stores/history';
 	import { studyGoal } from '$lib/stores/settings';
 	import { getLocalValue } from '$lib/utils/date';
-	import { setCronologiaJumpDate } from '$lib/stores/cronologiaNav';
+	import { setCronologiaJumpFromHeatmap } from '$lib/stores/cronologiaNav';
 
 	// Index = intensity level 0–4, images named 1–5
 	const INTENSITY_IMAGES: (string | null)[] = [
@@ -32,8 +32,8 @@
 	}
 
 	// ---- Expand state (bindable so parent can place the toggle button) ----
-	interface Props { expanded?: boolean; }
-	let { expanded = $bindable(false) }: Props = $props();
+	interface Props { expanded?: boolean; jumpDate?: string | null; }
+	let { expanded = $bindable(false), jumpDate = null }: Props = $props();
 
 	// ---- Month navigation (used only when expanded) ----
 	const now = new Date();
@@ -55,11 +55,21 @@
 		else viewMonth++;
 	}
 
+	// Track whether a jumpDate has already been applied so subsequent expand/collapse
+	// cycles reset to the current month as normal.
+	let jumpApplied = false;
+
 	$effect(() => {
-		// Reset to current month whenever expanding
 		if (expanded) {
-			viewYear = now.getFullYear();
-			viewMonth = now.getMonth();
+			if (jumpDate && !jumpApplied) {
+				const d = new Date(jumpDate);
+				viewYear = d.getFullYear();
+				viewMonth = d.getMonth();
+				jumpApplied = true;
+			} else if (!jumpDate || jumpApplied) {
+				viewYear = now.getFullYear();
+				viewMonth = now.getMonth();
+			}
 		}
 	});
 
@@ -127,7 +137,7 @@
 
 	function openDay(cell: DayCell) {
 		if (cell.isFuture) return;
-		setCronologiaJumpDate(cell.date);
+		setCronologiaJumpFromHeatmap(cell.date);
 		goto('/cronologia');
 	}
 </script>
