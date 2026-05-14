@@ -13,6 +13,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { fly } from 'svelte/transition';
 	import { getParoleSaved, setParoleSaved, type WordSort } from '$lib/stores/paroleNav';
+	import BackToTop from '$lib/components/BackToTop.svelte';
 
 	const saved = getParoleSaved();
 	let searchQuery = $state(saved.searchQuery);
@@ -201,6 +202,7 @@
 			{/if}
 		{/each}
 	</div>
+	<BackToTop />
 </div>
 
 {#if activeSheet !== null}

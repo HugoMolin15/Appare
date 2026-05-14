@@ -23,6 +23,7 @@
 	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
 	import { fly } from 'svelte/transition';
 	import { Folder as FolderIcon, Play, ArrowsDownUp, Shuffle, DotsThreeVertical, Trash, CaretLeft } from 'phosphor-svelte';
+	import BackToTop from '$lib/components/BackToTop.svelte';
 
 	let folderId = $derived($page.params.id as string);
 	let isProtected = $derived(folderId === MY_WORDS_FOLDER_ID);
@@ -454,6 +455,7 @@
 			</button>
 		</div>
 	{/if}
+	<BackToTop />
 </div>
 
 <!-- Modals & sheets — outside .page for correct stacking over navbar -->

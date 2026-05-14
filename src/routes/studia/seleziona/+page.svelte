@@ -15,6 +15,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { filterWords } from '$lib/utils/word-search';
 	import { Play } from 'phosphor-svelte';
+	import BackToTop from '$lib/components/BackToTop.svelte';
 
 	let searchQuery = $state('');
 	let scoreFilter = $state<'all' | WordScore>('all');
@@ -185,7 +186,7 @@
 			{/each}
 		{/if}
 	</div>
-
+	<BackToTop />
 </div>
 
 {#if activeSheet !== null}

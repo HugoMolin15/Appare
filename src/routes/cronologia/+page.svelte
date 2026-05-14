@@ -26,6 +26,7 @@
 	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import { wordScores } from '$lib/stores/wordScores';
 	import { Folder, Play, ArrowsDownUp, Shuffle, ClockCounterClockwise } from 'phosphor-svelte';
+	import BackToTop from '$lib/components/BackToTop.svelte';
 
 	const SCORE_COLORS: Record<string, string> = {
 		none: 'var(--color-border)',
@@ -466,6 +467,7 @@
 			</div>
 		{/if}
 	</div>
+	<BackToTop />
 </div>
 
 {#if editingColorKey}
