@@ -272,7 +272,7 @@
 					</button>
 				{/if}
 				<a href="/studia/seleziona" class="action-btn action-select" onclick={() => { bypassGuard = true; }}>
-					Cambia parole
+					Modifica selezione
 				</a>
 				<a href="/" class="action-btn action-home" onclick={() => { bypassGuard = true; }}>
 					Torna alla home
