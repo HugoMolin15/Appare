@@ -271,6 +271,9 @@
 						{$studyReturnContext.label}
 					</button>
 				{/if}
+				<a href="/studia/seleziona" class="action-btn action-select" onclick={() => { bypassGuard = true; }}>
+					Cambia parole
+				</a>
 				<a href="/" class="action-btn action-home" onclick={() => { bypassGuard = true; }}>
 					Torna alla home
 				</a>
@@ -561,6 +564,12 @@
 	}
 
 	.action-folder {
+		background: var(--color-surface);
+		color: var(--color-text);
+		border: 1.5px solid var(--color-border);
+	}
+
+	.action-select {
 		background: var(--color-surface);
 		color: var(--color-text);
 		border: 1.5px solid var(--color-border);

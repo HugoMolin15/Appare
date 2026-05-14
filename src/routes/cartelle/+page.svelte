@@ -14,7 +14,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { MY_WORDS_FOLDER_ID } from '$lib/constants';
-	import { Folder, Play, ArrowsDownUp, Shuffle } from 'phosphor-svelte';
+	import { Folder, Play, ArrowsDownUp, Shuffle, Plus } from 'phosphor-svelte';
 
 	let showModal = $state(false);
 	let reorderMode = $state(false);
@@ -142,7 +142,15 @@
 
 <div class="page page-enter">
 	<div class="sticky-header">
-		<PageHeader title="Cartelle" hideBackOnDesktop />
+		<PageHeader title="Cartelle" hideBackOnDesktop>
+			{#snippet actions()}
+				{#if !selectMode}
+					<button class="header-add-btn" onclick={() => showModal = true} aria-label="Nuova cartella">
+						<Plus size={24} weight="bold" />
+					</button>
+				{/if}
+			{/snippet}
+		</PageHeader>
 
 		{#if allFolderCount > 0}
 			<div class="search-row">
@@ -288,15 +296,6 @@
 		</div>
 	{/if}
 
-	<!-- FAB for New Folder -->
-	{#if !selectMode}
-		<div class="fab-container">
-			<button class="fab" onclick={() => showModal = true}>
-				<Icon name="plus" size={18} strokeWidth={2.5} />
-				Nuova cartella
-			</button>
-		</div>
-	{/if}
 
 </div>
 
@@ -495,17 +494,17 @@
 		font-size: 0.9rem; color: var(--color-text-secondary); padding: 1.5rem 0; text-align: center;
 	}
 
-	/* ---- FAB ---- */
-	.fab-container { position: fixed; bottom: calc(var(--bottom-nav-height) + 1rem); right: var(--spacing-page); z-index: 50; }
-
-	.fab {
-		display: flex; align-items: center; gap: 0.5rem; padding: 0.875rem 1.5rem;
-		background-color: var(--color-accent); color: var(--color-text); border: none;
-		border-radius: var(--radius-full); font-size: 0.95rem; font-weight: 700;
-		font-family: var(--font-sans); cursor: pointer; white-space: nowrap;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); text-decoration: none;
+	/* ---- Header add button ---- */
+	.header-add-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--color-text);
+		padding: 0;
 	}
-
-	.fab:hover { transform: translateY(-2px); }
-	.fab:active { transform: translateY(0) scale(0.96); }
 </style>
