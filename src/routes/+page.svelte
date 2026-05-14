@@ -51,11 +51,11 @@
 	<!-- Nav Cards -->
 	<div class="nav-grid hide-desktop">
 		<a href="/cartelle" class="nav-card">
-			<Folder size={32} weight="fill" color="#8B5CF6" />
+			<Folder size={32} weight="fill" color="#0EA5E9" />
 			<span class="nav-card-label">Cartelle</span>
 		</a>
 		<a href="/cronologia" class="nav-card">
-			<Clock size={32} weight="fill" color="#0EA5E9" />
+			<Clock size={32} weight="fill" color="#F59E0B" />
 			<span class="nav-card-label">Cronologia</span>
 		</a>
 	</div>
@@ -122,7 +122,7 @@
 
 	/* ---- Daily Words ---- */
 	.daily-section {
-		margin-bottom: 1.5rem;
+		margin-bottom: 0.75rem;
 	}
 
 	.daily-title-row {
@@ -162,7 +162,7 @@
 		background-color: var(--color-primary);
 		color: white;
 		border: none;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-lg);
 		font-size: 1.05rem;
 		font-weight: 600;
 		font-family: var(--font-sans);

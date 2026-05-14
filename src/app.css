@@ -119,8 +119,12 @@ a, button, input, textarea, select, [role="button"], label {
    instant transform to avoid conflicts.
    ======================================== */
 
-button, a.cta-button, a.back-btn, a.login-cta-btn {
+button, a.back-btn, a.login-cta-btn {
   border-radius: 8px !important;
+}
+
+a.cta-button {
+  border-radius: var(--radius-lg) !important;
 }
 
 /* Pills stay fully rounded */
