@@ -152,14 +152,12 @@
 
 		<FilterPills pills={activePills} />
 
-		<div class="below-pills">
-			{#if $selectedCount > 0}
+		{#if $selectedCount > 0}
+			<div class="below-pills">
 				<button class="select-toggle muted" onclick={clearSelection}>Deseleziona</button>
-			{/if}
-			<span class="word-count-right">
-				{$selectedCount > 0 ? $selectedCount : filteredWords.length} parole
-			</span>
-		</div>
+				<span class="word-count-right">{$selectedCount} parole</span>
+			</div>
+		{/if}
 
 	</div>
 
