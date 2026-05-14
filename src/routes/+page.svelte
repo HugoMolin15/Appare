@@ -2,7 +2,7 @@
 	import Heatmap from '$lib/components/Heatmap.svelte';
 	import { afterNavigate } from '$app/navigation';
 	import { consumeHeatmapReturnDate } from '$lib/stores/cronologiaNav';
-	import { Folder, Clock, BookOpen, CaretDown } from 'phosphor-svelte';
+	import { Folder, Clock, Books, CaretDown } from 'phosphor-svelte';
 
 	let heatmapExpanded = $state(false);
 	let heatmapJumpDate = $state<string | null>(null);
@@ -51,16 +51,16 @@
 	<!-- Nav Cards -->
 	<div class="nav-grid hide-desktop">
 		<a href="/cartelle" class="nav-card">
-			<Folder size={32} weight="fill" />
+			<Folder size={32} weight="fill" color="#8B5CF6" />
 			<span class="nav-card-label">Cartelle</span>
 		</a>
 		<a href="/cronologia" class="nav-card">
-			<Clock size={32} weight="fill" />
+			<Clock size={32} weight="fill" color="#0EA5E9" />
 			<span class="nav-card-label">Cronologia</span>
 		</a>
 	</div>
 	<a href="/parole" class="nav-card nav-card-wide hide-desktop">
-		<BookOpen size={28} weight="fill" />
+		<Books size={28} weight="fill" color="#10B981" />
 		<span class="nav-card-label">Tutte le parole</span>
 	</a>
 
@@ -193,11 +193,6 @@
 		color: var(--color-text);
 		-webkit-tap-highlight-color: transparent;
 	}
-
-	/* Individual icon colors */
-	.nav-grid .nav-card:nth-child(1) svg { color: var(--color-primary); }  /* Cartelle – red */
-	.nav-grid .nav-card:nth-child(2) svg { color: #42A5F5; }               /* Cronologia – blue */
-	.nav-card-wide svg { color: #66BB6A; }                                  /* Tutte le parole – green */
 
 	.nav-card-wide {
 		aspect-ratio: unset;

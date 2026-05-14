@@ -140,9 +140,10 @@ button, a.cta-button, a.back-btn, a.login-cta-btn {
   border-radius: 0 !important;
 }
 
-/* Phosphor (and other) SVGs render inline by default, causing baseline gaps in flex containers */
+/* Remove any browser default borders/outlines on SVG elements */
 svg {
-  display: block;
+  outline: none;
+  border: none;
 }
 
 /* Gradient for primary-colored action buttons */
