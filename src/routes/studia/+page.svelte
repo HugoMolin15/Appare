@@ -267,13 +267,9 @@
 				</button>
 				{#if $studyReturnContext}
 					<button type="button" class="action-btn action-folder" onclick={returnToOrigin}>
-						<Folder size={18} weight="fill" />
-						{$studyReturnContext.label}
+						Modifica selezione
 					</button>
 				{/if}
-				<a href="/studia/seleziona" class="action-btn action-select" onclick={() => { bypassGuard = true; }}>
-					Modifica selezione
-				</a>
 				<a href="/" class="action-btn action-home" onclick={() => { bypassGuard = true; }}>
 					Torna alla home
 				</a>
