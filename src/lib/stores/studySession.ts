@@ -36,6 +36,7 @@ export interface StudyReturnContext {
 	wordIds: string[];  // to restore selection on return
 	folderId?: string;  // set only for cartelle/[id] to re-enable selectMode
 	folderIds?: string[]; // set only for cartelle to restore multi-folder selection
+	subfolderIds?: string[]; // set only for cartelle/[id] to restore subfolder selection
 	selectedKeys?: string[]; // set only for cronologia to restore date/period selection
 }
 export const studyReturnContext = writable<StudyReturnContext | null>(null);

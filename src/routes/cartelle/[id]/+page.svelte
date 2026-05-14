@@ -45,6 +45,9 @@
 		if (ctx && ctx.folderId === folderId) {
 			studyReturnContext.set(null);
 			selectMode = true;
+			if (ctx.subfolderIds && ctx.subfolderIds.length > 0) {
+				selectedSubfolderIds = new Set(ctx.subfolderIds);
+			}
 		}
 	});
 	let showFolderModal = $state(false);
@@ -243,7 +246,13 @@
 		let ids = [...new Set([...fromFolders, ...fromWords])];
 		if (ids.length === 0) return;
 		if (get(randomCardOrder)) ids = shuffle(ids);
-		studyReturnContext.set({ href: `/cartelle/${folderId}`, label: 'Torna alla cartella', wordIds: ids, folderId });
+		studyReturnContext.set({
+			href: `/cartelle/${folderId}`,
+			label: 'Torna alla cartella',
+			wordIds: ids,
+			folderId,
+			subfolderIds: Array.from(selectedSubfolderIds)
+		});
 		setSelectedWords(ids);
 		goto('/studia');
 	}
