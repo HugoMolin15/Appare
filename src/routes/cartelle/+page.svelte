@@ -15,8 +15,10 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 	import { Folder, Play, ArrowsDownUp, Shuffle, Plus } from 'phosphor-svelte';
+	import { fly } from 'svelte/transition';
 
 	let showModal = $state(false);
+	let showSortSheet = $state(false);
 	let reorderMode = $state(false);
 	let selectMode = $state(false);
 	let selectedFolderIds = $state(new Set<string>());
@@ -167,11 +169,17 @@
 			{#if !selectMode}
 				<div class="quick-filter-bar">
 					{#if !reorderMode}
-						<button class="quick-pill" onclick={cycleFolderSort}>
+						<button class="quick-pill" class:active={folderSortMode !== 'newest'} onclick={() => showSortSheet = true}>
 							<ArrowsDownUp size={11} weight="bold" />
 							{folderSortLabels[folderSortMode]}
 						</button>
 					{/if}
+					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
+						<Shuffle size={14} weight="bold" /> Parole
+					</button>
+					<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
+						<Shuffle size={14} weight="bold" /> Carte
+					</button>
 					{#if folderList.length > 1}
 						{#if reorderMode}
 							<button class="quick-pill active" onclick={exitReorderMode}>Fine</button>
@@ -182,12 +190,6 @@
 							<button class="quick-pill" onclick={enterReorderMode}>Riordina</button>
 						{/if}
 					{/if}
-					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
-						<Shuffle size={14} weight="bold" /> Parole
-					</button>
-					<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
-						<Shuffle size={14} weight="bold" /> Carte
-					</button>
 				</div>
 			{/if}
 
@@ -301,6 +303,26 @@
 
 {#if showModal}
 	<FolderModal onClose={() => showModal = false} />
+{/if}
+
+{#if showSortSheet}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="sheet-backdrop" onclick={() => showSortSheet = false}></div>
+	<div class="filter-sheet" transition:fly={{ y: 300, duration: 280 }}>
+		<div class="sheet-header">
+			<h2 class="sheet-title">Ordina per</h2>
+			<button class="sheet-close" onclick={() => showSortSheet = false}>Chiudi</button>
+		</div>
+		<div class="option-list">
+			{#each folderSortCycle as val}
+				<button class="option-row" class:selected={folderSortMode === val} onclick={() => { folderSortMode = val; showSortSheet = false; }}>
+					<span>{folderSortLabels[val]}</span>
+					{#if folderSortMode === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+				</button>
+			{/each}
+		</div>
+	</div>
 {/if}
 
 <style>
@@ -493,6 +515,45 @@
 	.no-results {
 		font-size: 0.9rem; color: var(--color-text-secondary); padding: 1.5rem 0; text-align: center;
 	}
+
+	/* ---- Sort sheet ---- */
+	.sheet-backdrop {
+		position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100;
+	}
+
+	.filter-sheet {
+		position: fixed; bottom: 0; left: 0; right: 0;
+		background: var(--color-bg);
+		border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+		padding: 1.75rem;
+		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+		z-index: 101;
+	}
+
+	.sheet-header {
+		display: flex; align-items: center; justify-content: space-between;
+		margin-bottom: 1.5rem;
+	}
+
+	.sheet-title { font-size: 1.35rem; font-weight: 800; margin: 0; }
+
+	.sheet-close {
+		background: none; border: none; color: var(--color-text-secondary);
+		font-size: 0.95rem; font-weight: 600; font-family: inherit; cursor: pointer;
+	}
+
+	.option-list { display: flex; flex-direction: column; }
+
+	.option-row {
+		display: flex; align-items: center; justify-content: space-between;
+		width: 100%; padding: 0.9rem 0;
+		background: none; border: none; border-bottom: 1px solid var(--color-border);
+		font-family: inherit; font-size: 0.95rem; font-weight: 500;
+		color: var(--color-text); cursor: pointer; text-align: left;
+	}
+
+	.option-row:last-child { border-bottom: none; }
+	.option-row.selected { font-weight: 700; }
 
 	/* ---- Header add button ---- */
 	.header-add-btn {

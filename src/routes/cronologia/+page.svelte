@@ -151,7 +151,7 @@
 	function cycleWordSort() { wordSortMode = wordSortCycle[(wordSortCycle.indexOf(wordSortMode) + 1) % wordSortCycle.length]; }
 
 	let periodSortMode = $state<'newest' | 'oldest'>('newest');
-	function cyclePeriodSort() { periodSortMode = periodSortMode === 'newest' ? 'oldest' : 'newest'; }
+	let showPeriodSortSheet = $state(false);
 
 	let daySelectMode = $state(false);
 
@@ -323,7 +323,7 @@
 
 				{#if !selectMode}
 					<div class="quick-filter-bar">
-						<button class="quick-pill" onclick={cyclePeriodSort}>
+						<button class="quick-pill" class:active={periodSortMode !== 'newest'} onclick={() => showPeriodSortSheet = true}>
 							<ArrowsDownUp size={11} weight="bold" />
 							{periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}
 						</button>
@@ -469,6 +469,26 @@
 	</div>
 	<BackToTop />
 </div>
+
+{#if showPeriodSortSheet}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="sheet-backdrop" onclick={() => showPeriodSortSheet = false}></div>
+	<div class="filter-sheet" transition:fly={{ y: 300, duration: 280 }}>
+		<div class="sheet-header">
+			<h2 class="sheet-title">Ordina per</h2>
+			<button class="sheet-close" onclick={() => showPeriodSortSheet = false}>Chiudi</button>
+		</div>
+		<div class="option-list">
+			{#each [['newest', 'Più recenti'], ['oldest', 'Meno recenti']] as [val, label]}
+				<button class="option-row" class:selected={periodSortMode === val} onclick={() => { periodSortMode = val as 'newest' | 'oldest'; showPeriodSortSheet = false; }}>
+					<span>{label}</span>
+					{#if periodSortMode === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+				</button>
+			{/each}
+		</div>
+	</div>
+{/if}
 
 {#if editingColorKey}
 	<SheetBackdrop onClose={() => editingColorKey = null} />
@@ -678,6 +698,32 @@
 			padding-bottom: 1.75rem;
 		}
 	}
+
+	.sheet-backdrop {
+		position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100;
+	}
+
+	.filter-sheet {
+		position: fixed; bottom: 0; left: 0; right: 0;
+		background: var(--color-bg);
+		border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+		padding: 1.75rem;
+		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+		z-index: 101;
+	}
+
+	.option-list { display: flex; flex-direction: column; }
+
+	.option-row {
+		display: flex; align-items: center; justify-content: space-between;
+		width: 100%; padding: 0.9rem 0;
+		background: none; border: none; border-bottom: 1px solid var(--color-border);
+		font-family: inherit; font-size: 0.95rem; font-weight: 500;
+		color: var(--color-text); cursor: pointer; text-align: left;
+	}
+
+	.option-row:last-child { border-bottom: none; }
+	.option-row.selected { font-weight: 700; }
 
 	.sheet-header {
 		display: flex;
