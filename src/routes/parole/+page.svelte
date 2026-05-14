@@ -21,7 +21,7 @@
 	let sourceFilter = $state(saved.sourceFilter);
 	let typeFilter = $state(saved.typeFilter);
 	let selectedGroups = $state(new Set<string>(saved.selectedGroups));
-	let activeSheet = $state<'sort' | 'score' | 'type' | 'categories' | 'options' | null>(null);
+	let activeSheet = $state<'sort' | 'score' | 'type' | 'categories' | 'options' | 'source' | null>(null);
 	let sortMode = $state(saved.sortMode);
 
 	$effect(() => {
@@ -173,8 +173,11 @@
 		<SearchInput bind:value={searchQuery} placeholder="Cerca in italiano, romaji, hiragana..." />
 
 		<div class="quick-filter-bar">
-		<button class="quick-pill" class:active={$listDisplayLang !== 'italiano' || sourceFilter !== 'all'} onclick={() => activeSheet = 'options'}>
-			Opzioni <Icon name="chevron-down" size={14} />
+		<button class="quick-pill" class:active={$listDisplayLang !== 'italiano'} onclick={() => activeSheet = 'options'}>
+			Lingua <Icon name="chevron-down" size={14} />
+		</button>
+		<button class="quick-pill" class:active={sourceFilter !== 'all'} onclick={() => activeSheet = 'source'}>
+			Origine <Icon name="chevron-down" size={14} />
 		</button>
 		<button class="quick-pill" class:active={scoreFilter !== 'all'} onclick={() => activeSheet = 'score'}>
 			Stato <Icon name="chevron-down" size={14} />
@@ -214,7 +217,8 @@
 				{:else if activeSheet === 'score'}Stato
 				{:else if activeSheet === 'type'}Tipo
 				{:else if activeSheet === 'categories'}Categorie
-				{:else if activeSheet === 'options'}Opzioni di studio
+				{:else if activeSheet === 'options'}Lingua
+				{:else if activeSheet === 'source'}Origine
 				{/if}
 			</h2>
 			<button class="sheet-close" onclick={() => activeSheet = null}>Chiudi</button>
@@ -271,27 +275,22 @@
 					{/each}
 				</div>
 			{:else if activeSheet === 'options'}
-				<div class="filter-section" style="margin-bottom: 2rem;">
-					<span class="section-label">Lingua visualizzata</span>
-					<div class="option-list">
-						{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
-							<button class="option-row" class:selected={$listDisplayLang === val} onclick={() => listDisplayLang.set(val as ListDisplayLang)}>
-								<span>{label}</span>
-								{#if $listDisplayLang === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
-							</button>
-						{/each}
-					</div>
+				<div class="option-list">
+					{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
+						<button class="option-row" class:selected={$listDisplayLang === val} onclick={() => listDisplayLang.set(val as ListDisplayLang)}>
+							<span>{label}</span>
+							{#if $listDisplayLang === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+						</button>
+					{/each}
 				</div>
-				<div class="filter-section">
-					<span class="section-label">Origine</span>
-					<div class="option-list">
-						{#each [['all', 'Tutte le parole'], ['app', 'Parole dell\'app'], ['mine', 'Parole mie']] as [val, label]}
-							<button class="option-row" class:selected={sourceFilter === val} onclick={() => sourceFilter = val as 'all'|'app'|'mine'}>
-								<span>{label}</span>
-								{#if sourceFilter === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
-							</button>
-						{/each}
-					</div>
+			{:else if activeSheet === 'source'}
+				<div class="option-list">
+					{#each [['all', 'Tutte le parole'], ['app', 'Parole dell\'app'], ['mine', 'Parole mie']] as [val, label]}
+						<button class="option-row" class:selected={sourceFilter === val} onclick={() => sourceFilter = val as 'all'|'app'|'mine'}>
+							<span>{label}</span>
+							{#if sourceFilter === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+						</button>
+					{/each}
 				</div>
 			{/if}
 		</div>

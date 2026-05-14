@@ -940,6 +940,7 @@
 		display: flex; align-items: center; justify-content: space-between;
 		width: 100%; padding: 0.9rem 0;
 		background: none; border: none; border-bottom: 1px solid var(--color-border);
+		border-radius: 0 !important;
 		font-family: inherit; font-size: 0.95rem; font-weight: 500;
 		color: var(--color-text); cursor: pointer; text-align: left;
 	}
