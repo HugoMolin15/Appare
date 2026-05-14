@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { words } from '$lib/stores/words';
 	import { wordScores } from '$lib/stores/wordScores';
-	import { selectedWordIds, toggleWordSelection, selectedCount, setSelectedWords, studyReturnContext } from '$lib/stores/studySession';
+	import { selectedWordIds, toggleWordSelection, selectedCount, clearSelection, setSelectedWords, studyReturnContext } from '$lib/stores/studySession';
 	import { goto } from '$app/navigation';
 	import { get } from 'svelte/store';
 	import { shuffle } from '$lib/utils/shuffle';
@@ -151,6 +151,15 @@
 		</div>
 
 		<FilterPills pills={activePills} />
+
+		<div class="below-pills">
+			{#if $selectedCount > 0}
+				<button class="select-toggle muted" onclick={clearSelection}>Deseleziona</button>
+			{/if}
+			<span class="word-count-right">
+				{$selectedCount > 0 ? $selectedCount : filteredWords.length} parole
+			</span>
+		</div>
 
 	</div>
 
@@ -397,6 +406,37 @@
 	}
 
 	.play-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+	/* ---- Below pills row ---- */
+	.below-pills {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		gap: 1rem;
+		margin-top: 0.25rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.select-toggle {
+		background: none;
+		border: none;
+		font-size: 0.9rem;
+		font-weight: 700;
+		font-family: var(--font-sans);
+		color: var(--color-primary);
+		cursor: pointer;
+		padding: 0.25rem 0;
+	}
+
+	.select-toggle.muted { color: var(--color-text-secondary); }
+
+	.word-count-right {
+		font-size: 0.82rem;
+		font-weight: 500;
+		color: var(--color-text-secondary);
+		margin-left: auto;
+		white-space: nowrap;
+	}
 
 	/* ---- Filter sheet ---- */
 	.sheet-backdrop {
