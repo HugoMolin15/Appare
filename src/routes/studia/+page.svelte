@@ -13,19 +13,39 @@
 	import { randomCardOrder } from '$lib/stores/settings';
 	import { Folder, ArrowsCounterClockwise, CaretLeft, CaretRight } from 'phosphor-svelte';
 
+	const SESSION_KEY = 'appare_study_session';
+
+	function saveSession(ids: string[]) {
+		try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(ids)); } catch {}
+	}
+	function loadSession(): string[] | null {
+		try { const s = sessionStorage.getItem(SESSION_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
+	}
+	function clearSession() {
+		try { sessionStorage.removeItem(SESSION_KEY); } catch {}
+	}
+
 	const allWordsData = get(words);
 	const selectedIds = get(selectedWordIds);
 	let studySet = $state<typeof allWordsData>([]);
 
 	if (selectedIds.size > 0) {
-		// Preserve insertion order of the Set (callers may shuffle before setSelectedWords)
 		studySet = [...selectedIds]
 			.map(id => allWordsData.find(w => w.id === id))
 			.filter((w): w is (typeof allWordsData)[number] => w !== undefined);
 		clearSelection();
+		saveSession(studySet.map(w => w.id));
 	} else {
-		// Global study mode (from Home): draw up to 10 random words from the full library
-		studySet = shuffle(allWordsData).slice(0, 10);
+		const saved = loadSession();
+		if (saved && saved.length > 0) {
+			studySet = saved
+				.map(id => allWordsData.find(w => w.id === id))
+				.filter((w): w is (typeof allWordsData)[number] => w !== undefined);
+		}
+		if (studySet.length === 0) {
+			studySet = shuffle(allWordsData).slice(0, 10);
+			saveSession(studySet.map(w => w.id));
+		}
 	}
 
 	let currentIndex = $state(0);
@@ -103,6 +123,7 @@
 		if (!ctx) return;
 		setSelectedWords(ctx.wordIds);
 		bypassGuard = true;
+		clearSession();
 		goto(ctx.href);
 	}
 
@@ -124,6 +145,7 @@
 	function confirmExit() {
 		showExitModal = false;
 		bypassGuard = true;
+		clearSession();
 		if (pendingUrl) {
 			goto(pendingUrl);
 		} else {
@@ -140,6 +162,15 @@
 		showExitModal = false;
 		returnToOrigin();
 	}
+
+	function handleBack() {
+		pendingUrl = '/';
+		showExitModal = true;
+	}
+
+	$effect(() => {
+		if (finished) clearSession();
+	});
 
 	// Intercept browser refresh/close
 	function handleBeforeUnload(e: BeforeUnloadEvent) {
@@ -212,7 +243,7 @@
 {/if}
 
 <div class="page page-enter" bind:this={pageEl}>
-	<PageHeader title="Studia" hideBack />
+	<PageHeader title="Studia" hideBack={finished} onback={handleBack} />
 
 	{#if studySet.length === 0}
 		<EmptyState
