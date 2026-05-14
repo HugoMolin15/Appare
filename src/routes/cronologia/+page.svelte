@@ -15,7 +15,6 @@
 	import { filterWords } from '$lib/utils/word-search';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import ScoreFilter from '$lib/components/ScoreFilter.svelte';
 	import type { WordScore } from '$lib/types/word';
 	import type { Word } from '$lib/types/word';
 	import SheetBackdrop from '$lib/components/SheetBackdrop.svelte';
@@ -148,10 +147,11 @@
 	let wordSortMode = $state<WordSort>('newest');
 	const wordSortLabels: Record<WordSort, string> = { newest: 'Più recenti', oldest: 'Meno recenti', 'it-az': 'A-Z Italiano', 'jp-az': 'A-Z Giapponese' };
 	const wordSortCycle: WordSort[] = ['newest', 'oldest', 'it-az', 'jp-az'];
-	function cycleWordSort() { wordSortMode = wordSortCycle[(wordSortCycle.indexOf(wordSortMode) + 1) % wordSortCycle.length]; }
 
 	let periodSortMode = $state<'newest' | 'oldest'>('newest');
 	let showPeriodSortSheet = $state(false);
+	let showWordSortSheet = $state(false);
+	let showScoreSheet = $state(false);
 
 	let daySelectMode = $state(false);
 
@@ -370,12 +370,13 @@
 
 				{#if !daySelectMode}
 					<div class="quick-filter-bar">
-						<ScoreFilter
-							value={scoreFilter}
-							onChange={(v) => scoreFilter = v}
-							sortLabel={wordSortLabels[wordSortMode]}
-							onSortCycle={cycleWordSort}
-						/>
+						<button class="quick-pill" class:active={wordSortMode !== 'newest'} onclick={() => showWordSortSheet = true}>
+							<ArrowsDownUp size={11} weight="bold" />
+							{wordSortLabels[wordSortMode]}
+						</button>
+						<button class="quick-pill" class:active={scoreFilter !== 'all'} onclick={() => showScoreSheet = true}>
+							Stato <Icon name="chevron-down" size={14} />
+						</button>
 						<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
 							<Shuffle size={14} weight="bold" /> Parole
 						</button>
@@ -469,6 +470,46 @@
 	</div>
 	<BackToTop />
 </div>
+
+{#if showWordSortSheet}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="sheet-backdrop" onclick={() => showWordSortSheet = false}></div>
+	<div class="filter-sheet" transition:fly={{ y: 300, duration: 280 }}>
+		<div class="sheet-header">
+			<h2 class="sheet-title">Ordina per</h2>
+			<button class="sheet-close" onclick={() => showWordSortSheet = false}>Chiudi</button>
+		</div>
+		<div class="option-list">
+			{#each wordSortCycle as val}
+				<button class="option-row" class:selected={wordSortMode === val} onclick={() => { wordSortMode = val; showWordSortSheet = false; }}>
+					<span>{wordSortLabels[val]}</span>
+					{#if wordSortMode === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+				</button>
+			{/each}
+		</div>
+	</div>
+{/if}
+
+{#if showScoreSheet}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="sheet-backdrop" onclick={() => showScoreSheet = false}></div>
+	<div class="filter-sheet" transition:fly={{ y: 300, duration: 280 }}>
+		<div class="sheet-header">
+			<h2 class="sheet-title">Stato</h2>
+			<button class="sheet-close" onclick={() => showScoreSheet = false}>Chiudi</button>
+		</div>
+		<div class="option-list">
+			{#each [['all', 'Tutti'], ['none', 'Non valutate'], ['unknown', 'Difficile'], ['learning', 'Buono'], ['known', 'Facile']] as [val, label]}
+				<button class="option-row" class:selected={scoreFilter === val} onclick={() => { scoreFilter = val as typeof scoreFilter; showScoreSheet = false; }}>
+					<span>{label}</span>
+					{#if scoreFilter === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+				</button>
+			{/each}
+		</div>
+	</div>
+{/if}
 
 {#if showPeriodSortSheet}
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
