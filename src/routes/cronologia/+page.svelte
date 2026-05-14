@@ -324,8 +324,7 @@
 				{#if !selectMode}
 					<div class="quick-filter-bar">
 						<button class="quick-pill" class:active={periodSortMode !== 'newest'} onclick={() => showPeriodSortSheet = true}>
-							<ArrowsDownUp size={11} weight="bold" />
-							{periodSortMode === 'newest' ? 'Più recenti' : 'Meno recenti'}
+							Ordina <Icon name="chevron-down" size={14} />
 						</button>
 						<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
 							<Shuffle size={14} weight="bold" /> Parole
@@ -371,8 +370,7 @@
 				{#if !daySelectMode}
 					<div class="quick-filter-bar">
 						<button class="quick-pill" class:active={wordSortMode !== 'newest'} onclick={() => showWordSortSheet = true}>
-							<ArrowsDownUp size={11} weight="bold" />
-							{wordSortLabels[wordSortMode]}
+							Ordina <Icon name="chevron-down" size={14} />
 						</button>
 						<button class="quick-pill" class:active={scoreFilter !== 'all'} onclick={() => showScoreSheet = true}>
 							Stato <Icon name="chevron-down" size={14} />

@@ -14,7 +14,7 @@
 	import FilterPills from '$lib/components/FilterPills.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { filterWords } from '$lib/utils/word-search';
-	import { Play } from 'phosphor-svelte';
+	import { Play, Shuffle } from 'phosphor-svelte';
 	import BackToTop from '$lib/components/BackToTop.svelte';
 
 	let searchQuery = $state('');
@@ -64,8 +64,6 @@
 		if (typeFilter === 'phrase') pills.push({ label: 'Frasi', remove: removeType });
 		for (const g of selectedGroups) pills.push({ label: g, remove: () => removeGroup(g) });
 		if ($listDisplayLang !== 'italiano') pills.push({ label: LANG_LABELS[$listDisplayLang], remove: () => listDisplayLang.set('italiano') });
-		if ($randomWordOrder) pills.push({ label: 'Parole casuali', remove: () => randomWordOrder.set(false) });
-		if ($randomCardOrder) pills.push({ label: 'Lato casuale', remove: () => randomCardOrder.set(false) });
 		return pills;
 	});
 
@@ -134,8 +132,8 @@
 		</div>
 
 		<div class="quick-filter-bar">
-			<button class="quick-pill" class:active={$randomWordOrder || $randomCardOrder || $listDisplayLang !== 'italiano'} onclick={() => activeSheet = 'options'}>
-				Opzioni <Icon name="chevron-down" size={14} />
+			<button class="quick-pill" class:active={$listDisplayLang !== 'italiano'} onclick={() => activeSheet = 'options'}>
+				Lingua <Icon name="chevron-down" size={14} />
 			</button>
 			<button class="quick-pill" class:active={scoreFilter !== 'all'} onclick={() => activeSheet = 'score'}>
 				Stato <Icon name="chevron-down" size={14} />
@@ -148,6 +146,12 @@
 			</button>
 			<button class="quick-pill" class:active={sortMode !== 'newest'} onclick={() => activeSheet = 'sort'}>
 				Ordina <Icon name="chevron-down" size={14} />
+			</button>
+			<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
+				<Shuffle size={14} weight="bold" /> Parole
+			</button>
+			<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
+				<Shuffle size={14} weight="bold" /> Carte
 			</button>
 		</div>
 
@@ -198,7 +202,7 @@
 				{:else if activeSheet === 'score'}Stato
 				{:else if activeSheet === 'type'}Tipo
 				{:else if activeSheet === 'categories'}Categorie
-				{:else if activeSheet === 'options'}Opzioni di studio
+				{:else if activeSheet === 'options'}Lingua
 				{/if}
 			</h2>
 			<button class="sheet-close" onclick={() => activeSheet = null}>Chiudi</button>
@@ -255,29 +259,13 @@
 					{/each}
 				</div>
 			{:else if activeSheet === 'options'}
-				<div class="filter-section">
-					<span class="section-label">Lingua visualizzata in lista</span>
-					<div class="option-list">
-						{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
-							<button class="option-row" class:selected={$listDisplayLang === val} onclick={() => listDisplayLang.set(val as ListDisplayLang)}>
-								<span>{label}</span>
-								{#if $listDisplayLang === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
-							</button>
-						{/each}
-					</div>
-				</div>
-				<div class="filter-section" style="margin-top: 1.5rem;">
-					<span class="section-label">Impostazioni mazzo</span>
-					<div class="option-list">
-						<button class="option-row" onclick={() => randomWordOrder.update(v => !v)}>
-							<span>Ordine parole casuale</span>
-							{#if $randomWordOrder}<Icon name="check" size={18} strokeWidth={3} />{/if}
+				<div class="option-list">
+					{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
+						<button class="option-row" class:selected={$listDisplayLang === val} onclick={() => listDisplayLang.set(val as ListDisplayLang)}>
+							<span>{label}</span>
+							{#if $listDisplayLang === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
 						</button>
-						<button class="option-row" onclick={() => randomCardOrder.update(v => !v)}>
-							<span>Lato iniziale casuale</span>
-							{#if $randomCardOrder}<Icon name="check" size={18} strokeWidth={3} />{/if}
-						</button>
-					</div>
+					{/each}
 				</div>
 			{/if}
 		</div>

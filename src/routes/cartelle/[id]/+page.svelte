@@ -162,7 +162,7 @@
 	let wordSortMode = $state<WordSort>('newest');
 	const wordSortLabels: Record<WordSort, string> = { newest: 'Più recenti', oldest: 'Meno recenti', 'it-az': 'A-Z Italiano', 'jp-az': 'A-Z Giapponese' };
 	const wordSortCycle: WordSort[] = ['newest', 'oldest', 'it-az', 'jp-az'];
-	function cycleWordSort() { wordSortMode = wordSortCycle[(wordSortCycle.indexOf(wordSortMode) + 1) % wordSortCycle.length]; }
+	let showWordSortSheet = $state(false);
 
 	function applySortWords<T extends { createdAt: number; italiano: string; hiragana: string; katakana: string }>(list: T[], mode: WordSort): T[] {
 		const arr = [...list];
@@ -328,9 +328,8 @@
 						{/if}
 					{/if}
 					{#if folderWords.length > 0 || subfolders.length > 0}
-						<button class="quick-pill" onclick={cycleWordSort}>
-							<ArrowsDownUp size={11} weight="bold" />
-							{wordSortLabels[wordSortMode]}
+						<button class="quick-pill" class:active={wordSortMode !== 'newest'} onclick={() => showWordSortSheet = true}>
+							Ordina <Icon name="chevron-down" size={14} />
 						</button>
 					{/if}
 					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
@@ -466,6 +465,26 @@
 	{/if}
 	<BackToTop />
 </div>
+
+{#if showWordSortSheet}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="sheet-backdrop-sort" onclick={() => showWordSortSheet = false}></div>
+	<div class="sort-sheet" transition:fly={{ y: 300, duration: 280 }}>
+		<div class="sort-sheet-header">
+			<h2 class="sort-sheet-title">Ordina per</h2>
+			<button class="sheet-close" onclick={() => showWordSortSheet = false}>Chiudi</button>
+		</div>
+		<div class="sort-option-list">
+			{#each wordSortCycle as val}
+				<button class="sort-option-row" class:selected={wordSortMode === val} onclick={() => { wordSortMode = val; showWordSortSheet = false; }}>
+					<span>{wordSortLabels[val]}</span>
+					{#if wordSortMode === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+				</button>
+			{/each}
+		</div>
+	</div>
+{/if}
 
 <!-- Modals & sheets — outside .page for correct stacking over navbar -->
 {#if showAddWordsModal && folderId}
@@ -901,6 +920,32 @@
 	}
 
 	.sheet-title { font-size: 1.35rem; font-weight: 800; color: var(--color-text-primary); margin: 0; flex: 1; }
+
+	.sheet-backdrop-sort { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; }
+
+	.sort-sheet {
+		position: fixed; bottom: 0; left: 0; right: 0;
+		background: var(--color-bg);
+		border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+		padding: 1.75rem;
+		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+		z-index: 101;
+	}
+
+	.sort-sheet-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+	.sort-sheet-title { font-size: 1.35rem; font-weight: 800; margin: 0; }
+	.sort-option-list { display: flex; flex-direction: column; }
+
+	.sort-option-row {
+		display: flex; align-items: center; justify-content: space-between;
+		width: 100%; padding: 0.9rem 0;
+		background: none; border: none; border-bottom: 1px solid var(--color-border);
+		font-family: inherit; font-size: 0.95rem; font-weight: 500;
+		color: var(--color-text); cursor: pointer; text-align: left;
+	}
+
+	.sort-option-row:last-child { border-bottom: none; }
+	.sort-option-row.selected { font-weight: 700; }
 
 	.sheet-close {
 		background: none; border: none; cursor: pointer;

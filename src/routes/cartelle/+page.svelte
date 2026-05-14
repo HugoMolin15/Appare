@@ -170,8 +170,7 @@
 				<div class="quick-filter-bar">
 					{#if !reorderMode}
 						<button class="quick-pill" class:active={folderSortMode !== 'newest'} onclick={() => showSortSheet = true}>
-							<ArrowsDownUp size={11} weight="bold" />
-							{folderSortLabels[folderSortMode]}
+							Ordina <Icon name="chevron-down" size={14} />
 						</button>
 					{/if}
 					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
