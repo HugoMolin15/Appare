@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
 	import { House, PlusCircle, Gear } from 'phosphor-svelte';
+
 	const HIDDEN_ROUTES = ['/login', '/studia', '/test-studia', '/parole'];
 
 	let pathname = $derived($page.url.pathname);
@@ -17,10 +19,61 @@
 		if (tab.exact) return path === tab.href;
 		return path === tab.href || path.startsWith(tab.href + '/');
 	}
+
+	// iOS env(safe-area-inset-bottom) sometimes evaluates as 0 on first paint in
+	// standalone PWA, causing the nav to render at the wrong height until the user
+	// interacts. We measure the value via a probe element and apply it directly to
+	// the nav as an inline pixel value, sidestepping the CSS env() timing bug.
+	function guessSafeBottom(): number {
+		if (typeof window === 'undefined') return 0;
+		// Heuristic for iPhones with a home indicator (notch generation onward).
+		const ua = navigator.userAgent;
+		const isIOS = /iPhone|iPad|iPod/.test(ua);
+		if (!isIOS) return 0;
+		return Math.max(window.screen.height, window.screen.width) >= 812 ? 34 : 0;
+	}
+
+	let safeBottom = $state(guessSafeBottom());
+
+	onMount(() => {
+		const probe = document.createElement('div');
+		probe.style.cssText =
+			'position:fixed;left:0;top:-1000px;width:0;height:env(safe-area-inset-bottom);' +
+			'visibility:hidden;pointer-events:none;';
+		document.body.appendChild(probe);
+
+		function measure() {
+			const h = probe.offsetHeight;
+			// Only trust positive values — iOS sometimes reports 0 transiently.
+			if (h > 0) {
+				safeBottom = h;
+				document.documentElement.style.setProperty('--bottom-nav-height', `${56 + h}px`);
+			}
+		}
+
+		// Try multiple times to catch the value once iOS settles.
+		measure();
+		requestAnimationFrame(measure);
+		setTimeout(measure, 100);
+		setTimeout(measure, 500);
+
+		const onResize = () => measure();
+		window.addEventListener('resize', onResize);
+		window.addEventListener('orientationchange', onResize);
+
+		return () => {
+			window.removeEventListener('resize', onResize);
+			window.removeEventListener('orientationchange', onResize);
+			probe.remove();
+		};
+	});
 </script>
 
 {#if !hidden}
-	<nav class="bottom-nav hide-desktop">
+	<nav
+		class="bottom-nav hide-desktop"
+		style="height: {56 + safeBottom}px; padding-bottom: {safeBottom}px;"
+	>
 		{#each tabs as tab}
 			<a
 				href={tab.href}
@@ -52,8 +105,6 @@
 		align-items: stretch;
 		background: var(--color-bg);
 		border-top: 1px solid var(--color-border);
-		height: var(--bottom-nav-height);
-		padding-bottom: env(safe-area-inset-bottom, 0px);
 		box-sizing: border-box;
 	}
 
