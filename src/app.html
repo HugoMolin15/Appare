@@ -21,6 +21,8 @@
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
+		<!-- Set --app-height synchronously before first paint to avoid iOS dvh flicker -->
+		<script>document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');</script>
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>
