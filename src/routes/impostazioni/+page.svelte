@@ -8,6 +8,14 @@
 	import Flashcard from '$lib/components/Flashcard.svelte';
 	import { Shuffle, DotsSixVertical, X, Plus, BookOpen, Globe } from 'phosphor-svelte';
 
+	// Per-column card orderings shown in the "Ordine casuale delle carte" diagram —
+	// each column is a distinct permutation so the shuffle is visually obvious.
+	const cardOrderExamples: number[][] = [
+		[3, 1, 4, 2],
+		[2, 4, 1, 3],
+		[4, 2, 3, 1],
+	];
+
 	const previewWord: Word = {
 		id: 'preview',
 		italiano: 'grande',
@@ -274,6 +282,16 @@
 				<div class="toggle-thumb"></div>
 			</div>
 		</div>
+		<div class="order-visual">
+			{#each ($randomWordOrder ? [2, 1, 3] : [1, 2, 3]) as p}
+				<div class="vp-column">
+					<div class="vp-header">Parola {p}</div>
+					{#each [1, 2, 3, 4] as c}
+						<div class="vp-card">Carta {c}</div>
+					{/each}
+				</div>
+			{/each}
+		</div>
 
 		<!-- Random card order toggle -->
 		<div class="order-toggle" onclick={() => randomCardOrder.set(!$randomCardOrder)} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && randomCardOrder.set(!$randomCardOrder)}>
@@ -284,6 +302,16 @@
 			<div class="toggle-switch" class:on={$randomCardOrder}>
 				<div class="toggle-thumb"></div>
 			</div>
+		</div>
+		<div class="order-visual">
+			{#each [1, 2, 3] as p, i}
+				<div class="vp-column">
+					<div class="vp-header">Parola {p}</div>
+					{#each ($randomCardOrder ? cardOrderExamples[i] : [1, 2, 3, 4]) as c}
+						<div class="vp-card">Carta {c}</div>
+					{/each}
+				</div>
+			{/each}
 		</div>
 
 		<!-- Card builder -->
@@ -879,6 +907,46 @@
 
 	.toggle-switch.on .toggle-thumb {
 		transform: translateX(18px);
+	}
+
+	/* ---- Order visual (parole/carte explanation diagram) ---- */
+	.order-visual {
+		display: flex;
+		gap: 0.5rem;
+		margin: -0.5rem 0 1rem;
+		padding: 0.75rem;
+		background: var(--color-surface);
+		border-radius: var(--radius-lg);
+		border: 1px solid var(--color-border);
+	}
+
+	.vp-column {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		min-width: 0;
+	}
+
+	.vp-header {
+		font-size: 0.7rem;
+		font-weight: 700;
+		color: var(--color-text);
+		text-align: center;
+		padding: 0.25rem 0.1rem;
+		letter-spacing: -0.01em;
+	}
+
+	.vp-card {
+		font-size: 0.68rem;
+		font-weight: 500;
+		color: var(--color-text-secondary);
+		text-align: center;
+		padding: 0.3rem 0.1rem;
+		background: var(--color-bg);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		transition: transform 0.25s ease;
 	}
 
 	/* ---- Card Builder ---- */

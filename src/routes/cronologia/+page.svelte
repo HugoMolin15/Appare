@@ -241,7 +241,7 @@
 		const allIds = Array.from(selectedKeys).flatMap(k => collectWordIdsFromNode(items[k]));
 		let unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
 		if (unique.length === 0) return;
-		if (get(randomCardOrder)) unique = shuffle(unique);
+		if (get(randomWordOrder)) unique = shuffle(unique);
 		studyReturnContext.set({
 			href: '/cronologia',
 			label: 'Torna alla cronologia',
@@ -257,7 +257,7 @@
 		const allIds = Object.values(items as Record<string, unknown>).flatMap(v => collectWordIdsFromNode(v));
 		let unique = [...new Set(allIds)].filter(id => $words.some(w => w.id === id));
 		if (unique.length === 0) return;
-		if (get(randomCardOrder)) unique = shuffle(unique);
+		if (get(randomWordOrder)) unique = shuffle(unique);
 		studyReturnContext.set({ href: '/cronologia', label: 'Torna alla cronologia', wordIds: unique });
 		setSelectedWords(unique);
 		goto('/studia');
@@ -356,7 +356,7 @@
 							const ids = daySelectMode && selectedInDayView > 0
 								? dayWords.filter(w => $selectedWordIds.has(w.id)).map(w => w.id)
 								: dayWords.map(w => w.id);
-							const shuffled = get(randomCardOrder) ? shuffle([...ids]) : ids;
+							const shuffled = get(randomWordOrder) ? shuffle([...ids]) : ids;
 							studyReturnContext.set({ href: '/cronologia', label: 'Torna alla cronologia', wordIds: shuffled });
 							setSelectedWords(shuffled);
 							goto('/studia');
