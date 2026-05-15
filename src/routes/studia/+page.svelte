@@ -442,6 +442,15 @@
 		flex-shrink: 0;  /* never compress — always fully visible */
 	}
 
+	/* When keyboard is open: hide assess buttons so the input sits right
+	   above the keyboard with no dead space. Buttons reappear on dismiss. */
+	:global(html.keyboard-open) .page {
+		padding-bottom: 0.5rem;
+	}
+	:global(html.keyboard-open) .page .assess-area {
+		display: none;
+	}
+
 	.assess-row {
 		display: flex;
 		gap: 0.5rem;

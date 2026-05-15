@@ -60,8 +60,15 @@
 
 		// iOS standalone fix: 100dvh can briefly compute as the "small" viewport
 		// (with browser chrome) on first render. window.innerHeight is always exact.
-		const setAppHeight = () =>
-			document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+		// Also detects keyboard open (significant height reduction) and adds the
+		// `keyboard-open` class to <html> so the study page can adapt its layout.
+		let maxH = window.innerHeight;
+		const setAppHeight = () => {
+			const h = window.innerHeight;
+			document.documentElement.style.setProperty('--app-height', `${h}px`);
+			if (h > maxH) maxH = h;
+			document.documentElement.classList.toggle('keyboard-open', maxH - h > 100);
+		};
 		setAppHeight();
 		window.addEventListener('resize', setAppHeight);
 
