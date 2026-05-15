@@ -52,7 +52,7 @@
 		align-items: stretch;
 		background: var(--color-bg);
 		border-top: 1px solid var(--color-border);
-		padding-bottom: env(safe-area-inset-bottom, 0px);
+		padding-bottom: var(--safe-bottom, env(safe-area-inset-bottom, 0px));
 	}
 
 	.nav-tab {

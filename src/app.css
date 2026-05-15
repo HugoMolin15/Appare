@@ -78,7 +78,9 @@
    ======================================== */
 
 :root {
-  --bottom-nav-height: calc(56px + env(safe-area-inset-bottom, 0px));
+  /* --safe-bottom is set to 0px by JS when iOS toolbar/keyboard is visible,
+     suppressing the home-indicator padding that would otherwise show as dead space. */
+  --bottom-nav-height: calc(56px + var(--safe-bottom, env(safe-area-inset-bottom, 0px)));
 }
 
 html, body {
@@ -239,7 +241,7 @@ body {
   .main-content {
     height: 100%;
     overflow-y: auto;
-    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: var(--bottom-nav-height);
   }
 }
 

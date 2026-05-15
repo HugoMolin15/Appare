@@ -346,12 +346,11 @@
 		background: var(--color-bg);
 		z-index: 50; /* over top of layout */
 		padding: var(--spacing-page);
-		padding-bottom: var(--spacing-page);
+		padding-bottom: calc(var(--spacing-page) + env(safe-area-inset-bottom, 0px));
 		display: flex;
 		flex-direction: column;
 		gap: 0;
 		box-sizing: border-box;
-		padding-bottom: var(--spacing-page);
 	}
 
 	/* Reduce PageHeader margin so more height goes to the card */
