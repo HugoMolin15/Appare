@@ -21,36 +21,8 @@
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
-		<!-- Resolve viewport + safe-area values synchronously before first paint.
-		     iOS standalone PWA otherwise leaves env(safe-area-inset-*) and 100dvh
-		     "stuck" at incorrect values until the first user interaction. -->
-		<script>
-			(function () {
-				var root = document.documentElement;
-				root.style.setProperty('--app-height', window.innerHeight + 'px');
-
-				// Probe env() values via a hidden element and mirror to CSS vars.
-				var probe = document.createElement('div');
-				probe.style.cssText =
-					'position:fixed;top:0;left:0;visibility:hidden;pointer-events:none;' +
-					'height:env(safe-area-inset-bottom);width:env(safe-area-inset-top);';
-				function attach() {
-					(document.body || document.documentElement).appendChild(probe);
-					read();
-				}
-				function read() {
-					var sb = probe.offsetHeight;
-					var st = probe.offsetWidth;
-					root.style.setProperty('--safe-bottom', sb + 'px');
-					root.style.setProperty('--safe-top', st + 'px');
-				}
-				if (document.body) attach();
-				else document.addEventListener('DOMContentLoaded', attach, { once: true });
-				// iOS sometimes resolves env() one frame late — re-read.
-				requestAnimationFrame(read);
-				setTimeout(read, 200);
-			})();
-		</script>
+		<!-- Set --app-height synchronously before first paint to avoid iOS dvh flicker -->
+		<script>document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');</script>
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>

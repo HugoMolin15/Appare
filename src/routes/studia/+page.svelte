@@ -349,8 +349,8 @@
 		background: var(--color-bg);
 		z-index: 50;
 		padding: var(--spacing-page);
-		padding-top: calc(var(--spacing-page) + var(--safe-top));
-		padding-bottom: calc(var(--spacing-page) + var(--safe-bottom));
+		padding-top: calc(var(--spacing-page) + env(safe-area-inset-top, 0px));
+		padding-bottom: calc(var(--spacing-page) + env(safe-area-inset-bottom, 0px));
 		display: flex;
 		flex-direction: column;
 		gap: 0;
