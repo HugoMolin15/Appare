@@ -9,12 +9,21 @@
 	import { Shuffle, DotsSixVertical, X, Plus, BookOpen, Globe } from 'phosphor-svelte';
 	import { shuffle } from '$lib/utils/shuffle';
 
-	// Visual demo orderings — re-shuffled every time the corresponding toggle flips.
-	let wordVisualOrder = $derived($randomWordOrder ? shuffle([1, 2, 3]) : [1, 2, 3]);
-	let cardVisualOrders = $derived(
+	// Sample words shown in the random-order visual diagrams.
+	const exampleWords = [
+		{ it: 'grande', hi: 'おおきい', ro: 'ōkii', ka: '大きい' },
+		{ it: 'mangiare', hi: 'たべる', ro: 'taberu', ka: '食べる' },
+		{ it: 'scuola', hi: 'がっこう', ro: 'gakkō', ka: '学校' },
+	] as const;
+	type FormKey = 'it' | 'hi' | 'ro' | 'ka';
+	const FORM_KEYS: FormKey[] = ['it', 'hi', 'ro', 'ka'];
+
+	// Re-shuffled every time the corresponding toggle flips.
+	let wordOrderIdx = $derived<number[]>($randomWordOrder ? shuffle([0, 1, 2]) : [0, 1, 2]);
+	let cardFormOrders = $derived<FormKey[][]>(
 		$randomCardOrder
-			? [0, 1, 2].map(() => shuffle([1, 2, 3, 4]))
-			: [[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]]
+			? [0, 1, 2].map(() => shuffle([...FORM_KEYS]))
+			: [0, 1, 2].map(() => [...FORM_KEYS])
 	);
 
 	const previewWord: Word = {
@@ -284,11 +293,11 @@
 			</div>
 		</div>
 		<div class="order-visual">
-			{#each wordVisualOrder as p}
+			{#each wordOrderIdx as wi}
 				<div class="vp-column">
-					<div class="vp-header">Parola {p}</div>
-					{#each [1, 2, 3, 4] as c}
-						<div class="vp-card">Carta {c}</div>
+					<div class="vp-header">{exampleWords[wi].it}</div>
+					{#each FORM_KEYS as form}
+						<div class="vp-card" class:vp-card-jp={form === 'hi' || form === 'ka'}>{exampleWords[wi][form]}</div>
 					{/each}
 				</div>
 			{/each}
@@ -305,11 +314,11 @@
 			</div>
 		</div>
 		<div class="order-visual">
-			{#each [1, 2, 3] as p, i}
+			{#each [0, 1, 2] as wi}
 				<div class="vp-column">
-					<div class="vp-header">Parola {p}</div>
-					{#each cardVisualOrders[i] as c}
-						<div class="vp-card">Carta {c}</div>
+					<div class="vp-header">{exampleWords[wi].it}</div>
+					{#each cardFormOrders[wi] as form}
+						<div class="vp-card" class:vp-card-jp={form === 'hi' || form === 'ka'}>{exampleWords[wi][form]}</div>
 					{/each}
 				</div>
 			{/each}
@@ -930,24 +939,35 @@
 	}
 
 	.vp-header {
-		font-size: 0.7rem;
+		font-size: 0.72rem;
 		font-weight: 700;
 		color: var(--color-text);
 		text-align: center;
 		padding: 0.25rem 0.1rem;
 		letter-spacing: -0.01em;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.vp-card {
-		font-size: 0.68rem;
+		font-size: 0.72rem;
 		font-weight: 500;
 		color: var(--color-text-secondary);
 		text-align: center;
-		padding: 0.3rem 0.1rem;
+		padding: 0.35rem 0.15rem;
 		background: var(--color-bg);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-sm);
-		transition: transform 0.25s ease;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.vp-card-jp {
+		font-family: var(--font-jp);
+		font-size: 0.78rem;
+		color: var(--color-text);
 	}
 
 	/* ---- Card Builder ---- */
