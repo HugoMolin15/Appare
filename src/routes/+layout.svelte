@@ -58,26 +58,6 @@
 		// Lazy-load and merge the seed word bundle (no-op after first launch at the current SEED_VERSION)
 		ensureSeeded();
 
-		// iOS Safari fix: with viewport-fit=cover, env(safe-area-inset-bottom) is always 34px
-		// (screen-relative), but position:fixed bottom:0 tracks the visual viewport (above the toolbar).
-		// When the toolbar is visible the 34px padding shows as dead white space in the bottom nav.
-		// We suppress --safe-bottom to 0px whenever the visual viewport is significantly smaller
-		// than the screen height, indicating the toolbar or keyboard is stealing space.
-		if (window.visualViewport) {
-			function updateSafeBottom() {
-				const vvH = window.visualViewport!.height;
-				const screenH = window.screen.height;
-				// diff > 80px → toolbar or keyboard is active; home indicator not in viewport
-				if (screenH - vvH > 80) {
-					document.documentElement.style.setProperty('--safe-bottom', '0px');
-				} else {
-					document.documentElement.style.removeProperty('--safe-bottom');
-				}
-			}
-			window.visualViewport.addEventListener('resize', updateSafeBottom);
-			updateSafeBottom();
-		}
-
 		function blockEdgeSwipe(e: TouchEvent) {
 			if (e.touches[0].clientX < 30) e.preventDefault();
 		}
