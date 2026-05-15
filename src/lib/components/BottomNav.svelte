@@ -52,9 +52,7 @@
 		align-items: stretch;
 		background: var(--color-bg);
 		border-top: 1px solid var(--color-border);
-		padding-bottom: min(env(safe-area-inset-bottom, 0px), 34px);
-		max-height: 90px;
-		overflow: hidden;
+		padding-bottom: env(safe-area-inset-bottom, 0px);
 	}
 
 	.nav-tab {

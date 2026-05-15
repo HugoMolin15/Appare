@@ -340,12 +340,13 @@
 	.page {
 		position: fixed;
 		top: env(safe-area-inset-top, 0px);
-		bottom: env(safe-area-inset-bottom, 0px);
+		bottom: 0;
 		left: 0;
 		right: 0;
 		background: var(--color-bg);
 		z-index: 50; /* over top of layout */
 		padding: var(--spacing-page);
+		padding-bottom: calc(var(--spacing-page) + env(safe-area-inset-bottom, 0px));
 		display: flex;
 		flex-direction: column;
 		gap: 0;
