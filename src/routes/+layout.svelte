@@ -58,11 +58,21 @@
 		// Lazy-load and merge the seed word bundle (no-op after first launch at the current SEED_VERSION)
 		ensureSeeded();
 
+		// iOS standalone fix: 100dvh can briefly compute as the "small" viewport
+		// (with browser chrome) on first render. window.innerHeight is always exact.
+		const setAppHeight = () =>
+			document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+		setAppHeight();
+		window.addEventListener('resize', setAppHeight);
+
 		function blockEdgeSwipe(e: TouchEvent) {
 			if (e.touches[0].clientX < 30) e.preventDefault();
 		}
 		document.addEventListener('touchstart', blockEdgeSwipe, { passive: false });
-		return () => document.removeEventListener('touchstart', blockEdgeSwipe);
+		return () => {
+			window.removeEventListener('resize', setAppHeight);
+			document.removeEventListener('touchstart', blockEdgeSwipe);
+		};
 	});
 
 	let isLoginPage = $derived(path === '/login');
