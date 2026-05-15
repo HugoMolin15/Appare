@@ -33,6 +33,7 @@
 		katakana: 'オオキイ',
 		romaji: 'ōkii',
 		kanji: '大きい',
+		notes: 'Nota di esempio',
 		category: 'Aggettivo I',
 		wordType: 'word',
 		createdAt: 0,
