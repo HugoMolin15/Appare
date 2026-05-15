@@ -78,8 +78,10 @@
    ======================================== */
 
 :root {
-  --app-height: 100dvh; /* overridden by JS with exact window.innerHeight */
-  --bottom-nav-height: calc(56px + env(safe-area-inset-bottom, 0px));
+  --app-height: 100dvh; /* overridden by inline script with window.innerHeight */
+  --safe-top: env(safe-area-inset-top, 0px); /* overridden by inline script via probe */
+  --safe-bottom: env(safe-area-inset-bottom, 0px); /* overridden by inline script via probe */
+  --bottom-nav-height: calc(56px + var(--safe-bottom));
 }
 
 html, body {
@@ -252,13 +254,13 @@ body {
   font-family: var(--font-jp);
 }
 
-/* Safe area padding for notched devices */
+/* Safe area padding for notched devices — using JS-probed vars to avoid iOS env() initial-eval bug */
 .safe-top {
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: var(--safe-top);
 }
 
 .safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: var(--safe-bottom);
 }
 
 /* Smooth page transitions */

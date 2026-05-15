@@ -338,15 +338,19 @@
 
 <style>
 	.page {
+		/* Height-based instead of bottom: 0 so the page shrinks with the visual
+		   viewport when the keyboard opens (otherwise position:fixed sticks to
+		   the layout viewport and the input ends up behind the keyboard). */
 		position: fixed;
-		top: env(safe-area-inset-top, 0px);
-		bottom: 0;
+		top: 0;
 		left: 0;
 		right: 0;
+		height: var(--app-height);
 		background: var(--color-bg);
-		z-index: 50; /* over top of layout */
+		z-index: 50;
 		padding: var(--spacing-page);
-		padding-bottom: calc(var(--spacing-page) + env(safe-area-inset-bottom, 0px));
+		padding-top: calc(var(--spacing-page) + var(--safe-top));
+		padding-bottom: calc(var(--spacing-page) + var(--safe-bottom));
 		display: flex;
 		flex-direction: column;
 		gap: 0;
@@ -443,7 +447,8 @@
 	}
 
 	/* When keyboard is open: hide assess buttons so the input sits right
-	   above the keyboard with no dead space. Buttons reappear on dismiss. */
+	   above the keyboard with no dead space. Buttons reappear on dismiss.
+	   Also drop the bottom safe-area inset since the keyboard occupies that area. */
 	:global(html.keyboard-open) .page {
 		padding-bottom: 0.5rem;
 	}
