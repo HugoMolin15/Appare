@@ -5,7 +5,6 @@
 	import { currentUser, signOut } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
 	import PageHeader from '$lib/components/PageHeader.svelte';
-	import Flashcard from '$lib/components/Flashcard.svelte';
 	import { Shuffle, DotsSixVertical, X, Plus, BookOpen, Globe } from 'phosphor-svelte';
 	import { shuffle } from '$lib/utils/shuffle';
 
@@ -428,8 +427,27 @@
 		<h2 class="section-heading">Dimensione testo</h2>
 		<p class="section-subtitle">Regola la dimensione di tutto il testo nell'app.</p>
 
-		<div class="card-preview-wrap">
-			<Flashcard word={previewWord} />
+		<div class="card-preview-list">
+			{#each $cardLayout as card, ci}
+				<div class="card-preview-item">
+					<span class="card-preview-num">Carta {ci + 1}</span>
+					<div class="card-preview-fields">
+						{#each card.fields as f}
+							{@const val = previewWord[f as keyof typeof previewWord]}
+							{#if val}
+								<div class="card-preview-field">
+									<span class="card-preview-field-label">{FIELD_LABELS[f as keyof typeof FIELD_LABELS]}</span>
+									<span
+										class="card-preview-field-text"
+										class:font-jp={f === 'hiragana' || f === 'katakana' || f === 'kanji'}
+										style="font-size: {f === 'italiano' ? $fontSizeItaliano : f === 'hiragana' || f === 'katakana' ? $fontSizeHiragana : f === 'romaji' ? $fontSizeRomaji : f === 'kanji' ? $fontSizeKanji : $fontSizeNotes}rem"
+									>{val}</span>
+								</div>
+							{/if}
+						{/each}
+					</div>
+				</div>
+			{/each}
 		</div>
 
 		<div class="slider-row">
@@ -743,13 +761,70 @@
 	}
 
 	/* ---- Card Preview ---- */
-	.card-preview-wrap {
+	.card-preview-list {
 		display: flex;
 		flex-direction: column;
-		background-color: var(--color-surface);
-		border-radius: var(--radius-xl);
+		gap: 0.5rem;
 		margin-bottom: 1rem;
-		min-height: 200px;
+	}
+
+	.card-preview-item {
+		background: var(--color-surface);
+		border-radius: var(--radius-xl);
+		padding: 1rem 1.25rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.card-preview-num {
+		font-size: 0.65rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--color-text-tertiary);
+	}
+
+	.card-preview-fields {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+		width: 100%;
+	}
+
+	.card-preview-field {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.15rem;
+		width: 100%;
+	}
+
+	.card-preview-field + .card-preview-field {
+		padding-top: 0.5rem;
+		border-top: 1px solid var(--color-border);
+	}
+
+	.card-preview-field-label {
+		font-size: 0.65rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--color-text-tertiary);
+	}
+
+	.card-preview-field-text {
+		font-weight: 700;
+		color: var(--color-text);
+		text-align: center;
+		line-height: 1.4;
+		transition: font-size 0.15s ease;
+		word-break: break-word;
+	}
+
+	.card-preview-field-text.font-jp {
+		font-family: var(--font-jp);
 	}
 
 	/* ---- Slider ---- */
