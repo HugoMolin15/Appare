@@ -58,22 +58,28 @@
 		// Lazy-load and merge the seed word bundle (no-op after first launch at the current SEED_VERSION)
 		ensureSeeded();
 
-		// Detect on-screen keyboard via significant window.innerHeight drop and add
-		// `keyboard-open` to <html> so the study page can hide its assess buttons.
-		let maxH = window.innerHeight;
-		const onResize = () => {
-			const h = window.innerHeight;
-			if (h > maxH) maxH = h;
-			document.documentElement.classList.toggle('keyboard-open', maxH - h > 100);
+		// Track the visual viewport via the VisualViewport API. When the on-screen
+		// keyboard opens, vv.height shrinks but window.innerHeight may not (depending
+		// on iOS' interactive-widget mode). We mirror vv.height to --visual-vh so the
+		// study page can shrink its container, and toggle `keyboard-open` for the
+		// CSS that hides the assess buttons.
+		const vv = window.visualViewport;
+		const updateVV = () => {
+			const h = vv ? vv.height : window.innerHeight;
+			document.documentElement.style.setProperty('--visual-vh', `${h}px`);
+			document.documentElement.classList.toggle('keyboard-open', window.innerHeight - h > 100);
 		};
-		window.addEventListener('resize', onResize);
+		updateVV();
+		vv?.addEventListener('resize', updateVV);
+		window.addEventListener('resize', updateVV);
 
 		function blockEdgeSwipe(e: TouchEvent) {
 			if (e.touches[0].clientX < 30) e.preventDefault();
 		}
 		document.addEventListener('touchstart', blockEdgeSwipe, { passive: false });
 		return () => {
-			window.removeEventListener('resize', onResize);
+			vv?.removeEventListener('resize', updateVV);
+			window.removeEventListener('resize', updateVV);
 			document.removeEventListener('touchstart', blockEdgeSwipe);
 		};
 	});

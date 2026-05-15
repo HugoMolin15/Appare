@@ -341,12 +341,12 @@
 		/* Height-based instead of bottom: 0 so the page shrinks with the visual
 		   viewport when the keyboard opens (otherwise position:fixed sticks to
 		   the layout viewport and the input ends up behind the keyboard).
-		   100dvh tracks the visual viewport with interactive-widget=resizes-visual. */
+		   --visual-vh is updated by the layout from the VisualViewport API. */
 		position: fixed;
 		top: 0;
 		left: 0;
 		right: 0;
-		height: 100dvh;
+		height: var(--visual-vh, 100dvh);
 		background: var(--color-bg);
 		z-index: 50;
 		padding: var(--spacing-page);
