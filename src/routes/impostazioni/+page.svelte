@@ -5,6 +5,7 @@
 	import { currentUser, signOut } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import Flashcard from '$lib/components/Flashcard.svelte';
 	import { Shuffle, DotsSixVertical, X, Plus, BookOpen, Globe } from 'phosphor-svelte';
 	import { shuffle } from '$lib/utils/shuffle';
 
@@ -428,24 +429,7 @@
 		<p class="section-subtitle">Regola la dimensione di tutto il testo nell'app.</p>
 
 		<div class="card-preview-wrap">
-			{#each $cardLayout as card, ci}
-				{@const visibleFields = card.fields.filter(f => previewWord[f as keyof typeof previewWord])}
-				{#if visibleFields.length > 0}
-					<div class="preview-card" class:preview-card-divider={ci > 0}>
-						<span class="preview-card-label">Carta {ci + 1}</span>
-						{#each visibleFields as f}
-							<div class="preview-field">
-								<span class="preview-field-label">{FIELD_LABELS[f as keyof typeof FIELD_LABELS]}</span>
-								<span
-									class="preview-field-text"
-									class:font-jp={f === 'hiragana' || f === 'katakana' || f === 'kanji'}
-									style="font-size: {f === 'italiano' ? $fontSizeItaliano : f === 'hiragana' || f === 'katakana' ? $fontSizeHiragana : f === 'romaji' ? $fontSizeRomaji : f === 'kanji' ? $fontSizeKanji : $fontSizeNotes}rem"
-								>{previewWord[f as keyof typeof previewWord]}</span>
-							</div>
-						{/each}
-					</div>
-				{/if}
-			{/each}
+			<Flashcard word={previewWord} />
 		</div>
 
 		<div class="slider-row">
@@ -765,57 +749,7 @@
 		background-color: var(--color-surface);
 		border-radius: var(--radius-xl);
 		margin-bottom: 1rem;
-		overflow: hidden;
-	}
-
-	.preview-card {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.6rem;
-		padding: 1.25rem 1.5rem;
-	}
-
-	.preview-card-divider {
-		border-top: 1px solid var(--color-border);
-	}
-
-	.preview-card-label {
-		font-size: 0.65rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--color-text-tertiary);
-		align-self: flex-start;
-	}
-
-	.preview-field {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.2rem;
-		width: 100%;
-	}
-
-	.preview-field-label {
-		font-size: 0.65rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--color-text-tertiary);
-	}
-
-	.preview-field-text {
-		font-weight: 700;
-		color: var(--color-text);
-		text-align: center;
-		line-height: 1.4;
-		transition: font-size 0.15s ease;
-		word-break: break-word;
-	}
-
-	.preview-field-text.font-jp {
-		font-family: var(--font-jp);
+		min-height: 200px;
 	}
 
 	/* ---- Slider ---- */
