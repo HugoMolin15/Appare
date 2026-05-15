@@ -340,12 +340,13 @@
 	.page {
 		/* Height-based instead of bottom: 0 so the page shrinks with the visual
 		   viewport when the keyboard opens (otherwise position:fixed sticks to
-		   the layout viewport and the input ends up behind the keyboard). */
+		   the layout viewport and the input ends up behind the keyboard).
+		   100dvh tracks the visual viewport with interactive-widget=resizes-visual. */
 		position: fixed;
 		top: 0;
 		left: 0;
 		right: 0;
-		height: var(--app-height);
+		height: 100dvh;
 		background: var(--color-bg);
 		z-index: 50;
 		padding: var(--spacing-page);

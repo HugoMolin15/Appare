@@ -58,32 +58,27 @@
 		// Lazy-load and merge the seed word bundle (no-op after first launch at the current SEED_VERSION)
 		ensureSeeded();
 
-		// iOS standalone fix: 100dvh can briefly compute as the "small" viewport
-		// (with browser chrome) on first render. window.innerHeight is always exact.
-		// Also detects keyboard open (significant height reduction) and adds the
-		// `keyboard-open` class to <html> so the study page can adapt its layout.
+		// Detect on-screen keyboard via significant window.innerHeight drop and add
+		// `keyboard-open` to <html> so the study page can hide its assess buttons.
 		let maxH = window.innerHeight;
-		const setAppHeight = () => {
+		const onResize = () => {
 			const h = window.innerHeight;
-			document.documentElement.style.setProperty('--app-height', `${h}px`);
 			if (h > maxH) maxH = h;
 			document.documentElement.classList.toggle('keyboard-open', maxH - h > 100);
 		};
-		setAppHeight();
-		window.addEventListener('resize', setAppHeight);
+		window.addEventListener('resize', onResize);
 
 		function blockEdgeSwipe(e: TouchEvent) {
 			if (e.touches[0].clientX < 30) e.preventDefault();
 		}
 		document.addEventListener('touchstart', blockEdgeSwipe, { passive: false });
 		return () => {
-			window.removeEventListener('resize', setAppHeight);
+			window.removeEventListener('resize', onResize);
 			document.removeEventListener('touchstart', blockEdgeSwipe);
 		};
 	});
 
 	let isLoginPage = $derived(path === '/login');
-	let isStudiaPage = $derived(path === '/studia');
 </script>
 
 <div class="app-shell safe-top">
@@ -127,7 +122,7 @@
 		</div>
 	</aside>
 
-	<main class="main-content" class:no-scroll={isStudiaPage} bind:this={mainContent}>
+	<main class="main-content" bind:this={mainContent}>
 		{@render children()}
 	</main>
 
@@ -140,10 +135,6 @@
 	.main-content { flex: 1; min-width: 0; }
 
 	.hidden { display: none !important; }
-	.no-scroll { 
-		overflow: hidden !important; 
-		padding-bottom: 0 !important;
-	}
 
 	@media (min-width: 768px) {
 		.sidebar {
