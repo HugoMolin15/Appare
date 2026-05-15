@@ -239,7 +239,7 @@ body {
   .main-content {
     height: 100%;
     overflow-y: auto;
-    padding-bottom: var(--bottom-nav-height);
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   }
 }
 

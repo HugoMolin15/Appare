@@ -346,7 +346,7 @@
 		background: var(--color-bg);
 		z-index: 50; /* over top of layout */
 		padding: var(--spacing-page);
-		padding-bottom: calc(var(--spacing-page) + env(safe-area-inset-bottom, 0px));
+		padding-bottom: var(--spacing-page);
 		display: flex;
 		flex-direction: column;
 		gap: 0;
