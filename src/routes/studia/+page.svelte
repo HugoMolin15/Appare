@@ -338,23 +338,13 @@
 
 <style>
 	.page {
-		/* Height-based instead of bottom: 0 so the page shrinks with the visual
-		   viewport when the keyboard opens (otherwise position:fixed sticks to
-		   the layout viewport and the input ends up behind the keyboard).
-		   --visual-vh is updated by the layout from the VisualViewport API. */
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		height: var(--visual-vh, 100dvh);
-		background: var(--color-bg);
-		z-index: 50;
 		padding: var(--spacing-page);
-		padding-top: calc(var(--spacing-page) + env(safe-area-inset-top, 0px));
-		padding-bottom: calc(var(--spacing-page) + env(safe-area-inset-bottom, 0px));
+		height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+		max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+		overflow: hidden;
 		display: flex;
 		flex-direction: column;
-		gap: 0;
+		padding-bottom: 2rem;
 		box-sizing: border-box;
 	}
 
@@ -445,16 +435,6 @@
 		flex-direction: column;
 		gap: 0.5rem;
 		flex-shrink: 0;  /* never compress — always fully visible */
-	}
-
-	/* When keyboard is open: hide assess buttons so the input sits right
-	   above the keyboard with no dead space. Buttons reappear on dismiss.
-	   Also drop the bottom safe-area inset since the keyboard occupies that area. */
-	:global(html.keyboard-open) .page {
-		padding-bottom: 0.5rem;
-	}
-	:global(html.keyboard-open) .page .assess-area {
-		display: none;
 	}
 
 	.assess-row {
