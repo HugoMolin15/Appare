@@ -7,6 +7,24 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Flashcard from '$lib/components/Flashcard.svelte';
 	import { Shuffle, DotsSixVertical, X, Plus, BookOpen, Globe } from 'phosphor-svelte';
+	import { shuffle } from '$lib/utils/shuffle';
+
+	// Sample words shown in the random-order visual diagrams.
+	const exampleWords = [
+		{ it: 'grande', hi: 'おおきい', ro: 'ōkii', ka: '大きい' },
+		{ it: 'mangiare', hi: 'たべる', ro: 'taberu', ka: '食べる' },
+		{ it: 'scuola', hi: 'がっこう', ro: 'gakkō', ka: '学校' },
+	] as const;
+	type FormKey = 'it' | 'hi' | 'ro' | 'ka';
+	const FORM_KEYS: FormKey[] = ['it', 'hi', 'ro', 'ka'];
+
+	// Re-shuffled every time the corresponding toggle flips.
+	let wordOrderIdx = $derived<number[]>($randomWordOrder ? shuffle([0, 1, 2]) : [0, 1, 2]);
+	let cardFormOrders = $derived<FormKey[][]>(
+		$randomCardOrder
+			? [0, 1, 2].map(() => shuffle([...FORM_KEYS]))
+			: [0, 1, 2].map(() => [...FORM_KEYS])
+	);
 
 	const previewWord: Word = {
 		id: 'preview',
@@ -274,6 +292,16 @@
 				<div class="toggle-thumb"></div>
 			</div>
 		</div>
+		<div class="order-visual">
+			{#each wordOrderIdx as wi}
+				<div class="vp-column">
+					<div class="vp-header">{exampleWords[wi].it}</div>
+					{#each FORM_KEYS as form}
+						<div class="vp-card" class:vp-card-jp={form === 'hi' || form === 'ka'}>{exampleWords[wi][form]}</div>
+					{/each}
+				</div>
+			{/each}
+		</div>
 
 		<!-- Random card order toggle -->
 		<div class="order-toggle" onclick={() => randomCardOrder.set(!$randomCardOrder)} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && randomCardOrder.set(!$randomCardOrder)}>
@@ -284,6 +312,16 @@
 			<div class="toggle-switch" class:on={$randomCardOrder}>
 				<div class="toggle-thumb"></div>
 			</div>
+		</div>
+		<div class="order-visual">
+			{#each [0, 1, 2] as wi}
+				<div class="vp-column">
+					<div class="vp-header">{exampleWords[wi].it}</div>
+					{#each cardFormOrders[wi] as form}
+						<div class="vp-card" class:vp-card-jp={form === 'hi' || form === 'ka'}>{exampleWords[wi][form]}</div>
+					{/each}
+				</div>
+			{/each}
 		</div>
 
 		<!-- Card builder -->
@@ -879,6 +917,57 @@
 
 	.toggle-switch.on .toggle-thumb {
 		transform: translateX(18px);
+	}
+
+	/* ---- Order visual (parole/carte explanation diagram) ---- */
+	.order-visual {
+		display: flex;
+		gap: 0.5rem;
+		margin: -0.5rem 0 1rem;
+		padding: 0.75rem;
+		background: var(--color-surface);
+		border-radius: var(--radius-lg);
+		border: 1px solid var(--color-border);
+	}
+
+	.vp-column {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		min-width: 0;
+	}
+
+	.vp-header {
+		font-size: 0.72rem;
+		font-weight: 700;
+		color: var(--color-text);
+		text-align: center;
+		padding: 0.25rem 0.1rem;
+		letter-spacing: -0.01em;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.vp-card {
+		font-size: 0.72rem;
+		font-weight: 500;
+		color: var(--color-text-secondary);
+		text-align: center;
+		padding: 0.35rem 0.15rem;
+		background: var(--color-bg);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.vp-card-jp {
+		font-family: var(--font-jp);
+		font-size: 0.78rem;
+		color: var(--color-text);
 	}
 
 	/* ---- Card Builder ---- */
