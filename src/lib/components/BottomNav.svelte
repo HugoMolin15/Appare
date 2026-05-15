@@ -53,8 +53,7 @@
 		align-items: stretch;
 		background: var(--color-bg);
 		border-top: 1px solid var(--color-border);
-		height: var(--bottom-nav-height);
-		padding-bottom: env(safe-area-inset-bottom, 0px);
+		height: 56px;
 		box-sizing: border-box;
 	}
 
