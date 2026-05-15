@@ -7,14 +7,15 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Flashcard from '$lib/components/Flashcard.svelte';
 	import { Shuffle, DotsSixVertical, X, Plus, BookOpen, Globe } from 'phosphor-svelte';
+	import { shuffle } from '$lib/utils/shuffle';
 
-	// Per-column card orderings shown in the "Ordine casuale delle carte" diagram —
-	// each column is a distinct permutation so the shuffle is visually obvious.
-	const cardOrderExamples: number[][] = [
-		[3, 1, 4, 2],
-		[2, 4, 1, 3],
-		[4, 2, 3, 1],
-	];
+	// Visual demo orderings — re-shuffled every time the corresponding toggle flips.
+	let wordVisualOrder = $derived($randomWordOrder ? shuffle([1, 2, 3]) : [1, 2, 3]);
+	let cardVisualOrders = $derived(
+		$randomCardOrder
+			? [0, 1, 2].map(() => shuffle([1, 2, 3, 4]))
+			: [[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]]
+	);
 
 	const previewWord: Word = {
 		id: 'preview',
@@ -283,7 +284,7 @@
 			</div>
 		</div>
 		<div class="order-visual">
-			{#each ($randomWordOrder ? [2, 1, 3] : [1, 2, 3]) as p}
+			{#each wordVisualOrder as p}
 				<div class="vp-column">
 					<div class="vp-header">Parola {p}</div>
 					{#each [1, 2, 3, 4] as c}
@@ -307,7 +308,7 @@
 			{#each [1, 2, 3] as p, i}
 				<div class="vp-column">
 					<div class="vp-header">Parola {p}</div>
-					{#each ($randomCardOrder ? cardOrderExamples[i] : [1, 2, 3, 4]) as c}
+					{#each cardVisualOrders[i] as c}
 						<div class="vp-card">Carta {c}</div>
 					{/each}
 				</div>
