@@ -273,6 +273,7 @@
 	}
 
 	.card-notes {
+		flex-shrink: 0;
 		font-size: 0.78rem;
 		font-style: italic;
 		color: var(--color-text-secondary);
@@ -285,7 +286,8 @@
 	}
 
 	.card-bottom-actions {
-		margin-top: 1.5rem;
+		flex-shrink: 0;
+		margin-top: 0.75rem;
 		width: 100%;
 		display: flex;
 		justify-content: center;
