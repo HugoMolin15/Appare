@@ -21,11 +21,10 @@
 	interface Props {
 		word: Word;
 		showFlipButton?: boolean;
-		sidesCount?: number;
 		onflipregister?: (fn: () => void) => void;
 	}
 
-	let { word, showFlipButton = true, sidesCount = $bindable(0), onflipregister }: Props = $props();
+	let { word, showFlipButton = true, onflipregister }: Props = $props();
 
 	const SIDE_DEFS: Record<string, { label: string; japanese: boolean }> = {
 		italiano: { label: 'Italiano', japanese: false },
@@ -71,11 +70,6 @@
 		void word.id;
 		currentSide = 0;
 		animating = false;
-	});
-
-	// Sync sidesCount to parent when using bind:sidesCount
-	$effect(() => {
-		sidesCount = sides.length;
 	});
 
 	function flip() {

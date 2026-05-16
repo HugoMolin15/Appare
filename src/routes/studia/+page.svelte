@@ -10,7 +10,7 @@
 	import Flashcard from '$lib/components/Flashcard.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { shuffle } from '$lib/utils/shuffle';
-	import { randomCardOrder } from '$lib/stores/settings';
+	import { randomCardOrder, cardLayout } from '$lib/stores/settings';
 	import { Folder, ArrowsCounterClockwise, CaretLeft, CaretRight } from 'phosphor-svelte';
 
 	const SESSION_KEY = 'appare_study_session';
@@ -49,7 +49,23 @@
 	}
 
 	let doFlip = $state<(() => void) | null>(null);
-	let flashcardSides = $state(0);
+
+	// Compute side count directly — avoids $bindable timing issues with Svelte 5 $effect
+	let flashcardSides = $derived.by(() => {
+		if (!currentWord) return 0;
+		const vals: Record<string, string> = {
+			italiano: currentWord.italiano ?? '',
+			hiragana: currentWord.hiragana ?? '',
+			katakana: currentWord.katakana ?? '',
+			romaji:   currentWord.romaji   ?? '',
+			kanji:    currentWord.kanji    ?? '',
+			notes:    currentWord.notes    ?? '',
+		};
+		return $cardLayout
+			.map(card => card.fields.filter(k => vals[k]))
+			.filter(fields => fields.length > 0)
+			.length;
+	});
 
 	let currentIndex = $state(0);
 	let studiedCount = $state(0);
@@ -290,7 +306,7 @@
 
 		<!-- Flashcard -->
 		<div class="card-area">
-			<Flashcard word={currentWord} showFlipButton={false} bind:sidesCount={flashcardSides} onflipregister={(fn) => doFlip = fn} />
+			<Flashcard word={currentWord} showFlipButton={false} onflipregister={(fn) => doFlip = fn} />
 		</div>
 
 		<!-- Flip button — lives outside the card's overflow:hidden so it's always visible -->
