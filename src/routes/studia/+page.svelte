@@ -48,6 +48,9 @@
 		}
 	}
 
+	let flashcardRef = $state<{ triggerFlip: () => void } | null>(null);
+	let flashcardSides = $state(0);
+
 	let currentIndex = $state(0);
 	let studiedCount = $state(0);
 	let finished = $state(false);
@@ -287,8 +290,17 @@
 
 		<!-- Flashcard -->
 		<div class="card-area">
-			<Flashcard word={currentWord} />
+			<Flashcard word={currentWord} showFlipButton={false} bind:sidesCount={flashcardSides} bind:this={flashcardRef} />
 		</div>
+
+		<!-- Flip button — lives outside the card's overflow:hidden so it's always visible -->
+		{#if flashcardSides > 1}
+			<div class="flip-area">
+				<button class="flip-btn" onclick={() => flashcardRef?.triggerFlip()}>
+					Gira la carta
+				</button>
+			</div>
+		{/if}
 
 		<!-- Note textarea -->
 		<div class="note-area">
@@ -402,6 +414,33 @@
 		justify-content: center;
 		padding: 0.5rem 0 0;
 		overflow: hidden;     /* clip, inner Flashcard handles its own scroll */
+	}
+
+	/* ---- Flip button (outside card, always visible) ---- */
+	.flip-area {
+		flex-shrink: 0;
+		padding-top: 0.65rem;
+		display: flex;
+		justify-content: center;
+	}
+
+	.flip-btn {
+		background: var(--color-surface);
+		border: 1.5px solid var(--color-border);
+		color: var(--color-text);
+		font-weight: 700;
+		font-family: var(--font-sans);
+		font-size: 0.9rem;
+		padding: 0.75rem 1.5rem;
+		border-radius: var(--radius-full);
+		cursor: pointer;
+		transition: background 0.15s ease, transform 0.1s ease;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	.flip-btn:active {
+		background: var(--color-border);
+		transform: scale(0.97);
 	}
 
 	/* ---- Note textarea ---- */

@@ -20,9 +20,11 @@
 
 	interface Props {
 		word: Word;
+		showFlipButton?: boolean;
+		sidesCount?: number;
 	}
 
-	let { word }: Props = $props();
+	let { word, showFlipButton = true, sidesCount = $bindable(0) }: Props = $props();
 
 	const SIDE_DEFS: Record<string, { label: string; japanese: boolean }> = {
 		italiano: { label: 'Italiano', japanese: false },
@@ -70,6 +72,11 @@
 		animating = false;
 	});
 
+	// Sync sidesCount to parent when using bind:sidesCount
+	$effect(() => {
+		sidesCount = sides.length;
+	});
+
 	function flip() {
 		if (animating || sides.length <= 1) return;
 		animating = true;
@@ -77,6 +84,10 @@
 			currentSide = (currentSide + 1) % sides.length;
 			setTimeout(() => { animating = false; }, 180);
 		}, 180);
+	}
+
+	export function triggerFlip() {
+		flip();
 	}
 
 	let activeSide = $derived(sides[currentSide] ?? { fields: [] });
@@ -128,7 +139,7 @@
 		<p class="card-notes" style="font-size: {$fontSizeNotes}rem">{word.notes}</p>
 	{/if}
 
-	{#if sides.length > 1}
+	{#if sides.length > 1 && showFlipButton}
 		<div class="card-bottom-actions">
 			<button class="flip-btn" onclick={flip}>
 				Gira la carta
