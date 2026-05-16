@@ -7,7 +7,7 @@ import { MY_WORDS_FOLDER_ID } from '$lib/constants';
 
 const STORAGE_KEY = 'appare_folders';
 const SEEDED_KEY = 'appare_folders_seeded';
-const SEED_VERSION = '26';
+const SEED_VERSION = '27';
 
 /** Seed folder IDs */
 export const SEED_FOLDER_ID = 'seed-folder-luoghi';

@@ -22,9 +22,10 @@
 		word: Word;
 		showFlipButton?: boolean;
 		sidesCount?: number;
+		onflipregister?: (fn: () => void) => void;
 	}
 
-	let { word, showFlipButton = true, sidesCount = $bindable(0) }: Props = $props();
+	let { word, showFlipButton = true, sidesCount = $bindable(0), onflipregister }: Props = $props();
 
 	const SIDE_DEFS: Record<string, { label: string; japanese: boolean }> = {
 		italiano: { label: 'Italiano', japanese: false },
@@ -86,9 +87,10 @@
 		}, 180);
 	}
 
-	export function triggerFlip() {
-		flip();
-	}
+	// Register flip fn with parent on mount
+	$effect(() => {
+		onflipregister?.(flip);
+	});
 
 	let activeSide = $derived(sides[currentSide] ?? { fields: [] });
 	let sideIndicator = $derived(sides.length > 1 ? `${currentSide + 1} / ${sides.length}` : '');

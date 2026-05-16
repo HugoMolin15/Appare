@@ -48,7 +48,7 @@
 		}
 	}
 
-	let flashcardRef = $state<{ triggerFlip: () => void } | null>(null);
+	let doFlip = $state<(() => void) | null>(null);
 	let flashcardSides = $state(0);
 
 	let currentIndex = $state(0);
@@ -290,13 +290,13 @@
 
 		<!-- Flashcard -->
 		<div class="card-area">
-			<Flashcard word={currentWord} showFlipButton={false} bind:sidesCount={flashcardSides} bind:this={flashcardRef} />
+			<Flashcard word={currentWord} showFlipButton={false} bind:sidesCount={flashcardSides} onflipregister={(fn) => doFlip = fn} />
 		</div>
 
 		<!-- Flip button — lives outside the card's overflow:hidden so it's always visible -->
 		{#if flashcardSides > 1}
 			<div class="flip-area">
-				<button class="flip-btn" onclick={() => flashcardRef?.triggerFlip()}>
+				<button class="flip-btn" onclick={() => doFlip?.()}>
 					Gira la carta
 				</button>
 			</div>

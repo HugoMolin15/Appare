@@ -7,7 +7,7 @@ import { UNCATEGORIZED_TAG } from '$lib/constants';
 
 const STORAGE_KEY = 'appare_words';
 const SEEDED_KEY = 'appare_seeded';
-const SEED_VERSION = '26';
+const SEED_VERSION = '27';
 
 function loadStoredWords(): Word[] {
 	if (!browser) return [];
@@ -57,14 +57,32 @@ async function doSeed(): Promise<void> {
 	words.update((current) => {
 		// Remove words that belong to the deleted sections
 		const pruned = current.filter((w) => !REMOVED_FOLDER_IDS.has(w.folderId ?? ''));
+
+		// Track seed IDs handled via content fallback so we don't also add them as "new" seeds
+		const matchedSeedIds = new Set<string>();
+
 		// Update fields of remaining seed words
 		const updated = pruned.map((w) => {
-			const seed = seedMap.get(w.id) ?? seedByContent.get(`${w.italiano}||${w.folderId}`);
-			return seed ? { ...w, category: seed.category, romaji: seed.romaji, hiragana: seed.hiragana, folderId: seed.folderId } : w;
+			const seedById = seedMap.get(w.id);
+			if (seedById) {
+				return { ...w, category: seedById.category, romaji: seedById.romaji, hiragana: seedById.hiragana, folderId: seedById.folderId };
+			}
+			const seedByC = seedByContent.get(`${w.italiano}||${w.folderId}`);
+			if (seedByC) {
+				matchedSeedIds.add(seedByC.id); // remember: this seed ID is already covered
+				return { ...w, category: seedByC.category, romaji: seedByC.romaji, hiragana: seedByC.hiragana, folderId: seedByC.folderId };
+			}
+			return w;
 		});
-		const existingIds = new Set(updated.map((w) => w.id));
-		const newSeeds = SEED_WORDS.filter((w) => !existingIds.has(w.id));
-		return [...updated, ...newSeeds];
+
+		// Remove duplicate seed entries created by the v26 content-match bug:
+		// if a word's ID was already covered by a content match above, drop it
+		const deduped = updated.filter((w) => !matchedSeedIds.has(w.id));
+
+		// Add genuinely new seeds, excluding any already handled by content match
+		const existingIds = new Set(deduped.map((w) => w.id));
+		const newSeeds = SEED_WORDS.filter((w) => !existingIds.has(w.id) && !matchedSeedIds.has(w.id));
+		return [...deduped, ...newSeeds];
 	});
 
 	localStorage.setItem(SEEDED_KEY, SEED_VERSION);
