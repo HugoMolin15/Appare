@@ -10,7 +10,7 @@
 	import Flashcard from '$lib/components/Flashcard.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { shuffle } from '$lib/utils/shuffle';
-	import { randomCardOrder, cardLayout } from '$lib/stores/settings';
+	import { randomWordOrder, cardLayout } from '$lib/stores/settings';
 	import { Folder, ArrowsCounterClockwise, CaretLeft, CaretRight } from 'phosphor-svelte';
 
 	const SESSION_KEY = 'appare_study_session';
@@ -128,7 +128,7 @@
 	}
 
 	function restart() {
-		if (get(randomCardOrder)) studySet = shuffle([...studySet]);
+		if (get(randomWordOrder)) studySet = shuffle([...studySet]);
 		currentIndex = 0;
 		studiedCount = 0;
 		highWaterMark = 0;

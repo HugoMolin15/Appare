@@ -109,7 +109,7 @@
 	function startStudy() {
 		if ($selectedCount === 0) return;
 		let ids = [...get(selectedWordIds)];
-		if (get(randomCardOrder)) ids = shuffle(ids);
+		if (get(randomWordOrder)) ids = shuffle(ids);
 		studyReturnContext.set({ href: '/studia/seleziona', label: 'Modifica selezione', wordIds: ids });
 		setSelectedWords(ids);
 		goto('/studia');

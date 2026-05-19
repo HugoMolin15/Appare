@@ -111,7 +111,7 @@
 	function studyAll() {
 		let ids = get(words).map(w => w.id);
 		if (ids.length === 0) return;
-		if (get(randomCardOrder)) ids = shuffle(ids);
+		if (get(randomWordOrder)) ids = shuffle(ids);
 		studyReturnContext.set({ href: '/cartelle', label: 'Torna alle cartelle', wordIds: ids });
 		setSelectedWords(ids);
 		goto('/studia');
@@ -126,7 +126,7 @@
 		}
 		let ids = [...new Set(Array.from(selectedFolderIds).flatMap(collect))];
 		if (ids.length === 0) return;
-		if (get(randomCardOrder)) ids = shuffle(ids);
+		if (get(randomWordOrder)) ids = shuffle(ids);
 		studyReturnContext.set({
 			href: '/cartelle',
 			label: 'Torna alle cartelle',
