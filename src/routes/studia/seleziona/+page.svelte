@@ -132,6 +132,12 @@
 		</div>
 
 		<div class="quick-filter-bar">
+			<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
+				<Shuffle size={14} weight="bold" /> Parole
+			</button>
+			<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
+				<Shuffle size={14} weight="bold" /> Carte
+			</button>
 			<button class="quick-pill" class:active={$listDisplayLang !== 'italiano'} onclick={() => activeSheet = 'options'}>
 				Lingua <Icon name="chevron-down" size={14} />
 			</button>
@@ -146,12 +152,6 @@
 			</button>
 			<button class="quick-pill" class:active={sortMode !== 'newest'} onclick={() => activeSheet = 'sort'}>
 				Ordina <Icon name="chevron-down" size={14} />
-			</button>
-			<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
-				<Shuffle size={14} weight="bold" /> Parole
-			</button>
-			<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
-				<Shuffle size={14} weight="bold" /> Carte
 			</button>
 		</div>
 

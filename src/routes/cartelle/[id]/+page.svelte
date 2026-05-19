@@ -318,6 +318,12 @@
 
 			{#if !selectMode}
 				<div class="quick-filter-bar">
+					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
+						<Shuffle size={14} weight="bold" /> Parole
+					</button>
+					<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
+						<Shuffle size={14} weight="bold" /> Carte
+					</button>
 					{#if subfolders.length > 1 && !reorderSubfoldersMode}
 						<button class="quick-pill" onclick={enterSubfolderReorder}>Riordina</button>
 					{/if}
@@ -332,12 +338,6 @@
 							Ordina <Icon name="chevron-down" size={14} />
 						</button>
 					{/if}
-					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
-						<Shuffle size={14} weight="bold" /> Parole
-					</button>
-					<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
-						<Shuffle size={14} weight="bold" /> Carte
-					</button>
 				</div>
 			{/if}
 

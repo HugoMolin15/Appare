@@ -168,17 +168,17 @@
 
 			{#if !selectMode}
 				<div class="quick-filter-bar">
-					{#if !reorderMode}
-						<button class="quick-pill" class:active={folderSortMode !== 'newest'} onclick={() => showSortSheet = true}>
-							Ordina <Icon name="chevron-down" size={14} />
-						</button>
-					{/if}
 					<button class="quick-pill" class:active={$randomWordOrder} onclick={() => randomWordOrder.update(v => !v)}>
 						<Shuffle size={14} weight="bold" /> Parole
 					</button>
 					<button class="quick-pill" class:active={$randomCardOrder} onclick={() => randomCardOrder.update(v => !v)}>
 						<Shuffle size={14} weight="bold" /> Carte
 					</button>
+					{#if !reorderMode}
+						<button class="quick-pill" class:active={folderSortMode !== 'newest'} onclick={() => showSortSheet = true}>
+							Ordina <Icon name="chevron-down" size={14} />
+						</button>
+					{/if}
 					{#if folderList.length > 1}
 						{#if reorderMode}
 							<button class="quick-pill active" onclick={exitReorderMode}>Fine</button>
