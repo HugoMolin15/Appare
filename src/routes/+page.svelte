@@ -2,6 +2,7 @@
 	import Heatmap from '$lib/components/Heatmap.svelte';
 	import { afterNavigate } from '$app/navigation';
 	import { consumeHeatmapReturnDate } from '$lib/stores/cronologiaNav';
+	import { SITE_URL } from '$lib/constants';
 	import { Folder, Clock, Books, CaretDown } from 'phosphor-svelte';
 
 	let heatmapExpanded = $state(false);
@@ -23,13 +24,13 @@
 <div class="page page-enter">
 	<!-- Header -->
 	<header class="header hide-desktop">
-		<div class="header-left">
+		<a class="header-left" href={SITE_URL} target="_blank" rel="noopener noreferrer">
 			<img src="/secondary_icon.png" alt="Appare logo" class="header-icon" />
 			<div class="header-text">
 				<span class="header-title">APPARE!</span>
 				<span class="header-subtitle">Scuola di lingua Giapponese<br>di Tomoko Yamane</span>
 			</div>
-		</div>
+		</a>
 	</header>
 
 	<!-- Study Section (Heatmap will go here) -->
@@ -86,6 +87,8 @@
 		display: flex;
 		align-items: center;
 		gap: 0.6rem;
+		text-decoration: none;
+		color: inherit;
 	}
 
 	.header-icon {

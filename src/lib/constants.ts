@@ -1,6 +1,8 @@
 export const MY_WORDS_FOLDER_ID = 'protected-le-mie-parole';
 export const UNCATEGORIZED_TAG = 'Non categorizzato';
 
+export const SITE_URL = 'https://appareassociazione.wixsite.com/giapponeseperugia';
+
 export const FOLDER_COLORS = [
 	'#e96010',
 	'#6c8936',

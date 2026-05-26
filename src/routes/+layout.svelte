@@ -10,6 +10,7 @@
 	import { ensureSeeded } from '$lib/stores/words';
 	import { appFontScale } from '$lib/stores/settings';
 	import BottomNav from '$lib/components/BottomNav.svelte';
+	import { SITE_URL } from '$lib/constants';
 	import { House, BookOpen, Folder, Clock, Plus, Gear } from 'phosphor-svelte';
 
 	$effect(() => {
@@ -71,13 +72,13 @@
 
 <div class="app-shell safe-top">
 	<aside class="sidebar" class:hidden={isLoginPage}>
-		<div class="sidebar-logo">
+		<a class="sidebar-logo" href={SITE_URL} target="_blank" rel="noopener noreferrer">
 			<img src="/secondary_icon.png" alt="Appare logo" class="sidebar-icon" />
 			<div class="sidebar-text">
 				<span class="sidebar-title">Appare</span>
 				<span class="sidebar-subtitle">Scuola di lingua Giapponese<br>di Tomoko Yamane</span>
 			</div>
-		</div>
+		</a>
 
 		<nav class="sidebar-nav">
 			<a href="/" class="sidebar-link" class:active={path === '/' || path.startsWith('/studia')}>
@@ -166,6 +167,8 @@
 		gap: 0.6rem;
 		padding: 0 0.5rem;
 		margin-bottom: 2rem;
+		text-decoration: none;
+		color: inherit;
 	}
 
 	.sidebar-icon {

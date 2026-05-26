@@ -7,6 +7,7 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Flashcard from '$lib/components/Flashcard.svelte';
 	import { Shuffle, DotsSixVertical, X, Plus, BookOpen, Globe } from 'phosphor-svelte';
+	import { SITE_URL } from '$lib/constants';
 	import { shuffle } from '$lib/utils/shuffle';
 
 	// Sample words shown in the random-order visual diagrams.
@@ -631,7 +632,7 @@
 	<!-- Website link -->
 	<div class="site-link-row">
 		<a
-			href="https://appareassociazione.wixsite.com/giapponeseperugia"
+			href={SITE_URL}
 			target="_blank"
 			rel="noopener noreferrer"
 			class="site-link"
