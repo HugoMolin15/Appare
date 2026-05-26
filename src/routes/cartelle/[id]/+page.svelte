@@ -330,7 +330,7 @@
 			{/snippet}
 		</PageHeader>
 
-		{#if folder && (subfolders.length > 0 || folderWords.length > 0)}
+		{#if folder && (subfolders.length > 0 || folderWordsTotal > 0)}
 			<div class="search-row">
 				<SearchInput bind:value={searchQuery} placeholder="Cerca cartelle e parole..." />
 				<button

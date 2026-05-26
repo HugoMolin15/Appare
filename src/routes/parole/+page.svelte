@@ -240,19 +240,19 @@
 						{#if scoreFilter === 'all'}<Icon name="check" size={18} strokeWidth={3} />{/if}
 					</button>
 					<button class="option-row" class:selected={scoreFilter === 'none'} onclick={() => { scoreFilter = 'none'; activeSheet = null; }}>
-						<span>Non valutate</span>
+						<span class="score-opt"><span class="score-dot" style="background: var(--color-border)"></span>Non valutate</span>
 						{#if scoreFilter === 'none'}<Icon name="check" size={18} strokeWidth={3} />{/if}
 					</button>
 					<button class="option-row" class:selected={scoreFilter === 'unknown'} onclick={() => { scoreFilter = 'unknown'; activeSheet = null; }}>
-						<span>Difficile</span>
+						<span class="score-opt"><span class="score-dot" style="background: #EF5350"></span>Difficile</span>
 						{#if scoreFilter === 'unknown'}<Icon name="check" size={18} strokeWidth={3} />{/if}
 					</button>
 					<button class="option-row" class:selected={scoreFilter === 'learning'} onclick={() => { scoreFilter = 'learning'; activeSheet = null; }}>
-						<span>Buono</span>
+						<span class="score-opt"><span class="score-dot" style="background: #42A5F5"></span>Buono</span>
 						{#if scoreFilter === 'learning'}<Icon name="check" size={18} strokeWidth={3} />{/if}
 					</button>
 					<button class="option-row" class:selected={scoreFilter === 'known'} onclick={() => { scoreFilter = 'known'; activeSheet = null; }}>
-						<span>Facile</span>
+						<span class="score-opt"><span class="score-dot" style="background: #66BB6A"></span>Facile</span>
 						{#if scoreFilter === 'known'}<Icon name="check" size={18} strokeWidth={3} />{/if}
 					</button>
 				</div>
@@ -527,5 +527,11 @@
 
 	.option-row.selected svg {
 		stroke: #1A1A1A;
+	}
+
+	.score-opt { display: inline-flex; align-items: center; gap: 0.6rem; }
+	.score-dot {
+		width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+		border: 1px solid color-mix(in srgb, var(--color-text) 12%, transparent);
 	}
 </style>
