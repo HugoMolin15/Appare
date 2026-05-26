@@ -175,6 +175,12 @@
 		learning: 'Buono',
 		known: 'Facile',
 	};
+	const scoreDotColors: Record<WordScore, string> = {
+		none: 'var(--color-border)',
+		unknown: '#EF5350',
+		learning: '#42A5F5',
+		known: '#66BB6A',
+	};
 	let showScoreSheet = $state(false);
 
 	function applySortWords<T extends { createdAt: number; italiano: string; hiragana: string; katakana: string }>(list: T[], mode: WordSort): T[] {
@@ -197,6 +203,10 @@
 		$words.filter((w) => w.folderId === folderId && (scoreFilter === 'all' || ($wordScores[w.id] ?? 'none') === scoreFilter)),
 		wordSortMode
 	));
+
+	// Total direct words ignoring the Stato filter — used to tell a truly empty
+	// folder apart from one where the filter just hides every word.
+	let folderWordsTotal = $derived($words.filter((w) => w.folderId === folderId).length);
 
 	// All words reachable from this folder (this folder + every descendant subfolder)
 	let allDescendantWordIds = $derived.by(() => {
@@ -385,7 +395,7 @@
 			<p class="empty-text">Cartella non trovata.</p>
 		</div>
 
-	{:else if subfolders.length === 0 && folderWords.length === 0}
+	{:else if subfolders.length === 0 && folderWordsTotal === 0}
 		<div class="empty-state">
 			<span class="empty-icon">📝</span>
 			<p class="empty-text">Cartella vuota.</p>
@@ -471,12 +481,12 @@
 					{/if}
 				{/each}
 			</div>
-		{:else if searchQuery.trim() && folderWords.length > 0 && filteredSubfolders.length === 0}
-			<p class="no-results">Nessun risultato per "{searchQuery}"</p>
+		{:else if filteredSubfolders.length === 0}
+			<p class="no-results">Nessuna parola trovata.</p>
 		{/if}
 	{/if}
 
-	{#if subfolders.length === 0 && folderWords.length === 0 && folder && !isProtected}
+	{#if subfolders.length === 0 && folderWordsTotal === 0 && folder && !isProtected}
 		<div class="fab-container">
 			<button class="fab" onclick={() => showFolderModal = true}>
 				<Icon name="plus" size={18} strokeWidth={2.5} />
@@ -519,7 +529,10 @@
 		<div class="sort-option-list">
 			{#each scoreOptions as val}
 				<button class="sort-option-row" class:selected={scoreFilter === val} onclick={() => { scoreFilter = val; showScoreSheet = false; }}>
-					<span>{scoreLabels[val]}</span>
+					<span class="score-opt">
+						{#if val !== 'all'}<span class="score-dot" style="background: {scoreDotColors[val]}"></span>{/if}
+						{scoreLabels[val]}
+					</span>
 					{#if scoreFilter === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
 				</button>
 			{/each}
@@ -988,6 +1001,12 @@
 
 	.sort-option-row:last-child { border-bottom: none; }
 	.sort-option-row.selected { font-weight: 700; }
+
+	.score-opt { display: inline-flex; align-items: center; gap: 0.6rem; }
+	.score-dot {
+		width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+		border: 1px solid color-mix(in srgb, var(--color-text) 12%, transparent);
+	}
 
 	.sheet-close {
 		background: none; border: none; cursor: pointer;
