@@ -51,6 +51,7 @@
 		hiragana: 'Hiragana / Katakana',
 		romaji: 'Romaji',
 		kanji: 'Kanji',
+		notes: 'Note',
 	};
 
 	let activePills = $derived.by(() => {
@@ -260,7 +261,7 @@
 				</div>
 			{:else if activeSheet === 'options'}
 				<div class="option-list">
-					{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
+					{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji'], ['notes', 'Note']] as [val, label]}
 						<button class="option-row" class:selected={$listDisplayLang === val} onclick={() => listDisplayLang.set(val as ListDisplayLang)}>
 							<span>{label}</span>
 							{#if $listDisplayLang === val}<Icon name="check" size={18} strokeWidth={3} />{/if}

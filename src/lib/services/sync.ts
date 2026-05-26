@@ -14,6 +14,7 @@ import { studyHistory } from '$lib/stores/history';
 import { dateColors } from '$lib/stores/dateColors';
 import { wordScores } from '$lib/stores/wordScores';
 import { folderOrder } from '$lib/stores/folderOrder';
+import { folderLang } from '$lib/stores/folderLang';
 import {
 	studyGoal,
 	appFontScale,
@@ -188,6 +189,7 @@ async function pullSettings(userId: string) {
 	randomWordOrder.set(data.random_word_order ?? false);
 	if (data.word_scores) wordScores.set(data.word_scores);
 	if (data.folder_order) folderOrder.set(data.folder_order);
+	if (data.folder_lang) folderLang.set(data.folder_lang);
 }
 
 // ---------------------------------------------------------------------------
@@ -274,7 +276,8 @@ async function pushSettings(userId: string) {
 		random_card_order: get(randomCardOrder),
 		random_word_order: get(randomWordOrder),
 		word_scores: get(wordScores),
-		folder_order: get(folderOrder)
+		folder_order: get(folderOrder),
+		folder_lang: get(folderLang)
 	});
 }
 
@@ -362,6 +365,7 @@ export async function pushDateColor(userId: string, key: string, color: string |
 let settingsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let wordScoresDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let folderOrderDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let folderLangDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function pushSettingsUpdate(userId: string) {
 	if (settingsDebounceTimer) clearTimeout(settingsDebounceTimer);
@@ -384,6 +388,13 @@ export function pushFolderOrderUpdate(userId: string) {
 	}, 1000);
 }
 
+export function pushFolderLangUpdate(userId: string) {
+	if (folderLangDebounceTimer) clearTimeout(folderLangDebounceTimer);
+	folderLangDebounceTimer = setTimeout(() => {
+		if (get(currentUserId) === userId) pushSettings(userId);
+	}, 1000);
+}
+
 import { clearWords } from '$lib/stores/words';
 import { clearFolders } from '$lib/stores/folders';
 import { clearHistory, cancelPendingPushes as cancelHistoryPushes } from '$lib/stores/history';
@@ -392,6 +403,7 @@ import { clearSettings } from '$lib/stores/settings';
 import { clearWordScores } from '$lib/stores/wordScores';
 import { clearWordAttempts } from '$lib/stores/wordAttempts';
 import { clearAllFolderOrder } from '$lib/stores/folderOrder';
+import { clearAllFolderLang } from '$lib/stores/folderLang';
 import { clearUserTags } from '$lib/stores/userTags';
 import { resetCronologiaNav } from '$lib/stores/cronologiaNav';
 import { resetParoleNav } from '$lib/stores/paroleNav';
@@ -407,6 +419,7 @@ export function clearAllStores() {
 	if (settingsDebounceTimer) { clearTimeout(settingsDebounceTimer); settingsDebounceTimer = null; }
 	if (wordScoresDebounceTimer) { clearTimeout(wordScoresDebounceTimer); wordScoresDebounceTimer = null; }
 	if (folderOrderDebounceTimer) { clearTimeout(folderOrderDebounceTimer); folderOrderDebounceTimer = null; }
+	if (folderLangDebounceTimer) { clearTimeout(folderLangDebounceTimer); folderLangDebounceTimer = null; }
 	clearWords();
 	clearFolders();
 	clearHistory();
@@ -415,6 +428,7 @@ export function clearAllStores() {
 	clearWordScores();
 	clearWordAttempts();
 	clearAllFolderOrder();
+	clearAllFolderLang();
 	clearUserTags();
 	resetCronologiaNav();
 	resetParoleNav();

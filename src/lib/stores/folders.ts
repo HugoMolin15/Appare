@@ -297,10 +297,10 @@ export function removeFolder(id: string) {
 	dbDeleteFolder(id);
 }
 
-/** Update a folder's name, color, and/or displayLang */
-export function updateFolder(id: string, name: string, color?: string, displayLang?: Folder['displayLang']) {
+/** Update a folder's name and/or color */
+export function updateFolder(id: string, name: string, color?: string) {
 	folders.update((current) =>
-		current.map((f) => (f.id === id ? { ...f, name, color, displayLang } : f))
+		current.map((f) => (f.id === id ? { ...f, name, color } : f))
 	);
 	const uid = get(currentUserId);
 	if (uid) {

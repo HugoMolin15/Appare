@@ -41,6 +41,7 @@
 		if (displayLang === 'hiragana') return word.hiragana || word.katakana || word.italiano;
 		if (displayLang === 'romaji')   return word.romaji   || word.italiano;
 		if (displayLang === 'kanji')    return word.kanji    || word.hiragana || word.italiano;
+		if (displayLang === 'notes')    return word.notes    || word.italiano;
 		return word.italiano;
 	});
 	let displayIsJapanese = $derived(displayLang === 'hiragana' || displayLang === 'kanji');

@@ -5,10 +5,11 @@
 	import { get } from 'svelte/store';
 	import { folders, removeFolder, updateFolder } from '$lib/stores/folders';
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
+	import { folderLang, setFolderLang } from '$lib/stores/folderLang';
 	import { words, removeWord, moveWordsToFolder } from '$lib/stores/words';
 	import { wordScores } from '$lib/stores/wordScores';
 	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, studyReturnContext } from '$lib/stores/studySession';
-	import { randomCardOrder, randomWordOrder } from '$lib/stores/settings';
+	import { randomCardOrder, randomWordOrder, type ListDisplayLang } from '$lib/stores/settings';
 	import type { Folder, WordScore } from '$lib/types/word';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
@@ -57,11 +58,11 @@
 	let showMoveSheet = $state(false);
 	let editName = $state('');
 	let editColor = $state('');
-	let editDisplayLang = $state<Folder['displayLang']>(undefined);
+	let editDisplayLang = $state<ListDisplayLang | undefined>(undefined);
 	let itemToDelete = $state<{ type: 'word' | 'folder' | 'selection', id?: string, name?: string, ids?: string[] } | null>(null);
 
 	let folder = $derived($folders.find((f) => f.id === folderId));
-	let folderDisplayLang = $derived(folder?.displayLang ?? 'italiano');
+	let folderDisplayLang = $derived($folderLang[folderId] ?? 'italiano');
 
 	// ---- Select mode (words + subfolders) ----
 	let selectMode = $state(false);
@@ -89,17 +90,19 @@
 	function openOptions() {
 		editName = folder?.name ?? '';
 		editColor = folder?.color ?? '';
-		editDisplayLang = folder?.displayLang;
+		editDisplayLang = $folderLang[folderId];
 		showOptionsSheet = true;
 	}
 
 	function saveEdits() {
 		if (!folderId) return;
 		if (isProtected) {
-			updateFolder(folderId, folder?.name ?? '', editColor || undefined, editDisplayLang);
+			updateFolder(folderId, folder?.name ?? '', editColor || undefined);
+			setFolderLang(folderId, editDisplayLang ?? 'italiano');
 			showOptionsSheet = false;
 		} else if (editName.trim()) {
-			updateFolder(folderId, editName.trim(), editColor || undefined, editDisplayLang);
+			updateFolder(folderId, editName.trim(), editColor || undefined);
+			setFolderLang(folderId, editDisplayLang ?? 'italiano');
 			showOptionsSheet = false;
 		}
 	}
@@ -579,11 +582,11 @@
 		<div class="sheet-section">
 			<span class="sheet-label">Lingua visualizzata</span>
 			<div class="option-list">
-				{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji']] as [val, label]}
+				{#each [['italiano', 'Italiano'], ['hiragana', 'Hiragana / Katakana'], ['romaji', 'Romaji'], ['kanji', 'Kanji'], ['notes', 'Note']] as [val, label]}
 					<button
 						class="option-row"
 						class:selected={editDisplayLang === val || (!editDisplayLang && val === 'italiano')}
-						onclick={() => editDisplayLang = val === 'italiano' ? undefined : val as Folder['displayLang']}
+						onclick={() => editDisplayLang = val === 'italiano' ? undefined : val as ListDisplayLang}
 					>
 						<span>{label}</span>
 						{#if editDisplayLang === val || (!editDisplayLang && val === 'italiano')}<Icon name="check" size={18} strokeWidth={3} />{/if}

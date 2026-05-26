@@ -45,5 +45,4 @@ export interface Folder {
 	color?: string;
 	createdAt: number;
 	parentId?: string;
-	displayLang?: 'italiano' | 'hiragana' | 'romaji' | 'kanji';
 }

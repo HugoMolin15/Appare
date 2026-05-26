@@ -29,7 +29,7 @@ export const randomCardOrder = persisted<boolean>('appare_random_card_order', fa
 export const cardLayout = persisted<CardLayout>('appare_card_layout', DEFAULT_CARD_LAYOUT, { onChange: syncToCloud });
 
 /** Which field to show as the primary text in word list rows */
-export type ListDisplayLang = 'italiano' | 'hiragana' | 'romaji' | 'kanji';
+export type ListDisplayLang = 'italiano' | 'hiragana' | 'romaji' | 'kanji' | 'notes';
 export const listDisplayLang = persisted<ListDisplayLang>('appare_list_display_lang', 'italiano', { onChange: syncToCloud });
 
 /** Per-field flashcard font sizes in rem (independent of global appFontScale) */
