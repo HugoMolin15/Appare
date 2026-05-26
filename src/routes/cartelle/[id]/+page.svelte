@@ -6,9 +6,10 @@
 	import { folders, removeFolder, updateFolder } from '$lib/stores/folders';
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
 	import { words, removeWord, moveWordsToFolder } from '$lib/stores/words';
+	import { wordScores } from '$lib/stores/wordScores';
 	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, studyReturnContext } from '$lib/stores/studySession';
 	import { randomCardOrder, randomWordOrder } from '$lib/stores/settings';
-	import type { Folder } from '$lib/types/word';
+	import type { Folder, WordScore } from '$lib/types/word';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import StudyRandomPills from '$lib/components/StudyRandomPills.svelte';
 	import FolderModal from '$lib/components/FolderModal.svelte';
@@ -164,6 +165,18 @@
 	const wordSortCycle: WordSort[] = ['newest', 'oldest', 'it-az', 'jp-az'];
 	let showWordSortSheet = $state(false);
 
+	// ---- Score (Stato) filter ----
+	let scoreFilter = $state<'all' | WordScore>('all');
+	const scoreOptions: ('all' | WordScore)[] = ['all', 'none', 'unknown', 'learning', 'known'];
+	const scoreLabels: Record<'all' | WordScore, string> = {
+		all: 'Tutte le parole',
+		none: 'Non valutate',
+		unknown: 'Difficile',
+		learning: 'Buono',
+		known: 'Facile',
+	};
+	let showScoreSheet = $state(false);
+
 	function applySortWords<T extends { createdAt: number; italiano: string; hiragana: string; katakana: string }>(list: T[], mode: WordSort): T[] {
 		const arr = [...list];
 		if (mode === 'oldest') return arr.sort((a, b) => a.createdAt - b.createdAt);
@@ -180,7 +193,10 @@
 		return arr.sort((a, b) => b.createdAt - a.createdAt);
 	}
 
-	let folderWords = $derived(applySortWords($words.filter((w) => w.folderId === folderId), wordSortMode));
+	let folderWords = $derived(applySortWords(
+		$words.filter((w) => w.folderId === folderId && (scoreFilter === 'all' || ($wordScores[w.id] ?? 'none') === scoreFilter)),
+		wordSortMode
+	));
 
 	// All words reachable from this folder (this folder + every descendant subfolder)
 	let allDescendantWordIds = $derived.by(() => {
@@ -333,6 +349,11 @@
 							<button class="quick-pill" onclick={resetSubfolderOrder}>Reimposta</button>
 						{/if}
 					{/if}
+					{#if folderWords.length > 0 || scoreFilter !== 'all'}
+						<button class="quick-pill" class:active={scoreFilter !== 'all'} onclick={() => showScoreSheet = true}>
+							Stato <Icon name="chevron-down" size={14} />
+						</button>
+					{/if}
 					{#if folderWords.length > 0 || subfolders.length > 0}
 						<button class="quick-pill" class:active={wordSortMode !== 'newest'} onclick={() => showWordSortSheet = true}>
 							Ordina <Icon name="chevron-down" size={14} />
@@ -480,6 +501,26 @@
 				<button class="sort-option-row" class:selected={wordSortMode === val} onclick={() => { wordSortMode = val; showWordSortSheet = false; }}>
 					<span>{wordSortLabels[val]}</span>
 					{#if wordSortMode === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
+				</button>
+			{/each}
+		</div>
+	</div>
+{/if}
+
+{#if showScoreSheet}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="sheet-backdrop-sort" onclick={() => showScoreSheet = false}></div>
+	<div class="sort-sheet" transition:fly={{ y: 300, duration: 280 }}>
+		<div class="sort-sheet-header">
+			<h2 class="sort-sheet-title">Stato</h2>
+			<button class="sheet-close" onclick={() => showScoreSheet = false}>Chiudi</button>
+		</div>
+		<div class="sort-option-list">
+			{#each scoreOptions as val}
+				<button class="sort-option-row" class:selected={scoreFilter === val} onclick={() => { scoreFilter = val; showScoreSheet = false; }}>
+					<span>{scoreLabels[val]}</span>
+					{#if scoreFilter === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
 				</button>
 			{/each}
 		</div>
