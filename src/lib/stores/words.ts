@@ -7,7 +7,7 @@ import { UNCATEGORIZED_TAG } from '$lib/constants';
 
 const STORAGE_KEY = 'appare_words';
 const SEEDED_KEY = 'appare_seeded';
-const SEED_VERSION = '27';
+const SEED_VERSION = '28';
 
 function loadStoredWords(): Word[] {
 	if (!browser) return [];
@@ -37,52 +37,56 @@ async function doSeed(): Promise<void> {
 	if (localStorage.getItem(SEEDED_KEY) === SEED_VERSION) return;
 
 	const { SEED_WORDS } = await import('$lib/data/seed-words');
-	const seedMap = new Map(SEED_WORDS.map((w) => [w.id, w]));
-
-	// Folder IDs for the removed sections (verbi + aggettivi)
-	const REMOVED_FOLDER_IDS = new Set([
-		'seed-folder-vp-affermativa', 'seed-folder-vp-negativa',
-		'seed-folder-vp-passato-aff', 'seed-folder-vp-passato-neg',
-		'seed-folder-verbi-dizionario', 'seed-folder-verbi-masu',
-		'seed-folder-verbi-te', 'seed-folder-verbi-nai', 'seed-folder-verbi-ta',
-		'seed-folder-agg-piana', 'seed-folder-agg-pres-aff', 'seed-folder-agg-pres-neg',
-		'seed-folder-agg-pass-aff', 'seed-folder-agg-pass-neg',
-		'seed-folder-agg-p-pres-aff', 'seed-folder-agg-p-pres-neg',
-		'seed-folder-agg-p-pass-aff', 'seed-folder-agg-p-pass-neg',
-	]);
-
-	// Secondary lookup by (italiano + folderId) for words whose IDs shifted due to past array reorders
-	const seedByContent = new Map(SEED_WORDS.map((w) => [`${w.italiano}||${w.folderId}`, w]));
 
 	words.update((current) => {
-		// Remove words that belong to the deleted sections
-		const pruned = current.filter((w) => !REMOVED_FOLDER_IDS.has(w.folderId ?? ''));
+		// User-created words (random UUID ids) are never touched.
+		const manual = current.filter((w) => !w.id.startsWith('seed-'));
+		const localSeeds = current.filter((w) => w.id.startsWith('seed-'));
 
-		// Track seed IDs handled via content fallback so we don't also add them as "new" seeds
-		const matchedSeedIds = new Set<string>();
+		// Index existing seed words by content (italiano + folder). This lets us
+		// preserve each word's id/createdAt — and therefore its study score and
+		// position — even when the bundle's positional ids shift (e.g. when a whole
+		// folder like "La famiglia" is replaced). Matching by content rather than by
+		// id also avoids the corruption that an id-first match causes after a shift.
+		const localByContent = new Map<string, Word>();
+		for (const w of localSeeds) {
+			const key = `${w.italiano}||${w.folderId ?? ''}`;
+			if (!localByContent.has(key)) localByContent.set(key, w);
+		}
 
-		// Update fields of remaining seed words
-		const updated = pruned.map((w) => {
-			const seedById = seedMap.get(w.id);
-			if (seedById) {
-				return { ...w, category: seedById.category, romaji: seedById.romaji, hiragana: seedById.hiragana, folderId: seedById.folderId };
+		// Rebuild the seed set from the current bundle. Seed words whose content no
+		// longer exists (old "La famiglia" entries, removed verbi/aggettivi sections)
+		// simply aren't reproduced here, so they're dropped.
+		const usedIds = new Set<string>();
+		const rebuiltSeeds = SEED_WORDS.map((s) => {
+			const existing = localByContent.get(`${s.italiano}||${s.folderId ?? ''}`);
+			if (existing && !usedIds.has(existing.id)) {
+				usedIds.add(existing.id);
+				return {
+					...existing,
+					italiano: s.italiano,
+					hiragana: s.hiragana,
+					katakana: s.katakana,
+					romaji: s.romaji,
+					kanji: s.kanji,
+					category: s.category,
+					wordType: s.wordType,
+					folderId: s.folderId
+				};
 			}
-			const seedByC = seedByContent.get(`${w.italiano}||${w.folderId}`);
-			if (seedByC) {
-				matchedSeedIds.add(seedByC.id); // remember: this seed ID is already covered
-				return { ...w, category: seedByC.category, romaji: seedByC.romaji, hiragana: seedByC.hiragana, folderId: seedByC.folderId };
+			// Brand-new seed word. Guarantee its id is unique in the result so duplicate
+			// content keys (or id shifts) can never produce two words with the same id.
+			let id = s.id;
+			if (usedIds.has(id)) {
+				let n = 2;
+				while (usedIds.has(`${s.id}-${n}`)) n++;
+				id = `${s.id}-${n}`;
 			}
-			return w;
+			usedIds.add(id);
+			return { ...s, id };
 		});
 
-		// Remove duplicate seed entries created by the v26 content-match bug:
-		// if a word's ID was already covered by a content match above, drop it
-		const deduped = updated.filter((w) => !matchedSeedIds.has(w.id));
-
-		// Add genuinely new seeds, excluding any already handled by content match
-		const existingIds = new Set(deduped.map((w) => w.id));
-		const newSeeds = SEED_WORDS.filter((w) => !existingIds.has(w.id) && !matchedSeedIds.has(w.id));
-		return [...deduped, ...newSeeds];
+		return [...rebuiltSeeds, ...manual];
 	});
 
 	localStorage.setItem(SEEDED_KEY, SEED_VERSION);
