@@ -189,7 +189,12 @@ async function pullSettings(userId: string) {
 	randomWordOrder.set(data.random_word_order ?? false);
 	if (data.word_scores) wordScores.set(data.word_scores);
 	if (data.folder_order) folderOrder.set(data.folder_order);
-	if (data.folder_lang) folderLang.set(data.folder_lang);
+	// Merge (don't overwrite): folder_lang defaults to an empty object in the DB,
+	// which is truthy — a plain .set() would wipe locally-saved values that haven't
+	// been pushed yet. Merging lets remote win per-folder while keeping local-only entries.
+	if (data.folder_lang && Object.keys(data.folder_lang).length > 0) {
+		folderLang.update((local) => ({ ...local, ...data.folder_lang }));
+	}
 }
 
 // ---------------------------------------------------------------------------
