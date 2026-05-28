@@ -27,18 +27,18 @@
 			: [0, 1, 2].map(() => [...FORM_KEYS])
 	);
 
-	const previewWord: Word = {
+	let previewWord = $derived<Word>({
 		id: 'preview',
 		italiano: 'grande',
 		hiragana: 'おおきい',
 		katakana: 'オオキイ',
 		romaji: 'ōkii',
 		kanji: '大きい',
-		notes: 'Nota di esempio',
+		notes: $cardLayout.some(c => c.fields.includes('notes')) ? 'Nota di esempio' : '',
 		category: 'Aggettivo I',
 		wordType: 'word',
 		createdAt: 0,
-	};
+	});
 
 	async function handleSignOut() {
 		await signOut();
