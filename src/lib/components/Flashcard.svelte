@@ -98,8 +98,6 @@
 		kanji:    `${$fontSizeKanji}rem`,
 		notes:    `${$fontSizeNotes}rem`,
 	});
-
-	let notesInLayout = $derived($cardLayout.some(card => card.fields.includes('notes')));
 </script>
 
 <div
@@ -130,10 +128,6 @@
 			</div>
 		</div>
 	</div>
-
-	{#if word.notes && !notesInLayout}
-		<p class="card-notes" style="font-size: {$fontSizeNotes}rem">{word.notes}</p>
-	{/if}
 
 	{#if sides.length > 1 && showFlipButton}
 		<div class="card-bottom-actions">
@@ -277,19 +271,6 @@
 
 	.card-text.phrase-text {
 		font-weight: 600;
-	}
-
-	.card-notes {
-		flex-shrink: 0;
-		font-size: 0.78rem;
-		font-style: italic;
-		color: var(--color-text-secondary);
-		text-align: center;
-		margin: 0.4rem 0 0;
-		padding: 0 0.5rem;
-		line-height: 1.4;
-		white-space: pre-wrap;
-		word-break: break-word;
 	}
 
 	.card-bottom-actions {
