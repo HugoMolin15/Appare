@@ -84,6 +84,13 @@ CREATE TABLE IF NOT EXISTS settings (
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS word_scores JSONB NOT NULL DEFAULT '{}';
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS folder_order JSONB NOT NULL DEFAULT '{}';
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS random_word_order BOOLEAN NOT NULL DEFAULT false;
+-- Per-folder display language and sort mode (folderId -> value)
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS folder_lang JSONB NOT NULL DEFAULT '{}';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS folder_sort JSONB NOT NULL DEFAULT '{}';
+-- Flashcard layout, word-list display language, and per-field font sizes
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS card_layout JSONB;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS list_display_lang TEXT;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS font_sizes JSONB NOT NULL DEFAULT '{}';
 
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "own settings" ON settings;

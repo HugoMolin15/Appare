@@ -6,6 +6,7 @@
 	import { folders, removeFolder, updateFolder } from '$lib/stores/folders';
 	import { folderOrder, moveFolderInOrder, snapshotFolderOrder, clearFolderOrder, applyFolderOrder } from '$lib/stores/folderOrder';
 	import { folderLang, setFolderLang } from '$lib/stores/folderLang';
+	import { folderSort, setFolderSort } from '$lib/stores/folderSort';
 	import { words, removeWord, moveWordsToFolder } from '$lib/stores/words';
 	import { wordScores } from '$lib/stores/wordScores';
 	import { selectedWordIds, toggleWordSelection, setSelectedWords, clearSelection, studyReturnContext } from '$lib/stores/studySession';
@@ -163,7 +164,8 @@
 
 	// ---- Words + search ----
 	type WordSort = 'newest' | 'oldest' | 'it-az' | 'jp-az';
-	let wordSortMode = $state<WordSort>('newest');
+	// Sort mode is saved per folder, so each folder reopens on the sort you left it.
+	let wordSortMode = $derived($folderSort[folderId] ?? 'newest');
 	const wordSortLabels: Record<WordSort, string> = { newest: 'Più recenti', oldest: 'Meno recenti', 'it-az': 'A-Z Italiano', 'jp-az': 'A-Z Giapponese' };
 	const wordSortCycle: WordSort[] = ['newest', 'oldest', 'it-az', 'jp-az'];
 	let showWordSortSheet = $state(false);
@@ -511,7 +513,7 @@
 		</div>
 		<div class="sort-option-list">
 			{#each wordSortCycle as val}
-				<button class="sort-option-row" class:selected={wordSortMode === val} onclick={() => { wordSortMode = val; showWordSortSheet = false; }}>
+				<button class="sort-option-row" class:selected={wordSortMode === val} onclick={() => { setFolderSort(folderId, val); showWordSortSheet = false; }}>
 					<span>{wordSortLabels[val]}</span>
 					{#if wordSortMode === val}<Icon name="check" size={18} strokeWidth={3} />{/if}
 				</button>

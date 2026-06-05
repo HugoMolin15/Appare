@@ -15,12 +15,20 @@ import { dateColors } from '$lib/stores/dateColors';
 import { wordScores } from '$lib/stores/wordScores';
 import { folderOrder } from '$lib/stores/folderOrder';
 import { folderLang } from '$lib/stores/folderLang';
+import { folderSort } from '$lib/stores/folderSort';
 import {
 	studyGoal,
 	appFontScale,
 	cardOrder,
 	randomCardOrder,
-	randomWordOrder
+	randomWordOrder,
+	cardLayout,
+	listDisplayLang,
+	fontSizeItaliano,
+	fontSizeHiragana,
+	fontSizeRomaji,
+	fontSizeKanji,
+	fontSizeNotes
 } from '$lib/stores/settings';
 import { get } from 'svelte/store';
 import { currentUserId } from '$lib/stores/auth';
@@ -189,11 +197,25 @@ async function pullSettings(userId: string) {
 	randomWordOrder.set(data.random_word_order ?? false);
 	if (data.word_scores) wordScores.set(data.word_scores);
 	if (data.folder_order) folderOrder.set(data.folder_order);
-	// Merge (don't overwrite): folder_lang defaults to an empty object in the DB,
-	// which is truthy — a plain .set() would wipe locally-saved values that haven't
-	// been pushed yet. Merging lets remote win per-folder while keeping local-only entries.
+	if (data.card_layout) cardLayout.set(data.card_layout);
+	if (data.list_display_lang) listDisplayLang.set(data.list_display_lang);
+	if (data.font_sizes && Object.keys(data.font_sizes).length > 0) {
+		const fs = data.font_sizes;
+		if (fs.italiano != null) fontSizeItaliano.set(fs.italiano);
+		if (fs.hiragana != null) fontSizeHiragana.set(fs.hiragana);
+		if (fs.romaji != null) fontSizeRomaji.set(fs.romaji);
+		if (fs.kanji != null) fontSizeKanji.set(fs.kanji);
+		if (fs.notes != null) fontSizeNotes.set(fs.notes);
+	}
+	// Merge (don't overwrite): folder_lang / folder_sort default to an empty object
+	// in the DB, which is truthy — a plain .set() would wipe locally-saved values
+	// that haven't been pushed yet. Merging lets remote win per-folder while keeping
+	// local-only entries.
 	if (data.folder_lang && Object.keys(data.folder_lang).length > 0) {
 		folderLang.update((local) => ({ ...local, ...data.folder_lang }));
+	}
+	if (data.folder_sort && Object.keys(data.folder_sort).length > 0) {
+		folderSort.update((local) => ({ ...local, ...data.folder_sort }));
 	}
 }
 
@@ -282,7 +304,17 @@ async function pushSettings(userId: string) {
 		random_word_order: get(randomWordOrder),
 		word_scores: get(wordScores),
 		folder_order: get(folderOrder),
-		folder_lang: get(folderLang)
+		folder_lang: get(folderLang),
+		folder_sort: get(folderSort),
+		card_layout: get(cardLayout),
+		list_display_lang: get(listDisplayLang),
+		font_sizes: {
+			italiano: get(fontSizeItaliano),
+			hiragana: get(fontSizeHiragana),
+			romaji: get(fontSizeRomaji),
+			kanji: get(fontSizeKanji),
+			notes: get(fontSizeNotes)
+		}
 	});
 }
 
@@ -371,6 +403,7 @@ let settingsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let wordScoresDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let folderOrderDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let folderLangDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let folderSortDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function pushSettingsUpdate(userId: string) {
 	if (settingsDebounceTimer) clearTimeout(settingsDebounceTimer);
@@ -400,6 +433,13 @@ export function pushFolderLangUpdate(userId: string) {
 	}, 1000);
 }
 
+export function pushFolderSortUpdate(userId: string) {
+	if (folderSortDebounceTimer) clearTimeout(folderSortDebounceTimer);
+	folderSortDebounceTimer = setTimeout(() => {
+		if (get(currentUserId) === userId) pushSettings(userId);
+	}, 1000);
+}
+
 import { clearWords } from '$lib/stores/words';
 import { clearFolders } from '$lib/stores/folders';
 import { clearHistory, cancelPendingPushes as cancelHistoryPushes } from '$lib/stores/history';
@@ -409,6 +449,7 @@ import { clearWordScores } from '$lib/stores/wordScores';
 import { clearWordAttempts } from '$lib/stores/wordAttempts';
 import { clearAllFolderOrder } from '$lib/stores/folderOrder';
 import { clearAllFolderLang } from '$lib/stores/folderLang';
+import { clearAllFolderSort } from '$lib/stores/folderSort';
 import { clearUserTags } from '$lib/stores/userTags';
 import { resetCronologiaNav } from '$lib/stores/cronologiaNav';
 import { resetParoleNav } from '$lib/stores/paroleNav';
@@ -425,6 +466,7 @@ export function clearAllStores() {
 	if (wordScoresDebounceTimer) { clearTimeout(wordScoresDebounceTimer); wordScoresDebounceTimer = null; }
 	if (folderOrderDebounceTimer) { clearTimeout(folderOrderDebounceTimer); folderOrderDebounceTimer = null; }
 	if (folderLangDebounceTimer) { clearTimeout(folderLangDebounceTimer); folderLangDebounceTimer = null; }
+	if (folderSortDebounceTimer) { clearTimeout(folderSortDebounceTimer); folderSortDebounceTimer = null; }
 	clearWords();
 	clearFolders();
 	clearHistory();
@@ -434,6 +476,7 @@ export function clearAllStores() {
 	clearWordAttempts();
 	clearAllFolderOrder();
 	clearAllFolderLang();
+	clearAllFolderSort();
 	clearUserTags();
 	resetCronologiaNav();
 	resetParoleNav();
