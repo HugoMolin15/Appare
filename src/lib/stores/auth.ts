@@ -1,4 +1,4 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import type { User } from '@supabase/supabase-js';
 import { supabase, supabaseReady } from '$lib/supabase';
 import { browser } from '$app/environment';
@@ -37,9 +37,15 @@ export async function signUpWithEmail(email: string, password: string) {
 	return error;
 }
 
-import { clearAllStores } from '$lib/services/sync';
+import { clearAllStores, flushPendingSettingsPush } from '$lib/services/sync';
 
 export async function signOut() {
+	// Push any pending (debounced) settings change while still authenticated,
+	// otherwise clearAllStores cancels it and the change is lost on next login.
+	const uid = get(currentUserId);
+	if (uid) {
+		try { await flushPendingSettingsPush(uid); } catch {}
+	}
 	await supabase.auth.signOut();
 	clearAllStores();
 }

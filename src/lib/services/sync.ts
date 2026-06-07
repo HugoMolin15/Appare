@@ -449,6 +449,24 @@ export function pushFolderSortUpdate(userId: string) {
 	}, 1000);
 }
 
+/**
+ * Immediately flush any pending (debounced) settings write. Call this before
+ * logout: clearAllStores cancels the debounce timers, so a setting changed
+ * within ~1s of logging out would otherwise never reach the cloud and would
+ * appear "reset" on the next login. Must run while still authenticated.
+ */
+export async function flushPendingSettingsPush(userId: string) {
+	const hadPending =
+		settingsDebounceTimer || wordScoresDebounceTimer || folderOrderDebounceTimer ||
+		folderLangDebounceTimer || folderSortDebounceTimer;
+	if (settingsDebounceTimer) { clearTimeout(settingsDebounceTimer); settingsDebounceTimer = null; }
+	if (wordScoresDebounceTimer) { clearTimeout(wordScoresDebounceTimer); wordScoresDebounceTimer = null; }
+	if (folderOrderDebounceTimer) { clearTimeout(folderOrderDebounceTimer); folderOrderDebounceTimer = null; }
+	if (folderLangDebounceTimer) { clearTimeout(folderLangDebounceTimer); folderLangDebounceTimer = null; }
+	if (folderSortDebounceTimer) { clearTimeout(folderSortDebounceTimer); folderSortDebounceTimer = null; }
+	if (hadPending) await pushSettings(userId);
+}
+
 import { clearWords } from '$lib/stores/words';
 import { clearFolders } from '$lib/stores/folders';
 import { clearHistory, cancelPendingPushes as cancelHistoryPushes } from '$lib/stores/history';
