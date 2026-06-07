@@ -58,14 +58,20 @@ export async function pullFromSupabase(userId: string): Promise<void> {
 	const serverHasData = (count ?? 0) > 0;
 	const localUserWords = get(words).filter((w) => !w.id.startsWith('seed-')).length;
 
+	// Settings live in their own row and sync independently of whether the user
+	// has any words. Always pull them so a fresh device (or an account whose only
+	// words are the bundled seed set) still gets saved preferences. No-ops if the
+	// server has no settings row yet.
+	await pullSettings(userId);
+	if (get(currentUserId) !== userId) return;
+
 	if (serverHasData) {
 		// Server has data: pull everything to sync local state
 		await Promise.all([
 			pullWords(userId),
 			pullFolders(userId),
 			pullHistory(userId),
-			pullDateColors(userId),
-			pullSettings(userId)
+			pullDateColors(userId)
 		]);
 	} else if (localUserWords > 0) {
 		// Server is empty but we have local data: push it up
