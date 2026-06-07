@@ -48,7 +48,14 @@
 	$effect(() => {
 		if (!browser || !supabaseReady) return;
 
-		if ($currentUser && $currentUser.id !== syncedUserId) {
+		// Logged out: reset so logging back in — even as the same user in the same
+		// session (no page refresh) — triggers a fresh pull and restores settings.
+		if (!$currentUser) {
+			syncedUserId = null;
+			return;
+		}
+
+		if ($currentUser.id !== syncedUserId) {
 			syncedUserId = $currentUser.id;
 			pullFromSupabase($currentUser.id).catch(() => {});
 		}
