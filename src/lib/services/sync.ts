@@ -301,7 +301,7 @@ async function pushAllDateColors(userId: string) {
 }
 
 async function pushSettings(userId: string) {
-	await supabase.from('settings').upsert({
+	const { error } = await supabase.from('settings').upsert({
 		user_id: userId,
 		study_goal: get(studyGoal),
 		japanese_font_size: get(appFontScale),
@@ -322,6 +322,9 @@ async function pushSettings(userId: string) {
 			notes: get(fontSizeNotes)
 		}
 	});
+	// Surface failures (e.g. a missing column if the migration wasn't fully applied)
+	// instead of failing silently — otherwise settings just never reach the cloud.
+	if (error) console.error('Sync: settings push failed', error);
 }
 
 // ---------------------------------------------------------------------------
