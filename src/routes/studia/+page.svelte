@@ -379,7 +379,11 @@
 		flex-direction: column;
 		gap: 0;
 		box-sizing: border-box;
-		padding-bottom: var(--spacing-page);
+		/* Small phones (e.g. iPhone SE), especially with a larger app font size,
+		   can't fit the whole study screen. Allow it to scroll instead of letting
+		   the card collapse and the buttons clip off-screen. */
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
 	}
 
 	/* Reduce PageHeader margin so more height goes to the card */
@@ -423,7 +427,7 @@
 	/* ---- Card area ---- */
 	.card-area {
 		flex: 1;
-		min-height: 0;        /* allow shrinking below content size */
+		min-height: 9rem;     /* never collapse the card on short screens; page scrolls instead */
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
