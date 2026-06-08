@@ -79,6 +79,14 @@ export async function pullFromSupabase(userId: string): Promise<void> {
 	}
 
 	if (get(currentUserId) !== userId) return;
+
+	// Recovery safety net: if this device still holds scores / folder order that
+	// the server is missing (e.g. data that only ever lived in localStorage), back
+	// them up now so they're preserved and propagate to the user's other devices.
+	if (Object.keys(get(wordScores)).length > 0 || Object.keys(get(folderOrder)).length > 0) {
+		pushSettingsUpdate(userId);
+	}
+
 	localStorage.setItem(LOCAL_SYNCED_KEY, userId);
 }
 
