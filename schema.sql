@@ -81,8 +81,22 @@ CREATE TABLE IF NOT EXISTS settings (
   daily_words_count INTEGER NOT NULL DEFAULT 5
 );
 
-ALTER TABLE settings ADD COLUMN IF NOT EXISTS word_scores JSONB NOT NULL DEFAULT '{}';
-ALTER TABLE settings ADD COLUMN IF NOT EXISTS folder_order JSONB NOT NULL DEFAULT '{}';
+-- IMPORTANT: word_scores and folder_order are NULLABLE with NO default on purpose.
+-- They hold per-user data that lives only in the client until synced. A
+-- `NOT NULL DEFAULT '{}'` here caused a freshly-added empty column to overwrite
+-- (wipe) every user's local scores / folder order on the next download, because
+-- the client treated the empty {} as authoritative. Keep them nullable so a
+-- missing/empty value means "no cloud data yet — leave the device's data alone".
+-- Do NOT re-add NOT NULL or DEFAULT '{}' to these two columns.
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS word_scores JSONB;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS folder_order JSONB;
+-- Heal any environment where these were previously NOT NULL DEFAULT '{}' (idempotent).
+ALTER TABLE settings ALTER COLUMN word_scores DROP NOT NULL;
+ALTER TABLE settings ALTER COLUMN word_scores DROP DEFAULT;
+ALTER TABLE settings ALTER COLUMN folder_order DROP NOT NULL;
+ALTER TABLE settings ALTER COLUMN folder_order DROP DEFAULT;
+UPDATE settings SET word_scores = NULL WHERE word_scores = '{}'::jsonb;
+UPDATE settings SET folder_order = NULL WHERE folder_order = '{}'::jsonb;
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS random_word_order BOOLEAN NOT NULL DEFAULT false;
 -- Per-folder display language and sort mode (folderId -> value)
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS folder_lang JSONB NOT NULL DEFAULT '{}';
