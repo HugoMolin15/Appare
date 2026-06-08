@@ -201,8 +201,16 @@ async function pullSettings(userId: string) {
 	cardOrder.set(data.card_order);
 	randomCardOrder.set(data.random_card_order);
 	randomWordOrder.set(data.random_word_order ?? false);
-	if (data.word_scores) wordScores.set(data.word_scores);
-	if (data.folder_order) folderOrder.set(data.folder_order);
+	// Merge, and never let an empty remote value wipe local data. A freshly added
+	// DB column defaults to {}, which is truthy — a plain .set() would erase scores
+	// / folder order that only ever lived locally. Only apply remote when non-empty,
+	// merging per key (remote wins on conflicts, local-only entries are kept).
+	if (data.word_scores && Object.keys(data.word_scores).length > 0) {
+		wordScores.update((local) => ({ ...local, ...data.word_scores }));
+	}
+	if (data.folder_order && Object.keys(data.folder_order).length > 0) {
+		folderOrder.update((local) => ({ ...local, ...data.folder_order }));
+	}
 	if (data.card_layout) cardLayout.set(data.card_layout);
 	if (data.list_display_lang) listDisplayLang.set(data.list_display_lang);
 	if (data.font_sizes && Object.keys(data.font_sizes).length > 0) {
